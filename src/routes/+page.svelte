@@ -94,7 +94,7 @@
 					<div
 						class="flex h-8 w-8 items-center justify-center rounded-lg border border-amber-200 bg-gradient-to-br from-amber-100 to-orange-100 shadow-sm group-hover:shadow-md transition-shadow"
 					>
-						<img src="/logo.svg" alt="NiWrap" class="h-5 w-5" />
+						<img src={resolve("/logo.svg")} alt="NiWrap" class="h-5 w-5" />
 					</div>
 					<h1 class="text-lg font-bold tracking-tight">NiWrap Hub</h1>
 				</button>
