@@ -8,6 +8,7 @@
 	import PackageBrowser from '$lib/components/PackageBrowser.svelte';
 	import type { PackageInfo, Endpoint } from '$lib/services/packages';
 	import Contents from '$lib/components/Contents.svelte';
+	import { resolve } from '$app/paths';
 
 	// State
 	let isDark = $state(false);
@@ -60,7 +61,7 @@
 				<div
 					class="flex h-10 w-10 items-center justify-center rounded-xl border border-amber-200 bg-gradient-to-br from-amber-100 to-orange-100 shadow-md group-hover:shadow-lg transition-shadow"
 				>
-					<img src="/logo.svg" alt="NiWrap" class="h-6 w-6" />
+					<img src={resolve("/logo.svg")} alt="NiWrap" class="h-6 w-6" />
 				</div>
 				<h1 class="text-xl font-bold tracking-tight lg:text-2xl">NiWrap Hub</h1>
 			</button>
