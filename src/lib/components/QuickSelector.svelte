@@ -280,7 +280,7 @@
 							>
 								<div class="flex min-w-0 items-center">
 									<Terminal class={cn('mr-2 flex-shrink-0', compact ? 'h-3 w-3' : 'h-4 w-4')} />
-									<span class={cn('truncate', compact ? 'text-sm' : 'text-base')}>
+									<span class={cn('truncate', compact ? 'text-sm' : 'text-base', selectedApp ? "font-mono" : "")}>
 										{!selectedPackage
 											? 'Select package first'
 											: availableEndpoints.length === 0
@@ -313,7 +313,7 @@
 												)}
 											/>
 											<div class="flex-1">
-												<div class="truncate text-sm font-medium">{endpoint.target}</div>
+												<div class="truncate text-sm font-medium font-mono">{endpoint.target}</div>
 											</div>
 										</Command.Item>
 									{/each}

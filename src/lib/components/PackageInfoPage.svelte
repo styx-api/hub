@@ -314,7 +314,7 @@
 														)}
 													/>
 													<div class="flex-1">
-														<div class="font-medium">{endpoint.target}</div>
+														<div class="font-medium font-mono">{endpoint.target}</div>
 													</div>
 												</Command.Item>
 											{/each}
