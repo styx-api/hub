@@ -7,11 +7,9 @@
 	import * as Popover from '$lib/components/ui/popover/index.js';
 	import {
 		ExternalLink,
-		Package,
 		User,
 		Globe,
 		Container,
-		Activity,
 		Copy,
 		Check,
 		Terminal,
@@ -211,24 +209,63 @@
 		</div>
 	</div>
 
-	<!-- App Selector Section -->
-	{#if showAppSelector && availableEndpoints.length > 0}
-		<div class="space-y-4">
-			<div class="flex items-center gap-3">
-				<div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-					<Terminal class="h-4 w-4 text-primary" />
+	<!-- Package Details Section -->
+	<div class="space-y-6">
+		<!-- Metadata -->
+		<div class="flex flex-wrap items-center justify-between gap-4 text-sm text-muted-foreground">
+			<div class="flex flex-wrap items-center gap-6">
+				<div class="flex items-center gap-2">
+					<User class="h-4 w-4" />
+					<span>by <strong class="text-foreground">{packageInfo.author}</strong></span>
 				</div>
-				<h3 class="text-lg font-semibold">Available Apps</h3>
-				<Badge variant="secondary" class="h-6 px-2 text-sm">
-					{availableEndpoints.length} app{availableEndpoints.length !== 1 ? 's' : ''}
-				</Badge>
+				
+				<div class="flex items-center gap-2">
+					<Container class="h-4 w-4" />
+					<code class="rounded bg-muted px-2 py-1 font-mono text-xs">
+						{packageInfo.container}
+					</code>
+					<Button
+						variant="ghost"
+						size="icon"
+						class="h-6 w-6"
+						onclick={copyContainer}
+						aria-label="Copy container name"
+					>
+						{#if copied}
+							<Check class="h-3 w-3 text-green-600" />
+						{:else}
+							<Copy class="h-3 w-3" />
+						{/if}
+					</Button>
+				</div>
+
+				<div class="flex items-center gap-2">
+					<Terminal class="h-4 w-4" />
+					<span>
+						<strong class="text-foreground">{packageInfo.api.endpoints.length}</strong>
+						app{packageInfo.api.endpoints.length !== 1 ? 's' : ''} available
+					</span>
+				</div>
 			</div>
 
-			<div class="rounded-xl border border-border/50 bg-card/50 p-6">
-				<div class="mb-4">
-					<p class="text-sm text-muted-foreground">
-						Select app
-					</p>
+			<Button
+				variant="outline"
+				size="sm"
+				onclick={() => openUrl(packageInfo.url)}
+				class="shrink-0"
+			>
+				<Globe class="mr-2 h-4 w-4" />
+				Documentation
+				<ExternalLink class="ml-2 h-3 w-3" />
+			</Button>
+		</div>
+
+		<!-- App Selector -->
+		{#if showAppSelector && availableEndpoints.length > 0}
+			<div class="space-y-3">
+				<div class="flex items-center gap-3">
+					<Terminal class="h-5 w-5 text-primary" />
+					<h3 class="text-lg font-semibold">Select Application</h3>
 				</div>
 
 				<div class="flex items-center gap-3">
@@ -289,106 +326,14 @@
 					</div>
 
 					{#if selectedApp}
-						<div class="flex items-center gap-2 text-sm text-muted-foreground">
+						<div class="flex items-center gap-2 text-sm text-primary">
 							<ArrowRight class="h-4 w-4" />
-							<span>Ready to explore</span>
+							<span class="font-medium">Launching...</span>
 						</div>
 					{/if}
 				</div>
 			</div>
-		</div>
-	{/if}
-
-	<!-- Enhanced Info Grid -->
-	<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
-		<!-- Author -->
-		<div
-			class="group space-y-3 rounded-xl border border-border/50 bg-card/30 p-6 transition-all hover:bg-card/50"
-		>
-			<div class="flex items-center gap-3">
-				<div class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
-					<User class="h-4 w-4 text-blue-600 dark:text-blue-400" />
-				</div>
-				<span class="text-sm font-medium tracking-wide text-muted-foreground uppercase">Author</span
-				>
-			</div>
-			<p class="font-semibold text-foreground">{packageInfo.author}</p>
-		</div>
-
-		<!-- Container with Copy Button -->
-		<div
-			class="group space-y-3 rounded-xl border border-border/50 bg-card/30 p-6 transition-all hover:bg-card/50"
-		>
-			<div class="flex items-center gap-3">
-				<div class="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10">
-					<Container class="h-4 w-4 text-green-600 dark:text-green-400" />
-				</div>
-				<span class="text-sm font-medium tracking-wide text-muted-foreground uppercase"
-					>Container</span
-				>
-			</div>
-			<div class="group/container flex items-center gap-3">
-				<code
-					class="min-w-0 flex-1 truncate rounded-lg bg-muted px-3 py-2 font-mono text-sm text-foreground"
-				>
-					{packageInfo.container}
-				</code>
-				<Button
-					variant="ghost"
-					size="icon"
-					class="h-8 w-8 shrink-0 opacity-0 transition-opacity group-hover/container:opacity-100"
-					onclick={copyContainer}
-					aria-label="Copy container name"
-				>
-					{#if copied}
-						<Check class="h-4 w-4 text-green-600" />
-					{:else}
-						<Copy class="h-4 w-4" />
-					{/if}
-				</Button>
-			</div>
-		</div>
-
-		<!-- Website -->
-		<div
-			class="group space-y-3 rounded-xl border border-border/50 bg-card/30 p-6 transition-all hover:bg-card/50"
-		>
-			<div class="flex items-center gap-3">
-				<div class="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/10">
-					<Globe class="h-4 w-4 text-purple-600 dark:text-purple-400" />
-				</div>
-				<span class="text-sm font-medium tracking-wide text-muted-foreground uppercase"
-					>Website</span
-				>
-			</div>
-			<Button
-				variant="link"
-				class="h-auto cursor-pointer justify-start p-0 font-semibold text-foreground transition-colors hover:text-blue-600 dark:hover:text-blue-400"
-				onclick={() => openUrl(packageInfo.url)}
-				aria-label={`Visit ${packageInfo.name} website`}
-			>
-				<span class="truncate">View Documentation</span>
-				<ExternalLink class="ml-2 h-4 w-4 shrink-0" />
-			</Button>
-		</div>
-
-		<!-- API Endpoints -->
-		<div
-			class="group space-y-3 rounded-xl border border-border/50 bg-card/30 p-6 transition-all hover:bg-card/50"
-		>
-			<div class="flex items-center gap-3">
-				<div class="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500/10">
-					<Activity class="h-4 w-4 text-orange-600 dark:text-orange-400" />
-				</div>
-				<span class="text-sm font-medium tracking-wide text-muted-foreground uppercase">Apps</span>
-			</div>
-			<div class="flex items-baseline gap-2">
-				<span class="text-2xl font-bold text-foreground">{packageInfo.api.endpoints.length}</span>
-				<span class="text-sm text-muted-foreground">
-					app{packageInfo.api.endpoints.length !== 1 ? 's' : ''} available
-				</span>
-			</div>
-		</div>
+		{/if}
 	</div>
 
 	<!-- Bottom border for visual separation -->

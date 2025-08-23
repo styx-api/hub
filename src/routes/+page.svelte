@@ -3,8 +3,8 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Separator } from '$lib/components/ui/separator';
 	import { Sun, Moon, Menu } from '@lucide/svelte';
-	import DescriptorSelector from '$lib/components/AppSelector.svelte';
-	import PackageInfoCard from '$lib/components/PackageInfoCard.svelte';
+	import QuickSelector from '$lib/components/QuickSelector.svelte';
+	import PackageInfoPage from '$lib/components/PackageInfoPage.svelte';
 	import PackageBrowser from '$lib/components/PackageBrowser.svelte';
 	import type { PackageInfo, Endpoint } from '$lib/services/packages';
 	import Contents from '$lib/components/Contents.svelte';
@@ -13,7 +13,7 @@
 	// State
 	let isDark = $state(false);
 	let selectedPackage: PackageInfo | null = $state(null);
-	let selectedEndpoint: Endpoint | null = $state(null);
+	let selectedApp: Endpoint | null = $state(null);
 	let showMobileSelector = $state(false);
 
 	function toggleTheme() {
@@ -21,22 +21,9 @@
 		document.documentElement.classList.toggle('dark');
 	}
 
-	function handleDescriptorSelected(packageInfo: PackageInfo, endpoint: Endpoint) {
-		selectedPackage = packageInfo;
-		selectedEndpoint = endpoint;
-		showMobileSelector = false;
-		console.log('Selected:', packageInfo.name, endpoint.target);
-	}
-
-	function handlePackageSelected(packageInfo: PackageInfo) {
-		selectedPackage = packageInfo;
-		selectedEndpoint = null;
-		console.log('Package selected:', packageInfo.name);
-	}
-
 	function clearSelection() {
 		selectedPackage = null;
-		selectedEndpoint = null;
+		selectedApp = null;
 		showMobileSelector = false;
 		console.log('Selection cleared');
 	}
@@ -44,6 +31,30 @@
 	function toggleMobileSelector() {
 		showMobileSelector = !showMobileSelector;
 	}
+
+	function handlePackageSelected(pkg: PackageInfo) {
+		selectedPackage = pkg;
+		console.log('Package selected:', pkg.name);
+	}
+
+	function handleAppSelected(app: Endpoint) {
+		selectedApp = app;
+		showMobileSelector = false;
+		console.log('App selected:', app.target);
+	}
+
+	// Listen to changes
+	$effect(() => {
+		if (selectedPackage) {
+			console.log('Package changed:', selectedPackage.name);
+		}
+	});
+
+	$effect(() => {
+		if (selectedApp) {
+			console.log('App changed:', selectedApp.target);
+		}
+	});
 </script>
 
 <svelte:head>
@@ -57,23 +68,21 @@
 		<!-- Desktop Layout -->
 		<div class="hidden md:flex md:items-center md:gap-6">
 			<!-- Logo and Title -->
-			<button onclick={clearSelection} class="flex shrink-0 items-center space-x-3 group transition-all hover:opacity-80 cursor-pointer">
+			<button
+				onclick={clearSelection}
+				class="group flex shrink-0 cursor-pointer items-center space-x-3 transition-all hover:opacity-80"
+			>
 				<div
-					class="flex h-10 w-10 items-center justify-center rounded-xl border border-amber-200 bg-gradient-to-br from-amber-100 to-orange-100 shadow-md group-hover:shadow-lg transition-shadow"
+					class="flex h-10 w-10 items-center justify-center rounded-xl border border-amber-200 bg-gradient-to-br from-amber-100 to-orange-100 shadow-md transition-shadow group-hover:shadow-lg"
 				>
-					<img src={resolve("/logo.svg")} alt="NiWrap" class="h-6 w-6" />
+					<img src={resolve('/logo.svg')} alt="NiWrap" class="h-6 w-6" />
 				</div>
 				<h1 class="text-xl font-bold tracking-tight lg:text-2xl">NiWrap Hub</h1>
 			</button>
 
 			<!-- Selector -->
 			<div class="max-w-2xl flex-1">
-				<DescriptorSelector
-					onAppSelected={handleDescriptorSelected}
-					onPackageSelected={handlePackageSelected}
-					selectedPackage={selectedPackage}
-					compact={false}
-				/>
+				<QuickSelector bind:package={selectedPackage} bind:app={selectedApp} compact={false} />
 			</div>
 
 			<!-- Theme Toggle -->
@@ -90,11 +99,14 @@
 		<div class="space-y-3 md:hidden">
 			<!-- Top row -->
 			<div class="flex items-center justify-between">
-				<button onclick={clearSelection} class="flex items-center space-x-3 group transition-all hover:opacity-80 cursor-pointer">
+				<button
+					onclick={clearSelection}
+					class="group flex cursor-pointer items-center space-x-3 transition-all hover:opacity-80"
+				>
 					<div
-						class="flex h-8 w-8 items-center justify-center rounded-lg border border-amber-200 bg-gradient-to-br from-amber-100 to-orange-100 shadow-sm group-hover:shadow-md transition-shadow"
+						class="flex h-8 w-8 items-center justify-center rounded-lg border border-amber-200 bg-gradient-to-br from-amber-100 to-orange-100 shadow-sm transition-shadow group-hover:shadow-md"
 					>
-						<img src={resolve("/logo.svg")} alt="NiWrap" class="h-5 w-5" />
+						<img src={resolve('/logo.svg')} alt="NiWrap" class="h-5 w-5" />
 					</div>
 					<h1 class="text-lg font-bold tracking-tight">NiWrap Hub</h1>
 				</button>
@@ -125,20 +137,15 @@
 						<h3 class="text-sm font-medium">Select App</h3>
 						<Button variant="ghost" size="sm" onclick={toggleMobileSelector}>×</Button>
 					</div>
-					<DescriptorSelector
-						onAppSelected={handleDescriptorSelected}
-						onPackageSelected={handlePackageSelected}
-						selectedPackage={selectedPackage}
-						compact={true}
-					/>
+					<QuickSelector bind:package={selectedPackage} bind:app={selectedApp} compact={true} />
 				</div>
 			{:else}
 				<div class="rounded-lg border bg-muted/30 p-3">
-					{#if selectedPackage && selectedEndpoint}
+					{#if selectedPackage && selectedApp}
 						<div class="flex items-center justify-between">
 							<div class="min-w-0 flex-1">
 								<p class="truncate text-sm font-medium">{selectedPackage.name}</p>
-								<p class="truncate text-xs text-muted-foreground">{selectedEndpoint.target}</p>
+								<p class="truncate text-xs text-muted-foreground">{selectedApp.target}</p>
 							</div>
 							<Button variant="outline" size="sm" onclick={toggleMobileSelector}>Change</Button>
 						</div>
@@ -168,13 +175,13 @@
 
 	<!-- Main content -->
 	<div class="mt-4 space-y-4">
-		{#if selectedPackage && selectedEndpoint}
+		{#if selectedPackage && selectedApp}
 			<div class="min-h-[400px] w-full">
-				<Contents descriptorId={selectedEndpoint.target} packageId={selectedPackage.id} />
+				<Contents descriptorId={selectedApp.target} packageId={selectedPackage.id} />
 			</div>
 		{:else if selectedPackage}
 			<div class="min-h-[400px] w-full">
-				<PackageInfoCard packageInfo={selectedPackage} />
+				<PackageInfoPage packageInfo={selectedPackage} onAppSelected={handleAppSelected} />
 			</div>
 		{:else}
 			<PackageBrowser onPackageSelected={handlePackageSelected} />
@@ -236,8 +243,7 @@
 					>
 					<a
 						href="https://boutiques.github.io/"
-						class="block text-muted-foreground transition-colors hover:text-foreground"
-						>Boutiques</a
+						class="block text-muted-foreground transition-colors hover:text-foreground">Boutiques</a
 					>
 				</div>
 			</div>
