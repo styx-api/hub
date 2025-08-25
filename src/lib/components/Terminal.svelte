@@ -93,11 +93,10 @@
 			<span class="mr-2 font-semibold text-gray-400 select-none">{prompt}</span>
 			{#if args.length > 0}
 				<span class="select-text"
-					><span class="font-bold text-cyan-300">{parsedCommand().executable}</span><span
+					><span class="font-bold text-cyan-300">{parsedCommand().executable}</span>{#if parsedCommand().arguments}<span
 						class="font-medium text-green-300"
-					>
-						{' ' + parsedCommand().arguments}</span
-					></span
+					>{' ' + parsedCommand().arguments}</span
+					>{/if}</span
 				>
 			{/if}
 			{#if showCursor}
