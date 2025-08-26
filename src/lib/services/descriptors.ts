@@ -1,6 +1,6 @@
 
 function getJsonSchemaDownloadUrl(packageId: string, descriptorId: string) {
-  return `https://raw.githubusercontent.com/styx-api/niwrap-json-schema/refs/heads/main/${packageId}/${packageId}.${descriptorId}.json`;
+  return `https://raw.githubusercontent.com/styx-api/niwrap-json-schema/refs/heads/main/${packageId}/${packageId}.${descriptorId}.input.json`;
 }
 
 export async function fetchDescriptorJsonSchema(packageId: string, descriptorId: string): Promise<object> {
