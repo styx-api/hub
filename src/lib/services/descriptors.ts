@@ -1,10 +1,32 @@
 
-function getJsonSchemaDownloadUrl(packageId: string, descriptorId: string) {
+function getInputJsonSchemaDownloadUrl(packageId: string, descriptorId: string) {
   return `https://raw.githubusercontent.com/styx-api/niwrap-json-schema/refs/heads/main/${packageId}/${packageId}.${descriptorId}.input.json`;
 }
 
-export async function fetchDescriptorJsonSchema(packageId: string, descriptorId: string): Promise<object> {
-  const downloadUrl = getJsonSchemaDownloadUrl(packageId, descriptorId);
+export async function fetchDescriptorInputJsonSchema(packageId: string, descriptorId: string): Promise<object> {
+  const downloadUrl = getInputJsonSchemaDownloadUrl(packageId, descriptorId);
+  const response = await fetch(downloadUrl);
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch file content: ${response.status} ${response.statusText}`);
+  }
+
+  const content = await response.json();
+
+  // Basic validation
+  if (!content["$schema"] || !content.properties) {
+    throw new Error('Invalid schema file structure');
+  }
+
+  return content;
+}
+
+function getOutputJsonSchemaDownloadUrl(packageId: string, descriptorId: string) {
+  return `https://raw.githubusercontent.com/styx-api/niwrap-json-schema/refs/heads/main/${packageId}/${packageId}.${descriptorId}.output.json`;
+}
+
+export async function fetchDescriptorOutputJsonSchema(packageId: string, descriptorId: string): Promise<object> {
+  const downloadUrl = getInputJsonSchemaDownloadUrl(packageId, descriptorId);
   const response = await fetch(downloadUrl);
 
   if (!response.ok) {

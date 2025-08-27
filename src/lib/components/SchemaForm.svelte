@@ -18,22 +18,11 @@
 	import { Trash2, Plus, ChevronDown, ChevronRight, Info, File } from '@lucide/svelte';
 	import * as Collapsible from '$lib/components/ui/collapsible/index.js';
 	import { getNestedValue, updateNestedValue } from '../services/nestedValueUtils';
+	import {getSchemaDefaultValue} from "../services/schema/defaultValue"
+	import type { JsonSchema } from '../services/schema/types';
 
-	interface JSONSchema {
-		type?: string;
-		properties?: Record<string, JSONSchema>;
-		items?: JSONSchema;
-		anyOf?: JSONSchema[];
-		title?: string;
-		description?: string;
-		default?: any;
-		minimum?: number;
-		maximum?: number;
-		const?: any;
-		'x-styx-type'?: string;
-	}
 
-	let { schema, value = $bindable({}) }: { schema: JSONSchema; value: any } = $props();
+	let { schema, value = $bindable({}) }: { schema: JsonSchema; value: any } = $props();
 
 	// State for collapsible sections
 	let collapsedSections = $state(new Set<string>());
@@ -47,61 +36,17 @@
 		collapsedSections = new Set(collapsedSections);
 	}
 
-	function getDefaultValue(schema: JSONSchema): any {
-		if (schema.default !== undefined) {
-			return schema.default;
-		}
-
-		if (schema.anyOf) {
-			const isNullable = schema.anyOf.some((alt) => alt.type === 'null');
-			if (isNullable) {
-				return null;
-			}
-			// For struct unions, return empty object
-			return {};
-		}
-
-		switch (schema.type) {
-			case 'string':
-				return '';
-			case 'integer':
-				return 0;
-			case 'number':
-				return 0;
-			case 'boolean':
-				return false;
-			case 'array':
-				return [];
-			case 'object': {
-				const obj = {};
-				if (schema.properties) {
-					Object.entries(schema.properties).forEach(([key, propSchema]) => {
-						if (key === '@type') {
-							obj['@type'] = propSchema.const || 'undefined';
-						}
-						if (key !== '@type') {
-							obj[key] = getDefaultValue(propSchema);
-						}
-					});
-				}
-				return obj;
-			}
-			default:
-				return null;
-		}
-	}
-
 	// Initialize value if empty
 	$effect(() => {
 		if (schema) {
-			value = getDefaultValue(schema);
+			value = getSchemaDefaultValue(schema);
 		}
 	});
 
 </script>
 
 <!-- Schema Field Component -->
-{#snippet schemaField(fieldSchema: JSONSchema, path: string, parentPath: string = '', depth: number = 0)}
+{#snippet schemaField(fieldSchema: JsonSchema, path: string, parentPath: string = '', depth: number = 0)}
 	{@const fullPath = parentPath ? `${parentPath}.${path}` : path}
 	{@const fieldValue = getNestedValue(value, fullPath)}
 	{@const isCollapsed = collapsedSections.has(fullPath)}
@@ -120,7 +65,7 @@
 							value = updateNestedValue(
 								value,
 								fullPath,
-								(checked && nonNullSchema) ? getDefaultValue(nonNullSchema) : null
+								(checked && nonNullSchema) ? getSchemaDefaultValue(nonNullSchema) : null
 							);
 						}}
 						class="mt-0.5"
@@ -139,7 +84,7 @@
 						<Info class="h-4 w-4 text-muted-foreground/60 shrink-0 mt-0.5" />
 					{/if}
 				</div>
-				{#if fieldValue !== null && fieldValue !== undefined}
+				{#if fieldValue !== null && fieldValue !== undefined && nonNullSchema}
 					<div class="ml-6 border-l-2 border-primary/20 pl-4">
 						{@render schemaField(nonNullSchema, path, parentPath, depth + 1)}
 					</div>
@@ -191,7 +136,7 @@
 										const selectedSchema = fieldSchema.anyOf.find(
 											(alt) => alt.properties['@type']?.const === selectedType
 										);
-										const newValue = { '@type': selectedType, ...getDefaultValue(selectedSchema) };
+										const newValue = { '@type': selectedType, ...getSchemaDefaultValue(selectedSchema) };
 										value = updateNestedValue(value, fullPath, newValue);
 									}
 								}}
@@ -269,7 +214,7 @@
 									variant="outline"
 									size="sm"
 									onclick={() => {
-										const newItems = [getDefaultValue(fieldSchema.items!)];
+										const newItems = [getSchemaDefaultValue(fieldSchema.items!)];
 										value = updateNestedValue(value, fullPath, newItems);
 									}}
 								>
@@ -312,7 +257,7 @@
 								size="sm"
 								class="w-full"
 								onclick={() => {
-									const newItems = [...items, getDefaultValue(fieldSchema.items!)];
+									const newItems = [...items, getSchemaDefaultValue(fieldSchema.items!)];
 									value = updateNestedValue(value, fullPath, newItems);
 								}}
 							>

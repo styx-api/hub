@@ -44,6 +44,7 @@ export function niwrapExecute(config: object):
 
     const newOutputs = [];
     for (const [label, path] of Object.entries(outputs)) {
+      if (!(path instanceof String)) continue;
       newOutputs.push({
         path: '/outputs/' + path,
         title: 'Title',

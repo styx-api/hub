@@ -12,7 +12,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import Terminal from './Terminal.svelte';
-	import { fetchDescriptorJsonSchema } from '../services/descriptors';
+	import { fetchDescriptorInputJsonSchema } from '../services/descriptors';
 	import FileTreeView from './FileTreeView.svelte';
 	import { niwrapDeathMessage, niwrapExecute } from '../services/niwrapExecution';
 	import CodeBlock from './CodeBlock.svelte';
@@ -78,7 +78,7 @@
 		error = null;
 
 		try {
-			const schema = await fetchDescriptorJsonSchema(packageId, descriptorId);
+			const schema = await fetchDescriptorInputJsonSchema(packageId, descriptorId);
 			descriptorSchema = schema;
 			retryCount = 0;
 		} catch (err) {
