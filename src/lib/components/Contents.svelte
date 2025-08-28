@@ -12,7 +12,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import Terminal from './Terminal.svelte';
-	import { fetchDescriptorInputJsonSchema } from '../services/descriptors';
+	import { fetchDescriptorInputJsonSchema, fetchDescriptorOutputJsonSchema } from '../services/descriptors';
 	import FileTreeView from './FileTreeView.svelte';
 	import { niwrapDeathMessage, niwrapExecute } from '../services/niwrapExecution';
 	import CodeBlock from './CodeBlock.svelte';
@@ -28,6 +28,7 @@
 		Loader2,
 		Code
 	} from '@lucide/svelte';
+	import { getSchemaMetadata } from '$lib/services/schema/schemaPath';
 
 	interface Props {
 		packageId: string;
@@ -37,18 +38,18 @@
 	let { packageId, descriptorId }: Props = $props();
 
 	// State management
-	let descriptorSchema: object | null = $state(null);
+	let descriptorInputSchema: object | null = $state(null);
+	let descriptorOutputSchema: object | null = $state(null);
 	let descriptorConfig: object = $state({});
 	let isLoading = $state(false);
 	let error = $state<string | null>(null);
 	let activeTab = $state('command');
 	let commandCopied = $state(false);
-	let retryCount = $state(0);
 
 	// Memoized computations
 	const niwrapExecutionData = $derived.by(() => {
 		if (!descriptorConfig || Object.keys(descriptorConfig).length === 0) {
-			return { success: false, error: 'No configuration provided', cargs: [], outputFiles: [] };
+			return { success: false, error: 'No configuration provided', cargs: [], outputFiles: [], outputObject: {} };
 		}
 		return niwrapExecute(descriptorConfig);
 	});
@@ -65,7 +66,24 @@
 		return args.length > 0 ? args : ['# No command generated'];
 	});
 
-	const outputFiles = $derived(niwrapExecutionData.success ? niwrapExecutionData.outputFiles : []);
+	const outputFiles = $derived.by(() => {
+		const ret = [];
+		if (!niwrapExecutionData.success) return [];
+		console.log(niwrapExecutionData)
+		for (const [key, value] of Object.entries(niwrapExecutionData.outputObject)) {
+			if (!(typeof value === 'string')) continue;
+			const keyMetadata = descriptorOutputSchema && getSchemaMetadata(descriptorOutputSchema, key);
+			console.log(descriptorOutputSchema)
+			console.log(key)
+			ret.push({
+				path: '/outputs/' + value,
+				title: keyMetadata?.title ?? 'Title',
+				description: keyMetadata?.description ?? 'Description',
+				label: key,
+			});
+		}
+		return ret;
+	});
 	const niwrapError = $derived(niwrapExecutionData.success ? null : niwrapExecutionData.error);
 	const hasConfig = $derived(Object.keys(descriptorConfig).length > 0);
 	const hasOutputs = $derived(outputFiles.length > 0);
@@ -78,25 +96,14 @@
 		error = null;
 
 		try {
-			const schema = await fetchDescriptorInputJsonSchema(packageId, descriptorId);
-			descriptorSchema = schema;
-			retryCount = 0;
+			const inputSchema = await fetchDescriptorInputJsonSchema(packageId, descriptorId);
+			const outputSchema = await fetchDescriptorOutputJsonSchema(packageId, descriptorId);
+			descriptorInputSchema = inputSchema;
+			descriptorOutputSchema = outputSchema;
 		} catch (err) {
 			const errorMessage = err instanceof Error ? err.message : 'Failed to fetch schema';
 			console.error('Error fetching descriptor schema:', err);
-
-			// Exponential backoff retry
-			if (retryCount < 3) {
-				setTimeout(
-					() => {
-						retryCount++;
-						fetchSchema();
-					},
-					1000 * Math.pow(2, retryCount)
-				);
-			} else {
-				error = errorMessage;
-			}
+			error = errorMessage;
 		} finally {
 			isLoading = false;
 		}
@@ -152,9 +159,6 @@
 							<Loader2 class="h-5 w-5 animate-spin text-primary" />
 							<div class="text-sm text-muted-foreground">
 								Loading configuration schema...
-								{#if retryCount > 0}
-									<span class="block text-xs">Retry attempt {retryCount}/3</span>
-								{/if}
 							</div>
 						</div>
 					</CardContent>
@@ -168,7 +172,6 @@
 							variant="outline"
 							size="sm"
 							onclick={() => {
-								retryCount = 0;
 								fetchSchema();
 							}}
 							class="ml-4 shrink-0"
@@ -178,8 +181,8 @@
 						</Button>
 					</AlertDescription>
 				</Alert>
-			{:else if descriptorSchema}
-				<SchemaForm schema={descriptorSchema} bind:value={descriptorConfig} />
+			{:else if descriptorInputSchema}
+				<SchemaForm schema={descriptorInputSchema} bind:value={descriptorConfig} />
 			{:else}
 				<Card>
 					<CardContent class="flex flex-col items-center justify-center py-12 text-center">
@@ -294,9 +297,6 @@
 								<Loader2 class="h-5 w-5 animate-spin text-primary" />
 								<div class="text-sm text-muted-foreground">
 									Loading configuration schema...
-									{#if retryCount > 0}
-										<span class="block text-xs">Retry attempt {retryCount}/3</span>
-									{/if}
 								</div>
 							</div>
 						</CardContent>
@@ -310,7 +310,6 @@
 								variant="outline"
 								size="sm"
 								onclick={() => {
-									retryCount = 0;
 									fetchSchema();
 								}}
 								class="ml-4 shrink-0"
@@ -320,8 +319,8 @@
 							</Button>
 						</AlertDescription>
 					</Alert>
-				{:else if descriptorSchema}
-					<SchemaForm schema={descriptorSchema} bind:value={descriptorConfig} />
+				{:else if descriptorInputSchema}
+					<SchemaForm schema={descriptorInputSchema} bind:value={descriptorConfig} />
 				{:else}
 					<Card>
 						<CardContent class="flex flex-col items-center justify-center py-12 text-center">

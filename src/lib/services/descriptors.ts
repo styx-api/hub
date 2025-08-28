@@ -26,7 +26,7 @@ function getOutputJsonSchemaDownloadUrl(packageId: string, descriptorId: string)
 }
 
 export async function fetchDescriptorOutputJsonSchema(packageId: string, descriptorId: string): Promise<object> {
-  const downloadUrl = getInputJsonSchemaDownloadUrl(packageId, descriptorId);
+  const downloadUrl = getOutputJsonSchemaDownloadUrl(packageId, descriptorId);
   const response = await fetch(downloadUrl);
 
   if (!response.ok) {

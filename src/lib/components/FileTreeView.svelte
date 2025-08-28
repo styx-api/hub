@@ -11,8 +11,8 @@
   // Types
   interface FileData {
     path: string;
-    title: string;
-    description: string;
+    title?: string;
+    description?: string;
     label: string;
   }
 
@@ -200,20 +200,20 @@
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2 mb-1">
             <span class={cn(
-              "text-sm font-mono flex-1 truncate",
+              "text-sm flex-1 truncate",
               node.data ? "font-medium" : "font-normal text-muted-foreground"
             )}>
-              {node.data ? name : name}
+              {node.data ? (node.data.title ?? "Title") : name}
             </span>
           </div>
           {#if node.data}
             <div class="flex items-center justify-between gap-2">
               <div class="flex-1 min-w-0">
-                <div class="text-xs text-muted-foreground truncate">
-                  {node.data.title}
+                <div class="text-xs text-muted-foreground font-mono truncate">
+                  {name}
                 </div>
                 <div class="text-xs text-muted-foreground/70 mt-0.5 line-clamp-2">
-                  {node.data.description}
+                  {node.data.description ?? "Description"}
                 </div>
               </div>
               <button 
@@ -224,7 +224,7 @@
                   "active:bg-secondary/60 active:scale-95",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
                 )}
-                onclick={(e) => copyLabel(node.data.label, e)}
+                onclick={(e) => node.data && copyLabel(node.data.label, e)}
                 title="Copy label to clipboard"
                 type="button"
               >

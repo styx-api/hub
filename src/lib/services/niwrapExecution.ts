@@ -26,7 +26,7 @@ export function niwrapExecute(config: object):
   | {
     success: true;
     cargs: string[];
-    outputFiles: any[];
+    outputObject: any;
   }
   | {
     success: false;
@@ -41,21 +41,10 @@ export function niwrapExecute(config: object):
   try {
     const runner = new styxdefs.DryRunner();
     const outputs = niwrap.execute(config, runner);
-
-    const newOutputs = [];
-    for (const [label, path] of Object.entries(outputs)) {
-      if (!(path instanceof String)) continue;
-      newOutputs.push({
-        path: '/outputs/' + path,
-        title: 'Title',
-        description: 'Description',
-        label: label
-      });
-    }
     return {
       success: true,
       cargs: runner.lastCargs ?? [],
-      outputFiles: newOutputs
+      outputObject: outputs
     };
   } catch (error) {
     const errorString = error instanceof Error ? error.message : String(error);
