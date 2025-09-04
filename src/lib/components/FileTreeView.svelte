@@ -74,6 +74,7 @@
 
   // Reactive state using Svelte 5 runes
   const tree = $derived(buildTree(files));
+  // svelte-ignore state_referenced_locally
   let expanded = $state(getAllFolderPaths(tree));
   
   // Re-expand all folders when files change

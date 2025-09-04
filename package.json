@@ -46,7 +46,6 @@
 	},
 	"dependencies": {
 		"mode-watcher": "^1.1.0",
-		"niwrap": "^0.6.3",
 		"shell-quote": "^1.8.3",
 		"shiki": "^3.11.0",
 		"shlex": "^3.0.0",

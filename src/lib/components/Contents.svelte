@@ -23,7 +23,6 @@
 		Copy,
 		Check,
 		RefreshCw,
-		Package,
 		Loader2,
 		Code
 	} from '@lucide/svelte';
@@ -31,11 +30,11 @@
 	import { getAppInputSchema, getAppOutputSchema } from '$lib/services/packages.svelte';
 
 	interface Props {
-		packageId: string;
+		packageName: string;
 		descriptorId: string;
 	}
 
-	let { packageId, descriptorId }: Props = $props();
+	let { packageName, descriptorId }: Props = $props();
 
 	// State management
 	let descriptorInputSchema: object | null = $state(null);
@@ -45,16 +44,26 @@
 	let error = $state<string | null>(null);
 	let activeTab = $state('command');
 	let commandCopied = $state(false);
+	let niwrapExecutionData = $state<{
+    success: true;
+    cargs: string[];
+    outputObject: any;
+} | {
+    success: false;
+    error: string;
+} | null>(null);
 
 	// Memoized computations
-	const niwrapExecutionData = $derived.by(() => {
+	$effect(() => {
 		if (!descriptorConfig || Object.keys(descriptorConfig).length === 0) {
-			return { success: false, error: 'No configuration provided', cargs: [], outputFiles: [], outputObject: {} };
+			niwrapExecutionData = { success: false, error: 'No configuration provided' };
 		}
-		return niwrapExecute(descriptorConfig);
+		niwrapExecute(descriptorConfig).then((d) => niwrapExecutionData = d);
 	});
 
 	const commandArgs = $derived(() => {
+		if (!niwrapExecutionData) return [];
+
 		if (!niwrapExecutionData.success) {
 			return niwrapDeathMessage();
 		}
@@ -67,13 +76,12 @@
 	});
 
 	const outputFiles = $derived.by(() => {
+		if (!niwrapExecutionData) return [];
 		const ret = [];
 		if (!niwrapExecutionData.success) return [];
 		for (const [key, value] of Object.entries(niwrapExecutionData.outputObject)) {
 			if (!(typeof value === 'string')) continue;
 			const keyMetadata = descriptorOutputSchema && getSchemaMetadata(descriptorOutputSchema, key);
-			console.log(descriptorOutputSchema)
-			console.log(key)
 			ret.push({
 				path: '/outputs/' + value,
 				title: keyMetadata?.title ?? 'Title',
@@ -83,20 +91,20 @@
 		}
 		return ret;
 	});
-	const niwrapError = $derived(niwrapExecutionData.success ? null : niwrapExecutionData.error);
+	const niwrapError = $derived(niwrapExecutionData?.success ? null : niwrapExecutionData?.error ?? "???");
 	const hasConfig = $derived(Object.keys(descriptorConfig).length > 0);
 	const hasOutputs = $derived(outputFiles.length > 0);
 
 	// Schema fetching with retry logic
 	async function fetchSchema() {
-		if (!packageId || !descriptorId) return;
+		if (!packageName || !descriptorId) return;
 
 		isLoading = true;
 		error = null;
 
 		try {
-			const inputSchema = await getAppInputSchema(packageId, descriptorId);
-			const outputSchema = await getAppOutputSchema(packageId, descriptorId);
+			const inputSchema = await getAppInputSchema(packageName, descriptorId);
+			const outputSchema = await getAppOutputSchema(packageName, descriptorId);
 			descriptorInputSchema = inputSchema;
 			descriptorOutputSchema = outputSchema;
 		} catch (err) {

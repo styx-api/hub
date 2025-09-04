@@ -139,7 +139,7 @@
 								<div class="flex min-w-0 items-center">
 									<PackageIcon class={cn('mr-2 flex-shrink-0', compact ? 'h-3 w-3' : 'h-4 w-4')} />
 									<span class={cn('truncate', compact ? 'text-sm' : 'text-base')}>
-										{selectedPackage?.name || 'Choose a package...'}
+										{selectedPackage?.docs.title || 'Choose a package...'}
 									</span>
 								</div>
 								<ChevronsUpDownIcon
@@ -156,7 +156,7 @@
 								<Command.Group>
 									{#each packages as pkg (pkg.name)}
 										<Command.Item
-											value={pkg.name}
+											value={pkg.docs.title ?? pkg.name}
 											onSelect={() => selectPackage(pkg.name)}
 											class="flex cursor-pointer items-center justify-between py-3"
 										>
@@ -253,7 +253,7 @@
 								<Command.Group>
 									{#each apps as app (app.id)}
 										<Command.Item
-											value={app.id}
+											value={app.name}
 											onSelect={() => selectApp(app)}
 											class="flex cursor-pointer items-center py-2"
 										>

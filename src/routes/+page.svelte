@@ -9,19 +9,36 @@
 	import Contents from '$lib/components/Contents.svelte';
 	import { resolve } from '$app/paths';
 
-	import { loadData, isLoading, getProject, type Package, type App } from '$lib/services/packages.svelte';
+	import {
+		loadData,
+		isLoading,
+		getProject,
+		type Package,
+		type App,
+		type Project
+	} from '$lib/services/packages.svelte';
 	import { onMount } from 'svelte';
+	import { niwrapVersion, preloadNiwrap } from '$lib/services/niwrapExecution';
 
 	// State
 	let isDark = $state(false);
 	let selectedPackage: Package | null = $state(null);
 	let selectedApp: App | null = $state(null);
 	let showMobileSelector = $state(false);
-	let niwrapVersion: string | null = $state(null);
+	let project: Project | null = $state(null);
 
-	onMount(() => {
-		loadData();
-		getProject().then((p) => niwrapVersion = p?.version ?? null)
+	onMount(async () => {
+		preloadNiwrap();
+		await loadData();
+		const projectResponse = await getProject();
+		if (projectResponse) {
+			project = projectResponse;
+			
+			const niwrapJsVersion = await niwrapVersion();
+			if (niwrapJsVersion != projectResponse.version) {
+				console.error("NiWrap data version does not match niwrap javascript module version.");
+			}
+		}
 	});
 
 	function toggleTheme() {
@@ -76,6 +93,7 @@
 		<!-- Desktop Layout -->
 		<div class="hidden md:flex md:items-center md:gap-6">
 			<!-- Logo and Title -->
+			<!-- Logo and Title -->
 			<button
 				onclick={clearSelection}
 				class="group flex shrink-0 cursor-pointer items-center space-x-3 transition-all hover:opacity-80"
@@ -93,14 +111,24 @@
 				<QuickSelector bind:package={selectedPackage} bind:app={selectedApp} compact={false} />
 			</div>
 
-			<!-- Theme Toggle -->
-			<Button variant="outline" size="sm" onclick={toggleTheme} class="shrink-0">
-				{#if isDark}
-					<Sun class="h-4 w-4" />
-				{:else}
-					<Moon class="h-4 w-4" />
+			<!-- Version and Theme Toggle -->
+			<div class="flex shrink-0 items-center gap-3">
+				{#if project}
+					<div
+						class="hidden items-center gap-1.5 rounded-md border border-muted bg-muted/30 px-2.5 py-1 sm:flex"
+					>
+						<div class="h-1.5 w-1.5 rounded-full bg-green-500"></div>
+						<span class="text-xs font-medium text-muted-foreground">v{project.version}</span>
+					</div>
 				{/if}
-			</Button>
+				<Button variant="outline" size="sm" onclick={toggleTheme}>
+					{#if isDark}
+						<Sun class="h-4 w-4" />
+					{:else}
+						<Moon class="h-4 w-4" />
+					{/if}
+				</Button>
+			</div>
 		</div>
 
 		<!-- Mobile Layout -->
@@ -120,6 +148,14 @@
 				</button>
 
 				<div class="flex items-center gap-2">
+					{#if project}
+						<div
+							class="flex items-center gap-1.5 rounded-md border border-muted bg-muted/30 px-2 py-1"
+						>
+							<div class="h-1.5 w-1.5 rounded-full bg-green-500"></div>
+							<span class="text-xs font-medium text-muted-foreground">v{project.version}</span>
+						</div>
+					{/if}
 					<Button
 						variant="outline"
 						size="sm"
@@ -193,7 +229,7 @@
 		<div class="mt-4 space-y-4">
 			{#if selectedPackage && selectedApp}
 				<div class="min-h-[400px] w-full">
-					<Contents descriptorId={selectedApp.name} packageId={selectedPackage.name} />
+					<Contents descriptorId={selectedApp.id} packageName={selectedPackage.name} />
 				</div>
 			{:else if selectedPackage}
 				<div class="min-h-[400px] w-full">
@@ -263,6 +299,20 @@
 						class="block text-muted-foreground transition-colors hover:text-foreground">Boutiques</a
 					>
 				</div>
+			</div>
+		</div>
+
+		<!-- Version info at bottom of footer -->
+		<div class="mt-6 border-t pt-4">
+			<div
+				class="flex flex-col items-center justify-between gap-2 text-xs text-muted-foreground sm:flex-row"
+			>
+				<p>
+					© 2025 NiWrap Hub.{#if project?.docs.description}{" "+project.docs.description}{/if}
+				</p>
+				{#if project}
+					<p>NiWrap v{project.version}</p>
+				{/if}
 			</div>
 		</div>
 	</footer>

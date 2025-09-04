@@ -14,13 +14,20 @@ export type App = {
 
 let index: Index | null = $state(null);
 let loading = $state(false);
-let initialized = false;
+let loadPromise: Promise<void> | null = null; // Cache loading promise
 
 export async function getIndex() {
-  if (!initialized) {
-    initialized = true;
-    await loadData(); // Auto-load on first access
+  if (index !== null) {
+    return index; // Already loaded
   }
+  
+  if (loadPromise === null) {
+    // First caller starts the loading
+    loadPromise = loadData();
+  }
+  
+  // All callers wait for the same promise
+  await loadPromise;
   return index;
 }
 
@@ -40,6 +47,9 @@ export async function loadData() {
     }
   } catch (err) {
     console.error('Failed to load indices:', err);
+    // Reset loadPromise on error so it can be retried
+    loadPromise = null;
+    throw err; // Re-throw to let callers handle the error
   } finally {
     loading = false;
   }
