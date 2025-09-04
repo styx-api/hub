@@ -3,71 +3,42 @@
 	import { onMount } from 'svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
-	import { Loader2, Package, AlertCircle, RefreshCw, Terminal } from '@lucide/svelte/icons';
-	import { getAllPackages, type PackageInfo } from '$lib/services/packages';
+	import { Loader2, AlertCircle, RefreshCw, Terminal } from '@lucide/svelte/icons';
+	import { getPackages, type Package } from '$lib/services/packages.svelte';
 
 	// Props
 	interface Props {
-		onPackageSelected?: (packageInfo: PackageInfo) => void;
+		onPackageSelected?: (packageInfo: Package) => void;
 	}
 
 	let { onPackageSelected = () => {} }: Props = $props();
 
 	// State
-	let packages: PackageInfo[] = $state([]);
+	let packages: Package[] = $state([]);
 	let loading = $state(true);
 	let error = $state('');
 	let retryCount = $state(0);
 
-	// Load packages with retry logic
 	async function loadPackages() {
 		try {
 			loading = true;
 			error = '';
-			
-			const result = await getAllPackages();
-
-			// Filter and sort endpoints
-			const processedPackages = result.packages.map((pkg) => ({
-				...pkg,
-				api: {
-					...pkg.api,
-					endpoints: pkg.api.endpoints
-						.filter((endpoint) => endpoint.status === 'done')
-						.sort((a, b) => a.target.localeCompare(b.target))
-				}
-			}));
-
-			// Filter out packages with no available endpoints
-			packages = processedPackages.filter(pkg => pkg.api.endpoints.length > 0);
-
-			if (result.errors.length > 0) {
-				console.warn('Some packages failed to load:', result.errors);
-			}
-
-			if (packages.length === 0) {
-				error = 'No packages with available apps found';
-			}
-
-			retryCount = 0;
+			packages = await getPackages() ?? [];
 		} catch (err) {
-			const errorMessage = err instanceof Error ? err.message : 'Failed to load packages';
+			error = err instanceof Error ? err.message : 'Failed to load packages';
 		} finally {
 			loading = false;
 		}
 	}
 
-	// Load packages on mount
-	onMount(() => {
-		loadPackages();
-	});
+	onMount(loadPackages);
 
 	function handleRetry() {
 		retryCount = 0;
 		loadPackages();
 	}
 
-	function selectPackage(pkg: PackageInfo) {
+	function selectPackage(pkg: Package) {
 		onPackageSelected(pkg);
 	}
 
@@ -129,7 +100,7 @@
 	<div class="space-y-6">
 		<!-- Package Grid -->
 		<div class="grid gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 items-start">
-			{#each packages as pkg (pkg.id)}
+			{#each packages as pkg (pkg.name)}
 				<button
 					onclick={() => selectPackage(pkg)}
 					class="group relative overflow-hidden rounded-lg border border-border/50 bg-card p-4 text-left transition-all duration-200 hover:shadow-lg hover:shadow-black/5 hover:scale-[1.02] hover:border-primary/30 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 cursor-pointer w-full"
@@ -149,10 +120,10 @@
 					<!-- Package Info -->
 					<div class="space-y-2 mb-4">
 						<h3 class="text-base font-semibold group-hover:text-primary transition-colors duration-200">
-							{pkg.name}
+							{pkg.docs.title ?? pkg.name}
 						</h3>
 						<p class="text-xs text-muted-foreground font-medium">
-							{pkg.author}
+							{pkg.docs.authors?.join(", ")}
 						</p>
 					</div>
 
@@ -161,7 +132,7 @@
 						<div class="flex items-center gap-1.5">
 							<Terminal class="h-3 w-3 text-primary/70" />
 							<span class="text-xs font-medium text-muted-foreground">
-								{pkg.api.endpoints.length} app{pkg.api.endpoints.length !== 1 ? 's' : ''}
+								{pkg.appCount} app{pkg.appCount !== 1 ? 's' : ''}
 							</span>
 						</div>
 						<div class="h-1.5 w-1.5 rounded-full bg-primary/20 group-hover:bg-primary/40 transition-colors duration-200"></div>

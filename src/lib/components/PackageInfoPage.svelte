@@ -17,38 +17,40 @@
 		ArrowRight
 	} from '@lucide/svelte';
 	import { cn } from '$lib/utils.js';
-	import type { PackageInfo, Endpoint } from '$lib/services/packages';
+	import { type Package, type App, getApps } from '$lib/services/packages.svelte';
 
 	interface Props {
-		packageInfo: PackageInfo;
+		package: Package;
 		compact?: boolean;
 		showBorder?: boolean;
-		onAppSelected?: (endpoint: Endpoint) => void;
+		onAppSelected?: (app: App) => void;
 		showAppSelector?: boolean;
 	}
 
 	let {
-		packageInfo,
+		package: selectedPackage,
 		compact = false,
 		showBorder = true,
 		onAppSelected = () => {},
 		showAppSelector = true
 	}: Props = $props();
 
-	let copied = $state(false);
-	let selectedApp = $state('');
-	let appPopoverOpen = $state(false);
+	let apps: App[] = $state([]);
+	let copied: boolean = $state(false);
+	let selectedApp: App | null = $state(null);
+	let appPopoverOpen: boolean = $state(false);
 	let appTriggerRef = $state<HTMLButtonElement | null>(null);
 
-	// Computed values
-	const availableEndpoints = $derived(packageInfo.api.endpoints || []);
-	const selectedEndpoint = $derived(
-		availableEndpoints.find((endpoint) => endpoint.target === selectedApp) || null
-	);
+	$effect(() => {
+		if (!selectedPackage) return;
+		getApps(selectedPackage.name).then((response) => {
+			apps = response ?? [];
+		});
+	});
 
 	const selectedAppName = $derived(() => {
 		if (!selectedApp)
-			return availableEndpoints.length > 0
+			return apps.length > 0
 				? 'Choose an app to get started...'
 				: 'No apps available';
 		return selectedApp;
@@ -117,7 +119,7 @@
 
 	async function copyContainer() {
 		try {
-			await navigator.clipboard.writeText(packageInfo.container);
+			await navigator.clipboard.writeText(selectedPackage.docker);
 			copied = true;
 			setTimeout(() => (copied = false), 2000);
 		} catch (err) {
@@ -132,19 +134,16 @@
 		});
 	}
 
-	function selectApp(app: string) {
+	function selectApp(app: App) {
 		selectedApp = app;
-		const endpoint = availableEndpoints.find((e) => e.target === app);
-		if (endpoint) {
-			onAppSelected(endpoint);
-		}
+		onAppSelected(app);
 		closeAndFocusAppTrigger();
 	}
 
 	// Emit selection when app changes
 	$effect(() => {
-		if (selectedEndpoint) {
-			onAppSelected(selectedEndpoint);
+		if (selectedApp) {
+			onAppSelected(selectedApp);
 		}
 	});
 </script>
@@ -157,7 +156,7 @@
 		<!-- Decorative background elements -->
 		<div
 			class="absolute -top-20 -right-20 h-40 w-40 rounded-full bg-gradient-to-br {getPackageColorClass(
-				packageInfo.name
+				selectedPackage.name
 			)} opacity-10"
 		></div>
 		<div
@@ -170,26 +169,26 @@
 				<div class="flex items-start gap-4">
 					<div
 						class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br shadow-lg ring-1 ring-black/5 dark:ring-white/10 {getPackageColorClass(
-							packageInfo.name
+							selectedPackage.name
 						)}"
 					>
 						<span class="text-2xl font-bold text-white drop-shadow-sm">
-							{getPackageIcon(packageInfo.name)}
+							{getPackageIcon(selectedPackage.name)}
 						</span>
 					</div>
 					<div class="min-w-0 flex-1 space-y-2">
-						<h2 class="text-3xl font-bold tracking-tight text-foreground">{packageInfo.name}</h2>
+						<h2 class="text-3xl font-bold tracking-tight text-foreground">{selectedPackage.docs.title ?? selectedPackage.name}</h2>
 						<div class="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-							<span class="font-mono font-medium">v{packageInfo.version}</span>
+							<span class="font-mono font-medium">v{selectedPackage.version}</span>
 							<span class="h-1 w-1 rounded-full bg-muted-foreground/50"></span>
-							<span class="font-mono">{packageInfo.id}</span>
+							<span class="font-mono">{selectedPackage.name}</span>
 						</div>
 					</div>
 				</div>
 
 				<!-- Description -->
 				<div class="space-y-3">
-					{#each packageInfo.description.split('\n').filter((x) => x.trim().length > 0) as line}
+					{#each (selectedPackage.docs.description ?? "").split('\n').filter((x) => x.trim().length > 0) as line}
 						<p class="max-w-3xl leading-relaxed text-muted-foreground">
 							{line}
 						</p>
@@ -198,14 +197,14 @@
 			</div>
 
 			<!-- Status badges -->
-			<div class="flex flex-wrap gap-2 sm:flex-col">
-				<Badge variant="outline" class={getStatusColor(packageInfo.status)}>
-					{packageInfo.status}
+			<!-- <div class="flex flex-wrap gap-2 sm:flex-col">
+				<Badge variant="outline" class={getStatusColor(selectedPackage.status)}>
+					{selectedPackage.status}
 				</Badge>
-				<Badge variant="outline" class={getApproachColor(packageInfo.approach)}>
-					{packageInfo.approach}
+				<Badge variant="outline" class={getApproachColor(selectedPackage.approach)}>
+					{selectedPackage.approach}
 				</Badge>
-			</div>
+			</div> -->
 		</div>
 	</div>
 
@@ -216,13 +215,13 @@
 			<div class="flex flex-wrap items-center gap-6">
 				<div class="flex items-center gap-2">
 					<User class="h-4 w-4" />
-					<span>by <strong class="text-foreground">{packageInfo.author}</strong></span>
+					<span>by <strong class="text-foreground">{selectedPackage.docs.authors?.join(", ")}</strong></span>
 				</div>
 				
 				<div class="flex items-center gap-2">
 					<Container class="h-4 w-4" />
 					<code class="rounded bg-muted px-2 py-1 font-mono text-xs">
-						{packageInfo.container}
+						{selectedPackage.docker}
 					</code>
 					<Button
 						variant="ghost"
@@ -242,26 +241,28 @@
 				<div class="flex items-center gap-2">
 					<Terminal class="h-4 w-4" />
 					<span>
-						<strong class="text-foreground">{packageInfo.api.endpoints.length}</strong>
-						app{packageInfo.api.endpoints.length !== 1 ? 's' : ''} available
+						<strong class="text-foreground">{selectedPackage.appCount}</strong>
+						app{selectedPackage.appCount !== 1 ? 's' : ''} available
 					</span>
 				</div>
 			</div>
 
-			<Button
-				variant="outline"
-				size="sm"
-				onclick={() => openUrl(packageInfo.url)}
-				class="shrink-0"
-			>
-				<Globe class="mr-2 h-4 w-4" />
-				Documentation
-				<ExternalLink class="ml-2 h-3 w-3" />
-			</Button>
+			{#each selectedPackage.docs.urls ?? [] as url}
+				<Button
+					variant="outline"
+					size="sm"
+					onclick={() => openUrl(url)}
+					class="shrink-0"
+				>
+					<Globe class="mr-2 h-4 w-4" />
+					Documentation
+					<ExternalLink class="ml-2 h-3 w-3" />
+				</Button>
+			{/each }
 		</div>
 
 		<!-- App Selector -->
-		{#if showAppSelector && availableEndpoints.length > 0}
+		{#if showAppSelector && apps.length > 0}
 			<div class="space-y-3">
 				<div class="flex items-center gap-3">
 					<Terminal class="h-5 w-5 text-primary" />
@@ -301,20 +302,20 @@
 									<Command.List class="max-h-64">
 										<Command.Empty>No apps found.</Command.Empty>
 										<Command.Group>
-											{#each availableEndpoints as endpoint (endpoint.target)}
+											{#each apps as app (app.id)}
 												<Command.Item
-													value={endpoint.target}
-													onSelect={() => selectApp(endpoint.target)}
+													value={app.id}
+													onSelect={() => selectApp(app)}
 													class="flex cursor-pointer items-center py-3"
 												>
 													<Check
 														class={cn(
 															'mr-3 h-4 w-4 text-primary',
-															selectedApp !== endpoint.target && 'text-transparent'
+															selectedApp?.id !== app.id && 'text-transparent'
 														)}
 													/>
 													<div class="flex-1">
-														<div class="font-medium font-mono">{endpoint.target}</div>
+														<div class="font-medium font-mono">{app.name}</div>
 													</div>
 												</Command.Item>
 											{/each}

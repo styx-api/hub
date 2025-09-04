@@ -12,7 +12,6 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import Terminal from './Terminal.svelte';
-	import { fetchDescriptorInputJsonSchema, fetchDescriptorOutputJsonSchema } from '../services/descriptors';
 	import FileTreeView from './FileTreeView.svelte';
 	import { niwrapDeathMessage, niwrapExecute } from '../services/niwrapExecution';
 	import CodeBlock from './CodeBlock.svelte';
@@ -29,6 +28,7 @@
 		Code
 	} from '@lucide/svelte';
 	import { getSchemaMetadata } from '$lib/services/schema/schemaPath';
+	import { getAppInputSchema, getAppOutputSchema } from '$lib/services/packages.svelte';
 
 	interface Props {
 		packageId: string;
@@ -69,7 +69,6 @@
 	const outputFiles = $derived.by(() => {
 		const ret = [];
 		if (!niwrapExecutionData.success) return [];
-		console.log(niwrapExecutionData)
 		for (const [key, value] of Object.entries(niwrapExecutionData.outputObject)) {
 			if (!(typeof value === 'string')) continue;
 			const keyMetadata = descriptorOutputSchema && getSchemaMetadata(descriptorOutputSchema, key);
@@ -96,8 +95,8 @@
 		error = null;
 
 		try {
-			const inputSchema = await fetchDescriptorInputJsonSchema(packageId, descriptorId);
-			const outputSchema = await fetchDescriptorOutputJsonSchema(packageId, descriptorId);
+			const inputSchema = await getAppInputSchema(packageId, descriptorId);
+			const outputSchema = await getAppOutputSchema(packageId, descriptorId);
 			descriptorInputSchema = inputSchema;
 			descriptorOutputSchema = outputSchema;
 		} catch (err) {

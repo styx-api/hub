@@ -2,19 +2,27 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
 	import { Separator } from '$lib/components/ui/separator';
-	import { Sun, Moon, Menu } from '@lucide/svelte';
+	import { Sun, Moon, Menu, Loader2 } from '@lucide/svelte';
 	import QuickSelector from '$lib/components/QuickSelector.svelte';
 	import PackageInfoPage from '$lib/components/PackageInfoPage.svelte';
 	import PackageBrowser from '$lib/components/PackageBrowser.svelte';
-	import type { PackageInfo, Endpoint } from '$lib/services/packages';
 	import Contents from '$lib/components/Contents.svelte';
 	import { resolve } from '$app/paths';
 
+	import { loadData, isLoading, getProject, type Package, type App } from '$lib/services/packages.svelte';
+	import { onMount } from 'svelte';
+
 	// State
 	let isDark = $state(false);
-	let selectedPackage: PackageInfo | null = $state(null);
-	let selectedApp: Endpoint | null = $state(null);
+	let selectedPackage: Package | null = $state(null);
+	let selectedApp: App | null = $state(null);
 	let showMobileSelector = $state(false);
+	let niwrapVersion: string | null = $state(null);
+
+	onMount(() => {
+		loadData();
+		getProject().then((p) => niwrapVersion = p?.version ?? null)
+	});
 
 	function toggleTheme() {
 		isDark = !isDark;
@@ -32,15 +40,15 @@
 		showMobileSelector = !showMobileSelector;
 	}
 
-	function handlePackageSelected(pkg: PackageInfo) {
+	function handlePackageSelected(pkg: Package) {
 		selectedPackage = pkg;
 		console.log('Package selected:', pkg.name);
 	}
 
-	function handleAppSelected(app: Endpoint) {
+	function handleAppSelected(app: App) {
 		selectedApp = app;
 		showMobileSelector = false;
-		console.log('App selected:', app.target);
+		console.log('App selected:', app.name);
 	}
 
 	// Listen to changes
@@ -52,7 +60,7 @@
 
 	$effect(() => {
 		if (selectedApp) {
-			console.log('App changed:', selectedApp.target);
+			console.log('App changed:', selectedApp.name);
 		}
 	});
 </script>
@@ -145,7 +153,7 @@
 						<div class="flex items-center justify-between">
 							<div class="min-w-0 flex-1">
 								<p class="truncate text-sm font-medium">{selectedPackage.name}</p>
-								<p class="truncate text-xs text-muted-foreground">{selectedApp.target}</p>
+								<p class="truncate text-xs text-muted-foreground">{selectedApp.name}</p>
 							</div>
 							<Button variant="outline" size="sm" onclick={toggleMobileSelector}>Change</Button>
 						</div>
@@ -174,19 +182,28 @@
 	<Separator class="hidden md:block" />
 
 	<!-- Main content -->
-	<div class="mt-4 space-y-4">
-		{#if selectedPackage && selectedApp}
-			<div class="min-h-[400px] w-full">
-				<Contents descriptorId={selectedApp.target} packageId={selectedPackage.id} />
+	{#if isLoading()}
+		<div class="flex items-center justify-center py-6">
+			<div class="flex items-center space-x-3">
+				<Loader2 class="h-5 w-5 animate-spin text-primary" />
+				<div class="text-sm text-muted-foreground">Loading packages...</div>
 			</div>
-		{:else if selectedPackage}
-			<div class="min-h-[400px] w-full">
-				<PackageInfoPage packageInfo={selectedPackage} onAppSelected={handleAppSelected} />
-			</div>
-		{:else}
-			<PackageBrowser onPackageSelected={handlePackageSelected} />
-		{/if}
-	</div>
+		</div>
+	{:else}
+		<div class="mt-4 space-y-4">
+			{#if selectedPackage && selectedApp}
+				<div class="min-h-[400px] w-full">
+					<Contents descriptorId={selectedApp.name} packageId={selectedPackage.name} />
+				</div>
+			{:else if selectedPackage}
+				<div class="min-h-[400px] w-full">
+					<PackageInfoPage package={selectedPackage} onAppSelected={handleAppSelected} />
+				</div>
+			{:else}
+				<PackageBrowser onPackageSelected={handlePackageSelected} />
+			{/if}
+		</div>
+	{/if}
 
 	<!-- Footer -->
 	<footer class="mt-8 border-t pt-6">

@@ -9,112 +9,69 @@
 	import ChevronsUpDownIcon from '@lucide/svelte/icons/chevrons-up-down';
 	import {
 		Loader2,
-		Package,
+		Package as PackageIcon,
 		Terminal,
 		ArrowRight,
 		AlertCircle,
 		RefreshCw
 	} from '@lucide/svelte/icons';
 	import { cn } from '$lib/utils.js';
-	import { getAllPackages, type PackageInfo, type Endpoint } from '$lib/services/packages';
+	import { getPackages, getApps, type App, type Package } from '$lib/services/packages.svelte';
 
 	// Props
 	interface Props {
-		package?: PackageInfo | null;
-		app?: Endpoint | null;
-		showEndpointCounts?: boolean;
+		package?: Package | null;
+		app?: App | null;
+		showAppCounts?: boolean;
 		compact?: boolean;
 	}
 
 	let {
 		package: selectedPackage = $bindable(null),
 		app: selectedApp = $bindable(null),
-		showEndpointCounts = true,
+		showAppCounts: showAppCounts = true,
 		compact = false
 	}: Props = $props();
 
-	// Simple internal state
-	let packages: PackageInfo[] = $state([]);
+	let packages: Package[] = $state([]);
+	let apps: App[] = $state([]);
 	let loading = $state(true);
 	let error = $state('');
 	let packagePopoverOpen = $state(false);
 	let appPopoverOpen = $state(false);
 	let packageTriggerRef = $state<HTMLButtonElement | null>(null);
 	let appTriggerRef = $state<HTMLButtonElement | null>(null);
-	let retryCount = $state(0);
 
-	// Simple computed values
-	const availableEndpoints = $derived(
-		selectedPackage?.api.endpoints.filter((e) => e.status === 'done') || []
-	);
 	const hasPackage = $derived(!!selectedPackage);
 	const hasApp = $derived(!!selectedApp);
 
-	// Clear app when package changes
 	$effect(() => {
-		if (selectedPackage) {
-			// If current app doesn't belong to selected package, clear it
-			if (selectedApp && !availableEndpoints.some((e) => e.target === selectedApp?.target)) {
-				selectedApp = null;
-			}
-		} else {
-			selectedApp = null;
-		}
+		if (!selectedPackage) return;
+		getApps(selectedPackage.name).then((response) => {
+			apps = response ?? [];
+		});
 	});
 
-	// Load packages with retry logic
+	// clear app when package changes.
+	// looks really odd but works
+	$effect(() => {
+		selectedPackage;
+		selectedApp = null;
+	});
+
 	async function loadPackages() {
 		try {
 			loading = true;
-			error = '';
-
-			const result = await getAllPackages();
-
-			// Process packages - filter endpoints and sort
-			const processedPackages = result.packages.map((pkg) => ({
-				...pkg,
-				api: {
-					...pkg.api,
-					endpoints: pkg.api.endpoints
-						.filter((endpoint) => endpoint.status === 'done')
-						.sort((a, b) => a.target.localeCompare(b.target))
-				}
-			}));
-
-			// Only keep packages with available endpoints
-			packages = processedPackages.filter((pkg) => pkg.api.endpoints.length > 0);
-
-			if (result.errors.length > 0) {
-				console.warn('Some packages failed to load:', result.errors);
-			}
-
-			if (packages.length === 0) {
-				error = 'No packages with available apps found';
-			}
-
-			retryCount = 0;
+			packages = (await getPackages()) ?? [];
 		} catch (err) {
 			const errorMessage = err instanceof Error ? err.message : 'Failed to load packages';
-
-			if (retryCount < 3) {
-				setTimeout(
-					() => {
-						retryCount++;
-						loadPackages();
-					},
-					1000 * Math.pow(2, retryCount)
-				);
-			} else {
-				error = errorMessage;
-			}
+			error = errorMessage;
 		} finally {
 			loading = false;
 		}
 	}
 
-	onMount(() => {
-		loadPackages();
-	});
+	onMount(loadPackages);
 
 	// Helper functions
 	function closePackagePopover() {
@@ -127,20 +84,15 @@
 		tick().then(() => appTriggerRef?.focus());
 	}
 
-	function selectPackage(packageId: string) {
-		const pkg = packages.find((p) => p.id === packageId);
+	function selectPackage(packageName: string) {
+		const pkg = packages.find((p) => p.name === packageName);
 		selectedPackage = pkg || null;
 		closePackagePopover();
 	}
 
-	function selectApp(endpoint: Endpoint) {
-		selectedApp = endpoint;
+	function selectApp(app: App) {
+		selectedApp = app;
 		closeAppPopover();
-	}
-
-	function handleRetry() {
-		retryCount = 0;
-		loadPackages();
 	}
 </script>
 
@@ -149,12 +101,7 @@
 		<div class="flex items-center justify-center py-6">
 			<div class="flex items-center space-x-3">
 				<Loader2 class="h-5 w-5 animate-spin text-primary" />
-				<div class="text-sm text-muted-foreground">
-					Loading packages...
-					{#if retryCount > 0}
-						<span class="block text-xs">Retry attempt {retryCount}/3</span>
-					{/if}
-				</div>
+				<div class="text-sm text-muted-foreground">Loading packages...</div>
 			</div>
 		</div>
 	{:else if error}
@@ -162,7 +109,7 @@
 			<AlertCircle class="h-4 w-4" />
 			<AlertDescription class="flex items-center justify-between">
 				<span>{error}</span>
-				<Button variant="outline" size="sm" onclick={handleRetry} class="ml-4 shrink-0">
+				<Button variant="outline" size="sm" onclick={loadPackages} class="ml-4 shrink-0">
 					<RefreshCw class="mr-1 h-3 w-3" />
 					Retry
 				</Button>
@@ -190,7 +137,7 @@
 								aria-label="Select package"
 							>
 								<div class="flex min-w-0 items-center">
-									<Package class={cn('mr-2 flex-shrink-0', compact ? 'h-3 w-3' : 'h-4 w-4')} />
+									<PackageIcon class={cn('mr-2 flex-shrink-0', compact ? 'h-3 w-3' : 'h-4 w-4')} />
 									<span class={cn('truncate', compact ? 'text-sm' : 'text-base')}>
 										{selectedPackage?.name || 'Choose a package...'}
 									</span>
@@ -207,37 +154,35 @@
 							<Command.List class="max-h-64">
 								<Command.Empty>No packages found.</Command.Empty>
 								<Command.Group>
-									{#each packages as pkg (pkg.id)}
+									{#each packages as pkg (pkg.name)}
 										<Command.Item
-											value={`${pkg.name} ${pkg.author} ${pkg.approach} ${pkg.description}`}
-											onSelect={() => selectPackage(pkg.id)}
+											value={pkg.name}
+											onSelect={() => selectPackage(pkg.name)}
 											class="flex cursor-pointer items-center justify-between py-3"
 										>
 											<div class="flex min-w-0 flex-1 items-center">
 												<CheckIcon
 													class={cn(
 														'mr-3 h-4 w-4 text-primary',
-														selectedPackage?.id !== pkg.id && 'text-transparent'
+														selectedPackage?.name !== pkg.name && 'text-transparent'
 													)}
 												/>
 												<div class="min-w-0 flex-1 space-y-1">
 													<div class="flex items-center gap-2">
-														<span class="truncate text-sm font-medium">{pkg.name}</span>
+														<span class="truncate text-sm font-medium">{pkg.docs.title}</span>
 														<Badge variant="outline" class="h-4 px-1.5 text-xs">
 															v{pkg.version}
 														</Badge>
 													</div>
 													<div class="truncate text-xs text-muted-foreground">
-														{pkg.author}
+														{pkg.docs.authors?.join(', ')}
 													</div>
 												</div>
 											</div>
-											{#if showEndpointCounts}
+											{#if showAppCounts}
 												<div class="ml-3 flex flex-shrink-0 items-center">
 													<Badge variant="secondary" class="h-5 px-2 text-xs">
-														{pkg.api.endpoints.length} app{pkg.api.endpoints.length !== 1
-															? 's'
-															: ''}
+														{pkg.appCount} app{pkg.appCount !== 1 ? 's' : ''}
 													</Badge>
 												</div>
 											{/if}
@@ -270,7 +215,7 @@
 									!selectedPackage && 'opacity-50',
 									hasApp && 'border-primary/50 bg-primary/5',
 									selectedPackage &&
-										availableEndpoints.length === 0 &&
+										apps.length === 0 &&
 										'border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950'
 								)}
 								role="combobox"
@@ -280,12 +225,18 @@
 							>
 								<div class="flex min-w-0 items-center">
 									<Terminal class={cn('mr-2 flex-shrink-0', compact ? 'h-3 w-3' : 'h-4 w-4')} />
-									<span class={cn('truncate', compact ? 'text-sm' : 'text-base', selectedApp ? "font-mono" : "")}>
+									<span
+										class={cn(
+											'truncate',
+											compact ? 'text-sm' : 'text-base',
+											selectedApp ? 'font-mono' : ''
+										)}
+									>
 										{!selectedPackage
 											? 'Select package first'
-											: availableEndpoints.length === 0
+											: apps.length === 0
 												? 'No apps available'
-												: selectedApp?.target || 'Choose an app...'}
+												: selectedApp?.name || 'Choose an app...'}
 									</span>
 								</div>
 								<ChevronsUpDownIcon
@@ -300,20 +251,20 @@
 							<Command.List class="max-h-48">
 								<Command.Empty>No apps found.</Command.Empty>
 								<Command.Group>
-									{#each availableEndpoints as endpoint (endpoint.target)}
+									{#each apps as app (app.id)}
 										<Command.Item
-											value={endpoint.target}
-											onSelect={() => selectApp(endpoint)}
+											value={app.id}
+											onSelect={() => selectApp(app)}
 											class="flex cursor-pointer items-center py-2"
 										>
 											<CheckIcon
 												class={cn(
 													'mr-3 h-4 w-4 text-primary',
-													selectedApp?.target !== endpoint.target && 'text-transparent'
+													selectedApp?.id !== app.id && 'text-transparent'
 												)}
 											/>
 											<div class="flex-1">
-												<div class="truncate text-sm font-medium font-mono">{endpoint.target}</div>
+												<div class="truncate font-mono text-sm font-medium">{app.name}</div>
 											</div>
 										</Command.Item>
 									{/each}
@@ -324,15 +275,5 @@
 				</Popover.Root>
 			</div>
 		</div>
-
-		<!-- Selection Status -->
-		{#if selectedPackage && availableEndpoints.length === 0}
-			<Alert>
-				<AlertCircle class="h-4 w-4" />
-				<AlertDescription>
-					This package has no available apps. Try selecting a different package.
-				</AlertDescription>
-			</Alert>
-		{/if}
 	{/if}
 </div>
