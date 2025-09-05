@@ -53,6 +53,10 @@ export async function fetchIrIndex(): Promise<IrDumpIndex> {
     throw new Error('Invalid file structure');
   }
 
+  // Ensure IR index is sorted
+  content.packages.sort((a: any, b: any) => a.package.name.localeCompare(b.package.name));
+  content.packages.forEach((p: any) => p.apps.sort((a: any, b: any) => a.name.localeCompare(b.name)));
+
   return content;
 }
 

@@ -304,7 +304,7 @@
 										<Command.Group>
 											{#each apps as app (app.id)}
 												<Command.Item
-													value={app.id}
+													value={app.name}
 													onSelect={() => selectApp(app)}
 													class="flex cursor-pointer items-center py-3"
 												>
