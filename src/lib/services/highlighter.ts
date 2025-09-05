@@ -17,6 +17,7 @@ export async function getShikiHighlighter() {
         import('@shikijs/langs/javascript'),
         import('@shikijs/langs/typescript'),
         import('@shikijs/langs/python'),
+        import('@shikijs/langs/json'),
         import('@shikijs/langs/bash'),
       ],
       engine: createOnigurumaEngine(import('shiki/wasm'))
