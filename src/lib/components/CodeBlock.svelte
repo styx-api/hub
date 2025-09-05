@@ -5,6 +5,11 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Check, Copy } from '@lucide/svelte';
 	import type { BundledLanguage, BundledTheme, HighlighterGeneric } from 'shiki';
+	import { getShikiHighlighter } from '$lib/services/highlighter';
+
+	const SUPPORTED_LANGUAGES: BundledLanguage[] = [
+		'javascript', 'typescript', 'python', 'json', 'bash'
+	];
 
 	interface Props {
 		code: string;
@@ -34,21 +39,12 @@
 	let copied = $state<boolean>(false);
 	let isDarkMode = $state<boolean>(false);
 
-	let highlighterPromise: Promise<HighlighterGeneric<any, any>> | null = null;
-
 	function updateDarkMode() {
 		isDarkMode = document.documentElement.classList.contains('dark');
 	}
 
 	async function getHighlighter() {
-		if (!highlighterPromise) {
-			const { createHighlighter } = await import('shiki');
-			highlighterPromise = createHighlighter({
-				themes: [lightTheme, darkTheme],
-				langs: [language]
-			});
-		}
-		return highlighterPromise;
+		return getShikiHighlighter();
 	}
 
 	let currentTheme = $derived(isDarkMode ? darkTheme : lightTheme);
@@ -61,18 +57,6 @@
 
 		try {
 			const highlighter = await getHighlighter();
-			
-			// Ensure the language is loaded
-			const loadedLanguages = highlighter.getLoadedLanguages();
-			if (!loadedLanguages.includes(language)) {
-				await highlighter.loadLanguage(language);
-			}
-
-			// Ensure the theme is loaded
-			const loadedThemes = highlighter.getLoadedThemes();
-			if (!loadedThemes.includes(currentTheme)) {
-				await highlighter.loadTheme(currentTheme);
-			}
 
 			highlightedCode = highlighter.codeToHtml(code, {
 				lang: language,

@@ -47,7 +47,7 @@
 	"dependencies": {
 		"mode-watcher": "^1.1.0",
 		"shell-quote": "^1.8.3",
-		"shiki": "^3.11.0",
+		"shiki": "^3.12.2",
 		"shlex": "^3.0.0",
 		"styxdefs": "^0.1.0"
 	}
