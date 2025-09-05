@@ -54,7 +54,7 @@ export async function fetchIrIndex(): Promise<IrDumpIndex> {
   }
 
   // Ensure IR index is sorted
-  content.packages.sort((a: any, b: any) => a.package.name.localeCompare(b.package.name));
+  content.packages.sort((a: any, b: any) => (a.package.docs?.title ?? a.package.name).localeCompare(b.package.docs?.title ?? b.package.name));
   content.packages.forEach((p: any) => p.apps.sort((a: any, b: any) => a.name.localeCompare(b.name)));
 
   return content;
