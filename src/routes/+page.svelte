@@ -98,7 +98,8 @@
 			}
 		}
 
-		const newUrl = params.toString() ? `?${params.toString()}` : '/';
+		const basePath = resolve("/");
+		const newUrl = params.toString() ? `${basePath}?${params.toString()}` : basePath;
 		goto(newUrl, { replaceState: false, keepFocus: true });
 	}
 
