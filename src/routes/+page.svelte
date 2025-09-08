@@ -6,13 +6,17 @@
 	import QuickSelector from '$lib/components/QuickSelector.svelte';
 	import PackageInfoPage from '$lib/components/PackageInfoPage.svelte';
 	import PackageBrowser from '$lib/components/PackageBrowser.svelte';
-	import Contents from '$lib/components/Contents.svelte';
+	import AppPage from '$lib/components/AppPage.svelte';
 	import { resolve } from '$app/paths';
+	import { goto } from '$app/navigation';
+	import { browser } from '$app/environment';
 
 	import {
 		loadData,
 		isLoading,
 		getProject,
+		getPackages,
+		getApps,
 		type Package,
 		type App,
 		type Project
@@ -26,10 +30,24 @@
 	let selectedApp: App | null = $state(null);
 	let showMobileSelector = $state(false);
 	let project: Project | null = $state(null);
+	let packages: Package[] = $state([]);
+
+	let pageTitle = $derived(() => {
+		if (selectedApp && selectedPackage) {
+			return `${selectedApp.name} - ${selectedPackage.docs.title ?? selectedPackage.name} | NiWrap Hub`;
+		} else if (selectedPackage) {
+			return `${selectedPackage.docs.title ?? selectedPackage.name} | NiWrap Hub`;
+		} else {
+			return 'NiWrap Hub';
+		}
+	});
 
 	onMount(async () => {
 		preloadNiwrap();
 		await loadData();
+		const packagesResult = await getPackages();
+		packages = packagesResult || [];
+		
 		const projectResponse = await getProject();
 		if (projectResponse) {
 			project = projectResponse;
@@ -39,7 +57,50 @@
 				console.error("NiWrap data version does not match niwrap javascript module version.");
 			}
 		}
+
+		// Initialize state from URL params
+		await initializeFromUrl();
 	});
+
+	async function initializeFromUrl() {
+		if (!browser || packages.length === 0) return;
+		
+		const urlParams = new URLSearchParams(window.location.search);
+		const packageName = urlParams.get('package');
+		const appId = urlParams.get('app');
+
+		if (packageName) {
+			const pkg = packages.find(p => p.name === packageName);
+			if (pkg) {
+				selectedPackage = pkg;
+				
+				if (appId) {
+					const apps = await getApps(packageName);
+					const app = apps?.find(a => a.id === appId);
+					if (app) {
+						selectedApp = app;
+					}
+				}
+			}
+		}
+	}
+
+	function updateUrl() {
+		if (!browser) return;
+		
+		const params = new URLSearchParams();
+		
+		if (selectedPackage) {
+			params.set('package', selectedPackage.name);
+			
+			if (selectedApp) {
+				params.set('app', selectedApp.id);
+			}
+		}
+
+		const newUrl = params.toString() ? `?${params.toString()}` : '/';
+		goto(newUrl, { replaceState: false, keepFocus: true });
+	}
 
 	function toggleTheme() {
 		isDark = !isDark;
@@ -50,6 +111,7 @@
 		selectedPackage = null;
 		selectedApp = null;
 		showMobileSelector = false;
+		updateUrl();
 		console.log('Selection cleared');
 	}
 
@@ -59,14 +121,32 @@
 
 	function handlePackageSelected(pkg: Package) {
 		selectedPackage = pkg;
+		selectedApp = null; // clear app selection when package changes
+		updateUrl();
 		console.log('Package selected:', pkg.name);
 	}
 
 	function handleAppSelected(app: App) {
 		selectedApp = app;
 		showMobileSelector = false;
+		updateUrl();
 		console.log('App selected:', app.name);
 	}
+
+	// listen to URL changes (browser back/forward)
+	$effect(() => {
+		if (browser && packages.length > 0) {
+			const handlePopstate = async () => {
+				// reset state
+				selectedPackage = null;
+				selectedApp = null;
+				// re-initialize from new URL
+				await initializeFromUrl();
+			};
+			window.addEventListener('popstate', handlePopstate);
+			return () => window.removeEventListener('popstate', handlePopstate);
+		}
+	});
 
 	// Listen to changes
 	$effect(() => {
@@ -83,7 +163,7 @@
 </script>
 
 <svelte:head>
-	<title>NiWrap Hub</title>
+	<title>{pageTitle()}</title>
 	<meta name="description" content="Your central hub for neuroimaging CLI apps" />
 </svelte:head>
 
@@ -92,7 +172,6 @@
 	<header class="mb-4">
 		<!-- Desktop Layout -->
 		<div class="hidden md:flex md:items-center md:gap-6">
-			<!-- Logo and Title -->
 			<!-- Logo and Title -->
 			<button
 				onclick={clearSelection}
@@ -229,7 +308,7 @@
 		<div class="mt-4 space-y-4">
 			{#if selectedPackage && selectedApp}
 				<div class="min-h-[400px] w-full">
-					<Contents descriptorId={selectedApp.id} packageName={selectedPackage.name} />
+					<AppPage descriptorId={selectedApp.id} packageName={selectedPackage.name} />
 				</div>
 			{:else if selectedPackage}
 				<div class="min-h-[400px] w-full">
