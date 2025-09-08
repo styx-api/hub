@@ -32,6 +32,8 @@
 	let project: Project | null = $state(null);
 	let packages: Package[] = $state([]);
 
+	let isInitializing: boolean = false;
+
 	let pageTitle = $derived(() => {
 		if (selectedApp && selectedPackage) {
 			return `${selectedApp.name} - ${selectedPackage.docs.title ?? selectedPackage.name} | NiWrap Hub`;
@@ -47,14 +49,14 @@
 		await loadData();
 		const packagesResult = await getPackages();
 		packages = packagesResult || [];
-		
+
 		const projectResponse = await getProject();
 		if (projectResponse) {
 			project = projectResponse;
-			
+
 			const niwrapJsVersion = await niwrapVersion();
 			if (niwrapJsVersion != projectResponse.version) {
-				console.error("NiWrap data version does not match niwrap javascript module version.");
+				console.error('NiWrap data version does not match niwrap javascript module version.');
 			}
 		}
 
@@ -64,41 +66,47 @@
 
 	async function initializeFromUrl() {
 		if (!browser || packages.length === 0) return;
-		
+
+		isInitializing = true;
+
 		const urlParams = new URLSearchParams(window.location.search);
 		const packageName = urlParams.get('package');
 		const appId = urlParams.get('app');
 
 		if (packageName) {
-			const pkg = packages.find(p => p.name === packageName);
+			const pkg = packages.find((p) => p.name === packageName);
 			if (pkg) {
 				selectedPackage = pkg;
-				
+
 				if (appId) {
 					const apps = await getApps(packageName);
-					const app = apps?.find(a => a.id === appId);
+					const app = apps?.find((a) => a.id === appId);
 					if (app) {
 						selectedApp = app;
 					}
 				}
 			}
 		}
+
+		// Small delay to ensure all reactive updates are processed
+		await new Promise((resolve) => setTimeout(resolve, 0));
+		isInitializing = false;
 	}
 
 	function updateUrl() {
 		if (!browser) return;
-		
+
 		const params = new URLSearchParams();
-		
+
 		if (selectedPackage) {
 			params.set('package', selectedPackage.name);
-			
+
 			if (selectedApp) {
 				params.set('app', selectedApp.id);
 			}
 		}
 
-		const basePath = resolve("/");
+		const basePath = resolve('/');
 		const newUrl = params.toString() ? `${basePath}?${params.toString()}` : basePath;
 		goto(newUrl, { replaceState: false, keepFocus: true });
 	}
@@ -134,7 +142,18 @@
 		console.log('App selected:', app.name);
 	}
 
-	// listen to URL changes (browser back/forward)
+	// effect for URL updates when user makes selections
+	$effect(() => {
+		if (browser && packages.length > 0) {
+			// Only update URL if we're not currently initializing from URL
+			// and if we actually have selections to save
+			if (!isInitializing && (selectedPackage || selectedApp)) {
+				updateUrl();
+			}
+		}
+	});
+
+	// separate effect for handling browser navigation (back/forward)
 	$effect(() => {
 		if (browser && packages.length > 0) {
 			const handlePopstate = async () => {
@@ -388,7 +407,7 @@
 				class="flex flex-col items-center justify-between gap-2 text-xs text-muted-foreground sm:flex-row"
 			>
 				<p>
-					© 2025 NiWrap Hub.{#if project?.docs.description}{" "+project.docs.description}{/if}
+					© 2025 NiWrap Hub.{#if project?.docs.description}{' ' + project.docs.description}{/if}
 				</p>
 				{#if project}
 					<p>NiWrap v{project.version}</p>
