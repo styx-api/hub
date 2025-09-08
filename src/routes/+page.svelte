@@ -45,6 +45,7 @@
 	});
 
 	onMount(async () => {
+		isInitializing = true;
 		preloadNiwrap();
 		await loadData();
 		const packagesResult = await getPackages();
@@ -145,9 +146,9 @@
 	// effect for URL updates when user makes selections
 	$effect(() => {
 		if (browser && packages.length > 0) {
-			// Only update URL if we're not currently initializing from URL
-			// and if we actually have selections to save
-			if (!isInitializing && (selectedPackage || selectedApp)) {
+			selectedPackage;
+			selectedApp;
+			if (!isInitializing) {
 				updateUrl();
 			}
 		}
