@@ -1,4 +1,3 @@
-<!-- PackageInfoCard.svelte -->
 <script lang="ts">
 	import { tick } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
@@ -18,6 +17,8 @@
 	} from '@lucide/svelte';
 	import { cn } from '$lib/utils.js';
 	import { type Package, type App, getApps } from '$lib/services/packages.svelte';
+	import PackageIcon from './PackageIcon.svelte';
+
 	interface Props {
 		package: Package;
 		compact?: boolean;
@@ -32,6 +33,7 @@
 		onAppSelected = () => {},
 		showAppSelector = true
 	}: Props = $props();
+
 	let apps: App[] = $state([]);
 	let copied: boolean = $state(false);
 	let selectedApp: App | null = $state(null);
@@ -48,6 +50,7 @@
 			apps = response ?? [];
 		});
 	});
+
 	const selectedAppName = $derived(() => {
 		if (!selectedApp)
 			return apps.length > 0 ? 'Choose an app to get started...' : 'No apps available';
@@ -56,11 +59,6 @@
 
 	const packageGithubUrl = $derived(getPackageGithubUrl(selectedPackage.name));
 
-	// Helper to get package icon/logo placeholder
-	function getPackageIcon(packageName: string) {
-		return packageName.charAt(0).toUpperCase();
-	}
-	// Helper to get package color scheme
 	function getPackageColorClass(packageName: string) {
 		const colors = [
 			'from-blue-500 to-blue-600',
@@ -74,18 +72,22 @@
 			'from-red-500 to-red-600',
 			'from-amber-500 to-amber-600'
 		];
+
 		let hash = 0;
 		for (let i = 0; i < packageName.length; i++) {
 			hash = packageName.charCodeAt(i) + ((hash << 5) - hash);
 		}
 		return colors[Math.abs(hash) % colors.length];
 	}
+
 	function openUrl(url: string) {
 		window.open(url, '_blank', 'noopener,noreferrer');
 	}
+
 	function openGithubUrl() {
 		window.open(packageGithubUrl, '_blank', 'noopener,noreferrer');
 	}
+
 	async function copyContainer() {
 		try {
 			await navigator.clipboard.writeText(selectedPackage.docker);
@@ -95,17 +97,20 @@
 			console.error('Failed to copy:', err);
 		}
 	}
+
 	function closeAndFocusAppTrigger() {
 		appPopoverOpen = false;
 		tick().then(() => {
 			appTriggerRef?.focus();
 		});
 	}
+
 	function selectApp(app: App) {
 		selectedApp = app;
 		onAppSelected(app);
 		closeAndFocusAppTrigger();
 	}
+
 	// Emit selection when app changes
 	$effect(() => {
 		if (selectedApp) {
@@ -132,15 +137,8 @@
 		<div class="relative space-y-4">
 			<!-- Package icon and basic info -->
 			<div class="flex items-start gap-4">
-				<div
-					class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br shadow-lg ring-1 ring-black/5 dark:ring-white/10 {getPackageColorClass(
-						selectedPackage.name
-					)}"
-				>
-					<span class="text-2xl font-bold text-white drop-shadow-sm">
-						{getPackageIcon(selectedPackage.name)}
-					</span>
-				</div>
+				<PackageIcon package={selectedPackage} size="lg" class="shadow-lg" />
+
 				<div class="min-w-0 flex-1 space-y-2">
 					<div class="flex items-start justify-between gap-4">
 						<h2 class="min-w-0 flex-1 text-3xl font-bold tracking-tight text-foreground">
@@ -190,7 +188,6 @@
 						></span
 					>
 				</div>
-
 				<div class="flex items-center gap-2">
 					<Container class="h-4 w-4" />
 					<code class="rounded bg-muted px-2 py-1 font-mono text-xs">
@@ -218,7 +215,6 @@
 					</span>
 				</div>
 			</div>
-
 			<!-- Documentation links -->
 			{#each selectedPackage.docs.urls ?? [] as url}
 				<Button variant="outline" size="sm" onclick={() => openUrl(url)} class="shrink-0">

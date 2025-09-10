@@ -4,8 +4,8 @@
 	import { LoaderCircle } from '@lucide/svelte';
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
-	import PackageInfoPage from '$lib/components/PackageInfoPage.svelte';
-	import PackageBrowser from '$lib/components/PackageBrowser.svelte';
+	import PackageDetails from '$lib/components/PackageDetails.svelte';
+	import PackageGallery from '$lib/components/PackageGallery.svelte';
 	import AppPage from '$lib/components/AppPage.svelte';
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
@@ -216,10 +216,10 @@
 				</div>
 			{:else if selectedPackage}
 				<div class="min-h-[400px] w-full">
-					<PackageInfoPage package={selectedPackage} onAppSelected={handleAppSelected} />
+					<PackageDetails package={selectedPackage} onAppSelected={handleAppSelected} />
 				</div>
 			{:else}
-				<PackageBrowser onPackageSelected={handlePackageSelected} />
+				<PackageGallery onPackageSelected={handlePackageSelected} />
 			{/if}
 		</div>
 

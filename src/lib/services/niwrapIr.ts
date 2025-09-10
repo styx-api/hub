@@ -19,6 +19,7 @@ export interface IrPackage {
   version: string;
   docker: string;
   docs: IrDocumentation;
+  logo?: string;
 }
 
 export interface AppListing {
