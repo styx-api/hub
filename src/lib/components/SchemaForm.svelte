@@ -4,7 +4,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Checkbox } from '$lib/components/ui/checkbox';
-	import { Select, SelectContent, SelectItem, SelectTrigger } from '$lib/components/ui/select';
+	import * as Select from '$lib/components/ui/select/index.js';
 	import {
 		Card,
 		CardContent,
@@ -125,45 +125,101 @@
 					</Collapsible.Trigger>
 					<Collapsible.Content>
 						<CardContent class="space-y-4 pt-0">
-							<Select
-								selected={{
-									value: fieldValue['@type'] || '',
-									label: fieldValue['@type'] || 'Select type...'
-								}}
-								onSelectedChange={(selected) => {
-									const selectedType = selected?.value;
+							<!-- Type selector -->
+							{@const availableTypes = fieldSchema.anyOf.map((alt, index) => ({
+								value: alt.properties?.['@type']?.const || 
+								       alt.properties?.['@type']?.enum?.[0] ||
+								       alt.title ||
+								       alt['x-type'] ||
+								       `option_${index}`,
+								label: alt.title || 
+								       alt.properties?.['@type']?.const || 
+								       alt.properties?.['@type']?.enum?.[0] ||
+								       alt['x-type'] ||
+								       `Option ${index + 1}`,
+								schema: alt
+							}))}
+							
+							{@const currentType = fieldValue?.['@type'] || ''}
+							{@const triggerContent = availableTypes.find(t => t.value === currentType)?.label ?? 'Select type...'}
+							
+							<Select.Root 
+								type="single" 
+								value={currentType}
+								onValueChange={(selectedType) => {
 									if (selectedType) {
-										const selectedSchema = fieldSchema.anyOf.find(
-											(alt) => alt.properties['@type']?.const === selectedType
-										);
-										const newValue = { '@type': selectedType, ...getSchemaDefaultValue(selectedSchema) };
-										value = updateNestedValue(value, fullPath, newValue);
+										// Find the schema for the selected type
+										const selectedOption = availableTypes.find(t => t.value === selectedType);
+										
+										if (selectedOption?.schema) {
+											// Get default values for the selected schema
+											const defaultValues = getSchemaDefaultValue(selectedOption.schema);
+											
+											// Create new value with @type and merge defaults
+											const newValue = {
+												'@type': selectedType,
+												...defaultValues
+											};
+											
+											// Ensure @type is preserved
+											newValue['@type'] = selectedType;
+											
+											value = updateNestedValue(value, fullPath, newValue);
+										} else {
+											// Fallback: just set the type
+											value = updateNestedValue(value, fullPath, { '@type': selectedType });
+										}
+									} else {
+										// Clear the value when no type selected
+										value = updateNestedValue(value, fullPath, null);
 									}
 								}}
 							>
-								<SelectTrigger>
-									<span>{fieldValue?.['@type'] || 'Select type...'}</span>
-								</SelectTrigger>
-								<SelectContent>
-									{#each fieldSchema.anyOf as alt}
-										{#if alt.properties?.['@type']?.const}
-											<SelectItem value={alt.properties['@type'].const}>
-												{alt.properties['@type'].const}
-											</SelectItem>
-										{/if}
-									{/each}
-								</SelectContent>
-							</Select>
+								<Select.Trigger class="w-full">
+									{triggerContent}
+								</Select.Trigger>
+								<Select.Content>
+									<Select.Group>
+										{#each availableTypes as typeOption (typeOption.value)}
+											<Select.Item value={typeOption.value} label={typeOption.label}>
+												{typeOption.label}
+											</Select.Item>
+										{/each}
+									</Select.Group>
+								</Select.Content>
+							</Select.Root>
 
+							<!-- Render fields for selected type -->
 							{#if fieldValue?.['@type']}
-								{@const selectedSchema = fieldSchema.anyOf.find(
-									(alt) => alt.properties?.['@type']?.const === fieldValue['@type']
-								)}
+								{@const selectedSchema = availableTypes.find(t => t.value === fieldValue['@type'])?.schema}
+								
 								{#if selectedSchema}
 									<Separator />
 									<div class="pl-4 border-l-2 border-primary/20">
-										{@render schemaField(selectedSchema, path, parentPath, depth + 1)}
+										<!-- Render all properties except @type -->
+										{#if selectedSchema.properties}
+											<div class="space-y-4">
+												{#each Object.entries(selectedSchema.properties) as [key, propSchema]}
+													{#if key !== '@type'}
+														{@render schemaField(propSchema, key, fullPath, depth + 1)}
+													{/if}
+												{/each}
+											</div>
+										{:else if selectedSchema.type === 'object'}
+											<!-- Handle case where schema doesn't have explicit properties -->
+											{@render schemaField(selectedSchema, '', fullPath, depth + 1)}
+										{/if}
 									</div>
+								{:else}
+									<!-- Error state: selected type not found in schema -->
+									<Card class="border-destructive/50 bg-destructive/5">
+										<CardContent class="pt-6">
+											<div class="flex items-center space-x-2">
+												<Badge variant="destructive">Error</Badge>
+												<span class="text-sm">Unknown type: {fieldValue['@type']}</span>
+											</div>
+										</CardContent>
+									</Card>
 								{/if}
 							{/if}
 						</CardContent>
@@ -267,7 +323,7 @@
 						{/if}
 					</CardContent>
 				</Collapsible.Content>
-			</Card>
+		</Card>
 		</Collapsible.Root>
 	{:else if fieldSchema.type === 'object'}
 		<Collapsible.Root open={!isCollapsed}>
@@ -443,7 +499,7 @@
 			<div class="flex items-start space-x-3 rounded-lg border border-border/50 bg-muted/20 p-3">
 				<Checkbox
 					id={`boolean-${fullPath}`}
-					checked={fieldValue || false}
+					checked={fieldValue === true}
 					onCheckedChange={(checked) => {
 						value = updateNestedValue(value, fullPath, checked);
 					}}
