@@ -109,8 +109,9 @@ export async function niwrapExecute(config: object): Promise<
     };
   } catch (error) {
     const errorString = error instanceof Error ? error.message : String(error);
-    console.log(error);
+    console.error(error);
     console.error('NiWrap execution failed:', errorString);
+    console.log("niwrap params was:", config)
     
     return {
       success: false,
