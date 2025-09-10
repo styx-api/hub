@@ -187,7 +187,7 @@
 					</div>
 				</div>
 			{:else}
-				<AppPage descriptorId={selectedApp.id} packageName={selectedPackage.name} />
+				<AppPage selectedPackage={selectedPackage} selectedApp={selectedApp} />
 			{/if}
 		</div>
 	</div>
