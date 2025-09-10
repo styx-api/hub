@@ -40,7 +40,7 @@
 			<div
 				class="flex h-10 w-10 items-center justify-center rounded-xl border border-amber-200 bg-gradient-to-br from-amber-100 to-orange-100 shadow-md transition-shadow group-hover:shadow-lg"
 			>
-				<img src={resolve('/logo.svg')} alt="NiWrap" class="h-6 w-6" />
+				<img src={resolve('/logo.svg')} alt="NiWrap" class="h-7 w-7" />
 			</div>
 			<h1 class="text-xl font-bold tracking-tight lg:text-2xl">NiWrap Hub</h1>
 		</button>
@@ -78,7 +78,7 @@
 				<div
 					class="flex h-8 w-8 items-center justify-center rounded-lg border border-amber-200 bg-gradient-to-br from-amber-100 to-orange-100 shadow-sm transition-shadow group-hover:shadow-md"
 				>
-					<img src={resolve('/logo.svg')} alt="NiWrap" class="h-5 w-5" />
+					<img src={resolve('/logo.svg')} alt="NiWrap" class="h-6 w-6" />
 				</div>
 				<h1 class="text-lg font-bold tracking-tight">NiWrap Hub</h1>
 			</button>

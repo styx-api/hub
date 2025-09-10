@@ -131,7 +131,7 @@
 
 	const containerClass = $derived(
 		cn(
-			'relative overflow-hidden rounded-lg transition-all duration-200',
+			'relative overflow-hidden rounded-xl transition-all duration-200',
 			'border border-border bg-card',
 			'shadow-sm hover:shadow-md',
 			sizeConfig.container,
@@ -149,12 +149,9 @@
 				sizeConfig.padding
 			)}
 		>
-			<img
-				src={getPackageLogo(pkg)}
-				alt="{pkg.name} logo"
-				class="max-h-full max-w-full object-contain"
-				onerror={() => handleImageError(pkg.name)}
-			/>
+			<div class="aspect-square w-full overflow-hidden rounded-lg">
+				<img src={getPackageLogo(pkg)} alt="{pkg.name} logo" class="h-full w-full object-contain" />
+			</div>
 		</div>
 	{:else}
 		<div class={cn('flex h-full w-full items-center justify-center', packageColors.bg)}>
