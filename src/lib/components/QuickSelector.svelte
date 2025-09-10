@@ -8,17 +8,16 @@
 	import CheckIcon from '@lucide/svelte/icons/check';
 	import ChevronsUpDownIcon from '@lucide/svelte/icons/chevrons-up-down';
 	import {
-		Loader2,
+		LoaderCircle,
 		Package as PackageIcon,
 		Terminal,
 		ArrowRight,
-		AlertCircle,
+		CircleAlert,
 		RefreshCw
 	} from '@lucide/svelte/icons';
 	import { cn } from '$lib/utils.js';
 	import { getPackages, getApps, type App, type Package } from '$lib/services/packages.svelte';
 
-	// Props
 	interface Props {
 		package?: Package | null;
 		app?: App | null;
@@ -52,11 +51,13 @@
 		});
 	});
 
-	// clear app when package changes.
-	// looks really odd but works
+	let previousPackageName: string | undefined = $state(undefined);
 	$effect(() => {
-		selectedPackage;
-		selectedApp = null;
+		const currentPackageName = selectedPackage?.name;
+		if (previousPackageName !== undefined && previousPackageName !== currentPackageName) {
+			selectedApp = null;
+		}
+		previousPackageName = currentPackageName;
 	});
 
 	async function loadPackages() {
@@ -73,7 +74,6 @@
 
 	onMount(loadPackages);
 
-	// Helper functions
 	function closePackagePopover() {
 		packagePopoverOpen = false;
 		tick().then(() => packageTriggerRef?.focus());
@@ -100,13 +100,13 @@
 	{#if loading}
 		<div class="flex items-center justify-center py-6">
 			<div class="flex items-center space-x-3">
-				<Loader2 class="h-5 w-5 animate-spin text-primary" />
+				<LoaderCircle class="h-5 w-5 animate-spin text-primary" />
 				<div class="text-sm text-muted-foreground">Loading packages...</div>
 			</div>
 		</div>
 	{:else if error}
 		<Alert variant="destructive">
-			<AlertCircle class="h-4 w-4" />
+			<CircleAlert class="h-4 w-4" />
 			<AlertDescription class="flex items-center justify-between">
 				<span>{error}</span>
 				<Button variant="outline" size="sm" onclick={loadPackages} class="ml-4 shrink-0">
@@ -116,9 +116,7 @@
 			</AlertDescription>
 		</Alert>
 	{:else}
-		<!-- Selection Interface -->
 		<div class="flex items-center gap-3">
-			<!-- Package Selection -->
 			<div class="min-w-0 flex-1">
 				<Popover.Root bind:open={packagePopoverOpen}>
 					<Popover.Trigger bind:ref={packageTriggerRef}>
@@ -195,12 +193,10 @@
 				</Popover.Root>
 			</div>
 
-			<!-- Arrow indicator -->
 			<div class="flex-shrink-0 text-muted-foreground">
 				<ArrowRight class={cn(compact ? 'h-3 w-3' : 'h-4 w-4')} />
 			</div>
 
-			<!-- App Selection -->
 			<div class="min-w-0 flex-1">
 				<Popover.Root bind:open={appPopoverOpen}>
 					<Popover.Trigger bind:ref={appTriggerRef}>

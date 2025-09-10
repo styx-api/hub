@@ -19,11 +19,11 @@
 		Terminal as TerminalIcon,
 		FolderTree,
 		Settings,
-		AlertTriangle,
+		TriangleAlert,
 		Copy,
 		Check,
 		RefreshCw,
-		Loader2,
+		LoaderCircle,
 		Code
 	} from '@lucide/svelte';
 	import { getSchemaMetadata } from '$lib/services/schema/schemaPath';
@@ -36,7 +36,6 @@
 
 	let { packageName, descriptorId }: Props = $props();
 
-	// State management
 	let descriptorInputSchema: object | null = $state(null);
 	let descriptorOutputSchema: object | null = $state(null);
 	let descriptorConfig: object = $state({});
@@ -44,21 +43,24 @@
 	let error = $state<string | null>(null);
 	let activeTab = $state('command');
 	let commandCopied = $state(false);
-	let niwrapExecutionData = $state<{
-    success: true;
-    cargs: string[];
-    outputObject: any;
-} | {
-    success: false;
-    error: string;
-} | null>(null);
+	let niwrapExecutionData = $state<
+		| {
+				success: true;
+				cargs: string[];
+				outputObject: any;
+		  }
+		| {
+				success: false;
+				error: string;
+		  }
+		| null
+	>(null);
 
-	// Memoized computations
 	$effect(() => {
 		if (!descriptorConfig || Object.keys(descriptorConfig).length === 0) {
 			niwrapExecutionData = { success: false, error: 'No configuration provided' };
 		}
-		niwrapExecute(descriptorConfig).then((d) => niwrapExecutionData = d);
+		niwrapExecute(descriptorConfig).then((d) => (niwrapExecutionData = d));
 	});
 
 	const commandArgs = $derived(() => {
@@ -86,16 +88,18 @@
 				path: '/outputs/' + value,
 				title: keyMetadata?.title ?? 'Title',
 				description: keyMetadata?.description ?? 'Description',
-				label: key,
+				label: key
 			});
 		}
 		return ret;
 	});
-	const niwrapError = $derived(niwrapExecutionData?.success ? null : niwrapExecutionData?.error ?? "???");
+
+	const niwrapError = $derived(
+		niwrapExecutionData?.success ? null : (niwrapExecutionData?.error ?? '???')
+	);
 	const hasConfig = $derived(Object.keys(descriptorConfig).length > 0);
 	const hasOutputs = $derived(outputFiles.length > 0);
 
-	// Schema fetching with retry logic
 	async function fetchSchema() {
 		if (!packageName || !descriptorId) return;
 
@@ -109,14 +113,12 @@
 			descriptorOutputSchema = outputSchema;
 		} catch (err) {
 			const errorMessage = err instanceof Error ? err.message : 'Failed to fetch schema';
-			console.error('Error fetching descriptor schema:', err);
 			error = errorMessage;
 		} finally {
 			isLoading = false;
 		}
 	}
 
-	// Copy command to clipboard
 	async function copyCommand() {
 		try {
 			const command = commandArgs().join(' ');
@@ -128,7 +130,6 @@
 		}
 	}
 
-	// Fetch schema when component mounts or props change
 	$effect(() => {
 		fetchSchema();
 	});
@@ -138,7 +139,6 @@
 <div class="h-full overflow-y-auto lg:hidden">
 	<div class="container mx-auto max-w-7xl px-4 lg:px-6">
 		<div class="space-y-6 py-4">
-			<!-- Header -->
 			<header class="space-y-2">
 				<div class="space-y-1">
 					<h1 class="text-lg font-semibold tracking-tight text-foreground">Configuration</h1>
@@ -146,7 +146,6 @@
 				</div>
 			</header>
 
-			<!-- Mobile Tabs Interface -->
 			<Tabs value="config" class="w-full">
 				<TabsList class="grid w-full grid-cols-2">
 					<TabsTrigger value="config" class="flex items-center gap-2">
@@ -159,32 +158,22 @@
 					</TabsTrigger>
 				</TabsList>
 
-				<!-- Configuration Tab -->
 				<TabsContent value="config" class="mt-6">
 					{#if isLoading}
 						<Card>
 							<CardContent class="flex items-center justify-center py-12">
 								<div class="flex items-center space-x-3">
-									<Loader2 class="h-5 w-5 animate-spin text-primary" />
-									<div class="text-sm text-muted-foreground">
-										Loading configuration schema...
-									</div>
+									<LoaderCircle class="h-5 w-5 animate-spin text-primary" />
+									<div class="text-sm text-muted-foreground">Loading configuration schema...</div>
 								</div>
 							</CardContent>
 						</Card>
 					{:else if error}
 						<Alert variant="destructive">
-							<AlertTriangle class="h-4 w-4" />
+							<TriangleAlert class="h-4 w-4" />
 							<AlertDescription class="flex items-center justify-between">
 								<span>{error}</span>
-								<Button
-									variant="outline"
-									size="sm"
-									onclick={() => {
-										fetchSchema();
-									}}
-									class="ml-4 shrink-0"
-								>
+								<Button variant="outline" size="sm" onclick={fetchSchema} class="ml-4 shrink-0">
 									<RefreshCw class="mr-1 h-3 w-3" />
 									Retry
 								</Button>
@@ -199,18 +188,18 @@
 									<Settings class="h-6 w-6 text-muted-foreground" />
 								</div>
 								<CardTitle class="mb-2 text-base">No Configuration Required</CardTitle>
-								<CardDescription>This app doesn't require configuration parameters.</CardDescription>
+								<CardDescription>This app doesn't require configuration parameters.</CardDescription
+								>
 							</CardContent>
 						</Card>
 					{/if}
 				</TabsContent>
 
-				<!-- Results Tab -->
 				<TabsContent value="results" class="mt-6">
 					<div class="space-y-4">
 						{#if niwrapError}
 							<Alert variant="destructive">
-								<AlertTriangle class="h-4 w-4" />
+								<TriangleAlert class="h-4 w-4" />
 								<AlertDescription>
 									<strong>Configuration Error:</strong>
 									{niwrapError}
@@ -218,7 +207,6 @@
 							</Alert>
 						{/if}
 
-						<!-- Command Card -->
 						<Card>
 							<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-3">
 								<div>
@@ -250,7 +238,6 @@
 							</CardContent>
 						</Card>
 
-						<!-- Outputs Card -->
 						{#if hasOutputs}
 							<Card>
 								<CardHeader>
@@ -267,7 +254,6 @@
 							</Card>
 						{/if}
 
-						<!-- JSON Card -->
 						{#if hasConfig}
 							<Card>
 								<CardHeader>
@@ -288,11 +274,9 @@
 
 <!-- Desktop: Two Column Layout with Individual Scrolling -->
 <div class="hidden h-full w-full bg-background lg:flex">
-	<!-- Configuration Panel (1/2) -->
 	<div class="w-1/2 flex-shrink-0 overflow-y-auto border-r border-border">
 		<div class="container mx-auto max-w-none px-6 lg:px-8">
 			<div class="space-y-6 py-6 lg:py-8">
-				<!-- Header -->
 				<header class="space-y-2">
 					<div>
 						<h1 class="text-xl font-semibold tracking-tight text-foreground">Configuration</h1>
@@ -300,32 +284,22 @@
 					</div>
 				</header>
 
-				<!-- Configuration Form -->
 				<div class="space-y-4">
 					{#if isLoading}
 						<Card>
 							<CardContent class="flex items-center justify-center py-12">
 								<div class="flex items-center space-x-3">
-									<Loader2 class="h-5 w-5 animate-spin text-primary" />
-									<div class="text-sm text-muted-foreground">
-										Loading configuration schema...
-									</div>
+									<LoaderCircle class="h-5 w-5 animate-spin text-primary" />
+									<div class="text-sm text-muted-foreground">Loading configuration schema...</div>
 								</div>
 							</CardContent>
 						</Card>
 					{:else if error}
 						<Alert variant="destructive">
-							<AlertTriangle class="h-4 w-4" />
+							<TriangleAlert class="h-4 w-4" />
 							<AlertDescription class="flex items-center justify-between">
 								<span>{error}</span>
-								<Button
-									variant="outline"
-									size="sm"
-									onclick={() => {
-										fetchSchema();
-									}}
-									class="ml-4 shrink-0"
-								>
+								<Button variant="outline" size="sm" onclick={fetchSchema} class="ml-4 shrink-0">
 									<RefreshCw class="mr-1 h-3 w-3" />
 									Retry
 								</Button>
@@ -340,7 +314,8 @@
 									<Settings class="h-6 w-6 text-muted-foreground" />
 								</div>
 								<CardTitle class="mb-2 text-base">No Configuration Required</CardTitle>
-								<CardDescription>This app doesn't require configuration parameters.</CardDescription>
+								<CardDescription>This app doesn't require configuration parameters.</CardDescription
+								>
 							</CardContent>
 						</Card>
 					{/if}
@@ -349,11 +324,9 @@
 		</div>
 	</div>
 
-	<!-- Results Panel (1/2) -->
 	<div class="w-1/2 overflow-y-auto bg-muted/20">
 		<div class="container mx-auto max-w-none px-6 lg:px-8">
 			<div class="space-y-6 py-6 lg:py-8">
-				<!-- Results Header -->
 				<header class="space-y-2">
 					<div>
 						<h2 class="text-xl font-semibold tracking-tight text-foreground">Results</h2>
@@ -361,7 +334,6 @@
 					</div>
 				</header>
 
-				<!-- Results Tabs -->
 				<Tabs bind:value={activeTab} class="w-full">
 					<TabsList class="grid w-full grid-cols-3">
 						<TabsTrigger value="command" disabled={!hasConfig} class="flex items-center gap-2">
@@ -383,12 +355,11 @@
 						</TabsTrigger>
 					</TabsList>
 
-					<!-- Command Tab -->
 					<TabsContent value="command" class="mt-6">
 						<div class="space-y-4">
 							{#if niwrapError}
 								<Alert variant="destructive">
-									<AlertTriangle class="h-4 w-4" />
+									<TriangleAlert class="h-4 w-4" />
 									<AlertDescription>
 										<strong>Configuration Error:</strong>
 										{niwrapError}
@@ -429,7 +400,6 @@
 						</div>
 					</TabsContent>
 
-					<!-- Outputs Tab -->
 					<TabsContent value="outputs" class="mt-6">
 						<Card>
 							<CardHeader>
@@ -444,7 +414,6 @@
 						</Card>
 					</TabsContent>
 
-					<!-- Config Tab -->
 					<TabsContent value="config" class="mt-6">
 						<Card>
 							<CardHeader>
