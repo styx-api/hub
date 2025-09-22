@@ -1,5 +1,5 @@
 <script lang="ts">
-	import SchemaForm from './SchemaForm.svelte';
+	import SchemaForm from './schema-form/SchemaForm.svelte';
 	import {
 		Card,
 		CardContent,
@@ -28,13 +28,13 @@
 		Github,
 		ExternalLink
 	} from '@lucide/svelte';
-	import { getSchemaMetadata } from '$lib/services/schema/schemaPath';
 	import {
 		getAppInputSchema,
 		getAppOutputSchema,
 		type App,
 		type Package
 	} from '$lib/services/packages.svelte';
+	import { getSchemaAtPath, getSchemaMetadata } from '$lib/services/schema/schemaUtils';
 	interface Props {
 		selectedPackage: Package;
 		selectedApp: App;
@@ -89,11 +89,12 @@
 		if (!niwrapExecutionData.success) return [];
 		for (const [key, value] of Object.entries(niwrapExecutionData.outputObject)) {
 			if (!(typeof value === 'string')) continue;
-			const keyMetadata = descriptorOutputSchema && getSchemaMetadata(descriptorOutputSchema, key);
+			const outputFieldSchema = descriptorOutputSchema && getSchemaAtPath(descriptorOutputSchema, [key]);
+			const keyMetadata = outputFieldSchema && getSchemaMetadata(outputFieldSchema);
 			ret.push({
 				path: '/outputs/' + value,
-				title: keyMetadata?.title ?? 'Title',
-				description: keyMetadata?.description ?? 'Description',
+				title: keyMetadata && (keyMetadata?.title ?? 'Title'),
+				description: keyMetadata && (keyMetadata?.description ?? 'Description'),
 				label: key
 			});
 		}
@@ -502,7 +503,7 @@
 								<Button
 									variant="outline"
 									size="sm"
-									onclick={() => openGithubFile(githubUrls.schema)}
+									onclick={() => openGithubFile(githubUrls.schemaInput)}
 									title="View input schema"
 								>
 									<ExternalLink class="h-3 w-3" />
