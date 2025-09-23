@@ -14,19 +14,16 @@ export type App = {
 
 let index: Index | null = $state(null);
 let loading = $state(false);
-let loadPromise: Promise<void> | null = null; // Cache loading promise
+let loadPromise: Promise<void> | null = null;
 
+// singleton / cached
 export async function getIndex() {
   if (index !== null) {
-    return index; // Already loaded
+    return index;
   }
-  
   if (loadPromise === null) {
-    // First caller starts the loading
     loadPromise = loadData();
   }
-  
-  // All callers wait for the same promise
   await loadPromise;
   return index;
 }
@@ -37,7 +34,7 @@ export async function loadData() {
   if (loading) return; // Prevent duplicate loads
   loading = true;
   try {
-    let [irIndex, schemaIndex] = await Promise.all([fetchIrIndex(), fetchSchemaIndex()]);
+    const [irIndex, schemaIndex] = await Promise.all([fetchIrIndex(), fetchSchemaIndex()]);
     if (irIndex.project.version != schemaIndex.version) {
       throw new Error(`IR index and schema index versions do not match.`);
     }
