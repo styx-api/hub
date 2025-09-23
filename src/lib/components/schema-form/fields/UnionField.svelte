@@ -8,6 +8,7 @@
 	import { isObjectSchema, isSchemaObject, type JSONSchema } from '$lib/services/schema/schema';
 	import { isUnion } from '$lib/services/schema/schemaUtils';
 	import { type RequireField } from '$lib/utils/utils';
+	import { getFieldLabel } from '../utils';
 
 	let { schema, value, path, required, onUpdate }: FieldProps = $props();
 
@@ -44,7 +45,7 @@
 	});
 
 	$effect(() => {
-		fieldName = path[path.length - 1] + '' || 'Union';
+		fieldName = getFieldLabel(path);
 		currentType = value?.['@type'] || '';
 		selectedSchema = typeOptions.find((t) => t.value === currentType);
 	});
@@ -63,10 +64,12 @@
 </script>
 
 <div class="relative space-y-4">
-	<span class="text-l font-semibold text-foreground">{schema.title || fieldName}</span>
-	{#if schema.description}
-		<p class="text-xs text-muted-foreground">{schema.description}</p>
-	{/if}
+	<div class="space-y-2">
+		<span class="text-l font-semibold text-foreground">{schema.title || fieldName}</span>
+		{#if schema.description}
+			<p class="text-xs text-muted-foreground">{schema.description}</p>
+		{/if}
+	</div>
 
 	<Select.Root type="single" value={currentType} onValueChange={handleTypeChange}>
 		<Select.Trigger class="w-full">
