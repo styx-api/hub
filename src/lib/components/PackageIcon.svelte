@@ -4,7 +4,7 @@
 	import type { Picture } from 'vite-imagetools';
 
 	// @ts-ignore
-	import LogoAfni from '../assets/afni.jpg?enhanced&w=32;48;64;80';
+	import LogoAfni from '../assets/afni.png?enhanced&w=32;48;64;80';
 	// @ts-ignore
 	import LogoFreesurfer from '../assets/freesurfer.png?enhanced&w=32;48;64;80';
 	// @ts-ignore
