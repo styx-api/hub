@@ -8,7 +8,7 @@
 	// @ts-ignore
 	import LogoFreesurfer from '../assets/freesurfer.png?enhanced&w=32;48;64;80';
 	// @ts-ignore
-	import LogoFsl from '../assets/fsl.webp?enhanced&w=32;48;64;80';
+	import LogoFsl from '../assets/fsl.jpg?enhanced&w=32;48;64;80';
 	// @ts-ignore
 	import LogoWorkbench from '../assets/workbench.png?enhanced&w=32;48;64;80';
 
