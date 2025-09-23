@@ -1,7 +1,16 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
 	import type { Package } from '$lib/services/packages.svelte';
 	import { cn } from '$lib/utils.js';
+	import type { Picture } from 'vite-imagetools';
+
+	// @ts-ignore
+	import LogoAfni from '../assets/afni.jpg?enhanced&w=32;48;64;80';
+	// @ts-ignore
+	import LogoFreesurfer from '../assets/freesurfer.png?enhanced&w=32;48;64;80';
+	// @ts-ignore
+	import LogoFsl from '../assets/fsl.webp?enhanced&w=32;48;64;80';
+	// @ts-ignore
+	import LogoWorkbench from '../assets/workbench.png?enhanced&w=32;48;64;80';
 
 	interface Props {
 		package: Package;
@@ -13,17 +22,17 @@
 
 	let imageErrors = $state(new Set<string>());
 
-	const hardcodedLogos: Record<string, string> = {
-		fsl: resolve('/package_logos/fsl.webp'),
-		afni: resolve('/package_logos/afni.jpg'),
-		workbench: resolve('/package_logos/workbench.png'),
-		freesurfer: resolve('/package_logos/freesurfer.png')
+	const hardcodedLogos: Record<string, Picture> = {
+		fsl: LogoFsl,
+		afni: LogoAfni,
+		workbench: LogoWorkbench,
+		freesurfer: LogoFreesurfer
 	};
 
-	function getPackageLogo(pkg: Package): string | null {
+	function getPackageLogo(pkg: Package): Picture | null {
 		const hardcodedLogo = hardcodedLogos[pkg.name.toLowerCase()];
 		if (hardcodedLogo) return hardcodedLogo;
-		if (pkg.logo) return pkg.logo;
+		//if (pkg.logo) return pkg.logo;
 		return null;
 	}
 
@@ -150,7 +159,11 @@
 			)}
 		>
 			<div class="aspect-square w-full overflow-hidden rounded-lg">
-				<img src={getPackageLogo(pkg)} alt="{pkg.name} logo" class="h-full w-full object-contain" />
+				<enhanced:img
+					src={getPackageLogo(pkg)!!}
+					alt="{pkg.name} logo"
+					class="h-full w-full object-contain"
+				/>
 			</div>
 		</div>
 	{:else}
