@@ -69,16 +69,16 @@
 
 		const urlParams = new URLSearchParams(window.location.search);
 		const packageName = urlParams.get('package');
-		const appId = urlParams.get('app');
+		const appName = urlParams.get('app');
 
 		if (packageName) {
 			const pkg = packages.find((p) => p.name === packageName);
 			if (pkg) {
 				selectedPackage = pkg;
 
-				if (appId) {
+				if (appName) {
 					const apps = await getApps(packageName);
-					const app = apps?.find((a) => a.id === appId);
+					const app = apps?.find((a) => a.name === appName);
 					if (app) {
 						selectedApp = app;
 					}
@@ -99,7 +99,7 @@
 			params.set('package', selectedPackage.name);
 
 			if (selectedApp) {
-				params.set('app', selectedApp.id);
+				params.set('app', selectedApp.name);
 			}
 		}
 
