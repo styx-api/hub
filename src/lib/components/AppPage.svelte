@@ -35,6 +35,9 @@
 		type Package
 	} from '$lib/services/packages.svelte';
 	import { getSchemaAtPath, getSchemaMetadata } from '$lib/services/schema/schemaUtils';
+	import { join as quoteCommandLineArgs } from 'shlex';
+
+
 	interface Props {
 		selectedPackage: Package;
 		selectedApp: App;
@@ -125,7 +128,7 @@
 	}
 	async function copyCommand() {
 		try {
-			const command = commandArgs().join(' ');
+			const command = quoteCommandLineArgs(commandArgs());
 			await navigator.clipboard.writeText(command);
 			commandCopied = true;
 			setTimeout(() => (commandCopied = false), 2000);
