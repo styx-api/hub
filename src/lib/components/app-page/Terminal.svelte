@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { cn } from '$lib/utils';
-	import CopyButton from './CopyButton.svelte';
+	import CopyButton from './TerminalCopyButton.svelte';
 	import { join as quoteCommandLineArgs } from 'shlex';
 
 	interface Props {

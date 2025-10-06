@@ -6,7 +6,7 @@
 	import Footer from '$lib/components/Footer.svelte';
 	import PackageDetails from '$lib/components/PackageDetails.svelte';
 	import PackageGallery from '$lib/components/PackageGallery.svelte';
-	import AppPage from '$lib/components/AppPage.svelte';
+	import AppPage from '$lib/components/app-page/AppPage.svelte';
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import { resolve } from '$app/paths';

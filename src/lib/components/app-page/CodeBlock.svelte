@@ -4,12 +4,8 @@
 	import { cn } from '$lib/utils';
 	import { Button } from '$lib/components/ui/button';
 	import { Check, Copy } from '@lucide/svelte';
-	import type { BundledLanguage, BundledTheme, HighlighterGeneric } from 'shiki';
+	import type { BundledLanguage, BundledTheme } from 'shiki';
 	import { getShikiHighlighter } from '$lib/services/highlighter';
-
-	const SUPPORTED_LANGUAGES: BundledLanguage[] = [
-		'javascript', 'typescript', 'python', 'json', 'bash'
-	];
 
 	interface Props {
 		code: string;
@@ -64,7 +60,7 @@
 				transformers: showLineNumbers ? [
 					{
 						name: 'line-numbers',
-						line(node, line) {
+						line(node: any, line: any) {
 							node.children.unshift({
 								type: 'element',
 								tagName: 'span',
