@@ -2,10 +2,8 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Sun, Moon, Menu } from '@lucide/svelte';
 	import QuickSelector from '$lib/components/QuickSelector.svelte';
-	import { resolve as resolve_ } from '$app/paths';
+	import logo from '$lib/assets/logo.svg';
 	import type { Package, App, Project } from '$lib/services/packages.svelte';
-
-	const resolve = resolve_ as (arg0: string) => string; // typescript complains about something weird here.
 
 	interface Props {
 		selectedPackage: Package | null;
@@ -28,6 +26,43 @@
 		onToggleTheme,
 		onToggleMobileSelector
 	}: Props = $props();
+
+	let betaClicks = $state(0);
+	let showEasterEgg = $state(false);
+	let easterEggTimeout: ReturnType<typeof setTimeout> | null = null;
+
+	const betaMessages = [
+		"Still breaking things",
+		"Bugs are features",
+		"Works on my machine",
+		"Unfinished business",
+		"Proceed with caution",
+		"Handle with care",
+		"Expect the unexpected",
+		"Trust issues included",
+		"Stability not guaranteed",
+		"Blame Jason"
+	];
+
+	function handleBetaClick(event: MouseEvent) {
+		event.stopPropagation();
+		betaClicks++;
+		showEasterEgg = true;
+
+		if (easterEggTimeout) {
+			clearTimeout(easterEggTimeout);
+		}
+
+		easterEggTimeout = setTimeout(() => {
+			showEasterEgg = false;
+			betaClicks = 0;
+		}, 2000);
+	}
+
+	function getBetaMessage() {
+		if (betaClicks > betaMessages.length) return "You found all the bugs";
+		return betaMessages[Math.min(betaClicks - 1, betaMessages.length - 1)];
+	}
 </script>
 
 <header class="mb-4">
@@ -40,9 +75,28 @@
 			<div
 				class="flex h-10 w-10 items-center justify-center rounded-xl border border-amber-200 bg-gradient-to-br from-amber-100 to-orange-100 shadow-md transition-shadow group-hover:shadow-lg"
 			>
-				<img src={resolve('/logo.svg')} alt="NiWrap" class="h-7 w-7" />
+				<img src={logo} alt="NiWrap" class="h-7 w-7" />
 			</div>
-			<h1 class="text-xl font-bold tracking-tight lg:text-2xl">NiWrap Hub</h1>
+			<div class="relative">
+				<h1 class="text-xl font-bold tracking-tight lg:text-2xl">
+					NiWrap Hub
+					<!-- svelte-ignore a11y_no_noninteractive_element_to_interactive_role -->
+					<!-- svelte-ignore a11y_click_events_have_key_events -->
+					<sup 
+						class="ml-1.5 cursor-pointer rounded bg-purple-600 px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-white transition-transform hover:scale-110 active:scale-95 dark:bg-purple-500"
+						onclick={handleBetaClick}
+						role="button"
+						tabindex="0"
+					>
+						BETA
+					</sup>
+				</h1>
+				{#if showEasterEgg}
+					<div class="pointer-events-none absolute left-0 top-full z-50 mt-1 rounded border border-border bg-background px-2 py-1 text-xs text-muted-foreground shadow-lg">
+						{getBetaMessage()}
+					</div>
+				{/if}
+			</div>
 		</button>
 
 		<div class="max-w-2xl flex-1">
@@ -78,9 +132,26 @@
 				<div
 					class="flex h-8 w-8 items-center justify-center rounded-lg border border-amber-200 bg-gradient-to-br from-amber-100 to-orange-100 shadow-sm transition-shadow group-hover:shadow-md"
 				>
-					<img src={resolve('/logo.svg')} alt="NiWrap" class="h-6 w-6" />
+					<img src={logo} alt="NiWrap" class="h-6 w-6" />
 				</div>
-				<h1 class="text-lg font-bold tracking-tight">NiWrap Hub</h1>
+				<div class="relative">
+					<h1 class="text-lg font-bold tracking-tight">
+						NiWrap Hub
+						<sup 
+							class="ml-1.5 cursor-pointer rounded bg-purple-600 px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-white transition-transform hover:scale-110 active:scale-95 dark:bg-purple-500"
+							onclick={handleBetaClick}
+							role="button"
+							tabindex="0"
+						>
+							BETA
+						</sup>
+					</h1>
+					{#if showEasterEgg}
+						<div class="pointer-events-none absolute left-0 top-full z-50 mt-1 rounded border border-border bg-background px-2 py-1 text-xs text-muted-foreground shadow-lg">
+							{getBetaMessage()}
+						</div>
+					{/if}
+				</div>
 			</button>
 
 			<div class="flex items-center gap-2">
