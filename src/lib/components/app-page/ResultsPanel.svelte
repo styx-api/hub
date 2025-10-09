@@ -18,7 +18,10 @@
 		FolderTree,
 		TriangleAlert,
 		Code,
-		ExternalLink
+		ExternalLink,
+
+		BracesIcon
+
 	} from '@lucide/svelte';
 	import { fetchSymbolmapForConfig } from '$lib/services/niwrapPythonSymbolmaps';
 
@@ -324,7 +327,7 @@
 				<span class:hidden={isMobile} class="xl:inline">Python</span>
 			</TabsTrigger>
 			<TabsTrigger value="config" disabled={!hasConfig} class="flex items-center gap-2">
-				<Code class="h-3 w-3" />
+				<BracesIcon class="h-3 w-3" />
 				<span class:hidden={isMobile} class="xl:inline">JSON</span>
 			</TabsTrigger>
 		</TabsList>

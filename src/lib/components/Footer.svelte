@@ -14,7 +14,7 @@
 			<h4 class="text-sm font-semibold">Getting Started</h4>
 			<div class="space-y-1 text-xs">
 				<a
-					href="https://styx-api.github.io/styxbook/"
+					href="https://niwrap.dev/styxbook/"
 					class="block text-muted-foreground transition-colors hover:text-foreground"
 					>Documentation</a
 				>
@@ -24,7 +24,7 @@
 					>GitHub Repository</a
 				>
 				<a
-					href="https://styx-api.github.io/styxbook/contributing.html"
+					href="https://niwrap.dev/styxbook/contributing.html"
 					class="block text-muted-foreground transition-colors hover:text-foreground"
 					>Contributing Guide</a
 				>

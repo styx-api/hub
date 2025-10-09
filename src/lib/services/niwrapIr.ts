@@ -40,7 +40,7 @@ export interface IrDumpIndex {
 }
 
 export async function fetchIrIndex(): Promise<IrDumpIndex> {
-  const downloadUrl = "https://styx-api.github.io/niwrap/niwrap-ir-dump/index.json";
+  const downloadUrl = "https://niwrap.dev/niwrap/niwrap-ir-dump/index.json";
   const response = await fetch(downloadUrl);
 
   if (!response.ok) {
@@ -62,7 +62,7 @@ export async function fetchIrIndex(): Promise<IrDumpIndex> {
 }
 
 export async function fetchIrApp(app: string): Promise<object> {
-  const downloadUrl = "https://styx-api.github.io/niwrap/niwrap-ir-dump/" + app;
+  const downloadUrl = "https://niwrap.dev/niwrap/niwrap-ir-dump/" + app;
   const response = await fetch(downloadUrl);
 
   if (!response.ok) {

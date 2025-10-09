@@ -16,7 +16,7 @@ export interface SchemaIndex {
 }
 
 export async function fetchSchemaIndex(): Promise<SchemaIndex> {
-  const downloadUrl = "https://styx-api.github.io/niwrap/niwrap-json-schema/index.json";
+  const downloadUrl = "https://niwrap.dev/niwrap/niwrap-json-schema/index.json";
   const response = await fetch(downloadUrl);
 
   if (!response.ok) {
@@ -34,7 +34,7 @@ export async function fetchSchemaIndex(): Promise<SchemaIndex> {
 }
 
 export async function fetchAppSchema(schema: string): Promise<object> {
-  const downloadUrl = "https://styx-api.github.io/niwrap/niwrap-json-schema/" + schema;
+  const downloadUrl = "https://niwrap.dev/niwrap/niwrap-json-schema/" + schema;
   const response = await fetch(downloadUrl);
 
   if (!response.ok) {

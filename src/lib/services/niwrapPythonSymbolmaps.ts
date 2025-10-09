@@ -30,7 +30,7 @@ export async function fetchPythonSymbolmapsIndex(): Promise<PythonSymbolmapsInde
     return cachedMainIndex;
   }
 
-  const downloadUrl = "https://styx-api.github.io/niwrap/python-symbolmaps/index.json";
+  const downloadUrl = "https://niwrap.dev/niwrap/python-symbolmaps/index.json";
   const response = await fetch(downloadUrl);
 
   if (!response.ok) {
@@ -48,7 +48,7 @@ export async function fetchPythonSymbolmapsPackageIndex(path: string): Promise<P
     return packageIndexCache.get(path)!;
   }
 
-  const downloadUrl = "https://styx-api.github.io/niwrap/python-symbolmaps/" + path;
+  const downloadUrl = "https://niwrap.dev/niwrap/python-symbolmaps/" + path;
   const response = await fetch(downloadUrl);
 
   if (!response.ok) {
@@ -62,7 +62,7 @@ export async function fetchPythonSymbolmapsPackageIndex(path: string): Promise<P
 }
 
 export async function fetchPythonSymbolmap(path: string): Promise<PythonSymbolmap> {
-  const downloadUrl = "https://styx-api.github.io/niwrap/python-symbolmaps/" + path;
+  const downloadUrl = "https://niwrap.dev/niwrap/python-symbolmaps/" + path;
   const response = await fetch(downloadUrl);
 
   if (!response.ok) {

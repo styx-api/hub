@@ -22,14 +22,14 @@ async function loadNiwrap(): Promise<any> {
     try {
       // Try ESM first (preferred for modern browsers)
       try {
-        const module = await import('https://styx-api.github.io/niwrap/js/index.esm.js');
+        const module = await import('https://niwrap.dev/niwrap/js/index.esm.js');
         niwrapModule = module;
         return niwrapModule;
       } catch (esmError) {
         console.warn('Failed to load ESM module, falling back to CJS:', esmError);
         
         // Fallback to CJS - though this might need special handling in browser
-        const module = await import('https://styx-api.github.io/niwrap/js/index.cjs.js');
+        const module = await import('https://niwrap.dev/niwrap/js/index.cjs.js');
         niwrapModule = module;
         return niwrapModule;
       }
