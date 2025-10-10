@@ -2,6 +2,7 @@
 <script lang="ts">
 	import { Input } from '$lib/components/ui/input';
 	import * as Select from '$lib/components/ui/select';
+	import { File } from '@lucide/svelte';
 	import { isStringSchema, type JSONSchema } from '$lib/services/schema/schema';
 	import { simpleClone } from '$lib/utils/utils';
 	import type { FieldProps } from '../types';
@@ -13,6 +14,7 @@
 	let stringSchema: JSONSchema.String = $state({});
 	let hasEnum: boolean = $state(false);
 	let enumOptions: string[] = $state([]);
+	let isFileType: boolean = $state(false);
 
 	let fieldName: string = $state('');
 	let fieldId: string = $state('');
@@ -22,6 +24,7 @@
 			stringSchema = schema;
 			hasEnum = Array.isArray(stringSchema.enum) && stringSchema.enum.length > 0;
 			enumOptions = hasEnum ? (simpleClone(stringSchema.enum!!) as string[]) : [];
+			isFileType = (schema as any)?.['x-styx-type'] === 'file';
 		}
 	});
 
@@ -61,13 +64,20 @@
 			</Select.Content>
 		</Select.Root>
 	{:else}
-		<Input
-			id={fieldId}
-			type="text"
-			value={value || ''}
-			oninput={handleInputChange}
-			placeholder={stringSchema.default || `Enter ${fieldName}`}
-			class={required && !value ? 'border-destructive' : ''}
-		/>
+		<div class="relative">
+			{#if isFileType}
+				<div class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
+					<File size={16} />
+				</div>
+			{/if}
+			<Input
+				id={fieldId}
+				type="text"
+				value={value || ''}
+				oninput={handleInputChange}
+				placeholder={stringSchema.default || `Enter ${fieldName}`}
+				class={`${required && !value ? 'border-destructive' : ''} ${isFileType ? 'pl-10' : ''}`}
+			/>
+		</div>
 	{/if}
 </FieldSnippet>
