@@ -9,7 +9,7 @@
 	} from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
-	import { TriangleAlert, RefreshCw, LoaderCircle, Settings, Github } from '@lucide/svelte';
+	import { TriangleAlert, RefreshCw, LoaderCircle, Settings, Github, Share2, Check } from '@lucide/svelte';
 
 	interface Props {
 		descriptorInputSchema: object | null;
@@ -19,6 +19,7 @@
 		githubUrls: { schemaInput: string; descriptor: string };
 		isMobile?: boolean;
 		onRetry: () => void;
+		onShare?: () => void;
 	}
 
 	let {
@@ -28,11 +29,25 @@
 		error,
 		githubUrls,
 		isMobile = false,
-		onRetry
+		onRetry,
+		onShare
 	}: Props = $props();
+
+	const hasConfig = $derived(Object.keys(descriptorConfig).length > 0);
+	let showCopied = $state(false);
 
 	function openGithubFile(url: string) {
 		window.open(url, '_blank', 'noopener,noreferrer');
+	}
+
+	async function handleShare() {
+		if (onShare) {
+			await onShare();
+			showCopied = true;
+			setTimeout(() => {
+				showCopied = false;
+			}, 2000);
+		}
 	}
 </script>
 
@@ -50,12 +65,28 @@
 				<p class="text-sm text-muted-foreground">Set parameters to generate command</p>
 			</div>
 			<div class="flex gap-2">
+				{#if onShare && hasConfig}
+					<Button
+						variant="default"
+						size="sm"
+						onclick={handleShare}
+						class="h-8 cursor-pointer"
+						title={showCopied ? "Copied!" : "Copy shareable link"}
+					>
+						{#if showCopied}
+							<Check class="h-3 w-3 mr-1" />
+						{:else}
+							<Share2 class="h-3 w-3 mr-1" />
+						{/if}
+						<span class="hidden xl:inline">{showCopied ? 'Copied!' : 'Share'}</span>
+					</Button>
+				{/if}
 				{#if isMobile}
 					<Button
 						variant="outline"
 						size="sm"
 						onclick={() => openGithubFile(githubUrls.descriptor)}
-						class="h-8 w-8 p-0"
+						class="h-8 w-8 p-0 cursor-pointer"
 						title="View descriptor on GitHub"
 					>
 						<Github class="h-3 w-3" />
@@ -64,18 +95,8 @@
 					<Button
 						variant="outline"
 						size="sm"
-						onclick={() => openGithubFile(githubUrls.schemaInput)}
-						class="h-8"
-						title="View input schema on GitHub"
-					>
-						<Github class="mr-1 h-3 w-3" />
-						<span class="hidden xl:inline">Schema</span>
-					</Button>
-					<Button
-						variant="outline"
-						size="sm"
 						onclick={() => openGithubFile(githubUrls.descriptor)}
-						class="h-8"
+						class="h-8 cursor-pointer"
 						title="View descriptor on GitHub"
 					>
 						<Github class="mr-1 h-3 w-3" />
@@ -101,7 +122,7 @@
 				<TriangleAlert class="h-4 w-4" />
 				<AlertDescription class="flex items-center justify-between">
 					<span>{error}</span>
-					<Button variant="outline" size="sm" onclick={onRetry} class="ml-4 shrink-0">
+					<Button variant="outline" size="sm" onclick={onRetry} class="ml-4 shrink-0 cursor-pointer">
 						<RefreshCw class="mr-1 h-3 w-3" />
 						Retry
 					</Button>

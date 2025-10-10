@@ -7,12 +7,31 @@
 
 	let { schema, value = $bindable({}) }: { schema: JSONSchema; value: any } = $props();
 
+	let previousSchema: JSONSchema | null = $state(null);
 
-	// reset value when schema changes
+	// Helper function to check if value has meaningful data
+	function hasNonEmptyValues(obj: any): boolean {
+		if (!obj || typeof obj !== 'object') return false;
+		
+		for (const key of Object.keys(obj)) {
+			const val = obj[key];
+			if (typeof val === 'string' && val !== '') return true;
+			if (typeof val === 'number') return true;
+			if (typeof val === 'boolean') return true;
+			if (Array.isArray(val) && val.length > 0) return true;
+			if (typeof val === 'object' && hasNonEmptyValues(val)) return true;
+		}
+		return false;
+	}
+
+	// reset value when schema changes, but preserve existing non-empty values
 	$effect(() => {
-		if (schema) {
-			value = getSchemaDefaultValue(schema) || {};
-			// console.log("New default", value)
+		if (schema && schema !== previousSchema) {
+			// Only reset if value doesn't have meaningful data
+			if (!hasNonEmptyValues(value)) {
+				value = getSchemaDefaultValue(schema) || {};
+			}
+			previousSchema = schema;
 		}
 	})
 

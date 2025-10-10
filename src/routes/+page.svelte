@@ -7,9 +7,10 @@
 	import PackageDetails from '$lib/components/PackageDetails.svelte';
 	import PackageGallery from '$lib/components/PackageGallery.svelte';
 	import AppPage from '$lib/components/app-page/AppPage.svelte';
-	import { goto } from '$app/navigation';
+	import { goto, replaceState } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import { resolve } from '$app/paths';
+	import { page } from '$app/stores';
 
 	import {
 		loadData,
@@ -30,7 +31,8 @@
 	let showMobileSelector = $state(false);
 	let project: Project | null = $state(null);
 	let packages: Package[] = $state([]);
-	let isInitializing: boolean = false;
+	let isInitializing: boolean = $state(false);
+	let initialConfig: object | null = $state(null);
 
 	let pageTitle = $derived(() => {
 		if (selectedApp && selectedPackage) {
@@ -41,6 +43,56 @@
 			return 'NiWrap Hub';
 		}
 	});
+
+	async function decompressString(str: string): Promise<string> {
+		const data = Uint8Array.from(atob(str), (c) => c.charCodeAt(0));
+		const stream = new ReadableStream({
+			start(controller) {
+				controller.enqueue(data);
+				controller.close();
+			}
+		}).pipeThrough(new DecompressionStream('gzip'));
+
+		const decompressed = await new Response(stream).arrayBuffer();
+		return new TextDecoder().decode(decompressed);
+	}
+
+	async function loadConfigFromUrl(): Promise<object | null> {
+		const params = new URLSearchParams(window.location.search);
+		const configParam = params.get('config');
+		const encoding = params.get('enc');
+
+		if (!configParam) return null;
+
+		try {
+			let json: string;
+
+			if (encoding === 'gz') {
+				json = await decompressString(configParam);
+			} else {
+				json = atob(configParam);
+			}
+
+			return JSON.parse(json);
+		} catch (err) {
+			console.error('Failed to parse config from URL:', err);
+			return null;
+		}
+	}
+
+	function clearConfigFromUrl() {
+		if (!browser) return;
+
+		const params = new URLSearchParams(window.location.search);
+		params.delete('config');
+		params.delete('enc');
+
+		const basePath = resolve('/');
+		const newUrl = params.toString() ? `${basePath}?${params.toString()}` : basePath;
+
+		// Use replaceState so this doesn't add a history entry
+		replaceState(newUrl, {});
+	}
 
 	onMount(async () => {
 		isInitializing = true;
@@ -70,6 +122,14 @@
 		const urlParams = new URLSearchParams(window.location.search);
 		const packageName = urlParams.get('package');
 		const appName = urlParams.get('app');
+
+		// Load config from URL
+		initialConfig = await loadConfigFromUrl();
+
+		// Clear config params from URL after loading (use replaceState, not adding to history)
+		if (initialConfig) {
+			clearConfigFromUrl();
+		}
 
 		if (packageName) {
 			const pkg = packages.find((p) => p.name === packageName);
@@ -105,7 +165,12 @@
 
 		const basePath = resolve('/');
 		const newUrl = params.toString() ? `${basePath}?${params.toString()}` : basePath;
-		goto(newUrl, { replaceState: false, keepFocus: true });
+
+		// Check if URL actually needs to change
+		const currentUrl = window.location.pathname + window.location.search;
+		if (currentUrl !== newUrl) {
+			goto(newUrl, { replaceState: false, keepFocus: true, noScroll: true });
+		}
 	}
 
 	function toggleTheme() {
@@ -117,6 +182,7 @@
 		selectedPackage = null;
 		selectedApp = null;
 		showMobileSelector = false;
+		initialConfig = null;
 	}
 
 	function toggleMobileSelector() {
@@ -126,12 +192,15 @@
 	function handlePackageSelected(pkg: Package) {
 		selectedPackage = pkg;
 		selectedApp = null;
+		initialConfig = null;
 	}
 
 	function handleAppSelected(app: App) {
 		selectedApp = app;
 		showMobileSelector = false;
 	}
+
+	let isUpdatingUrl = $state(false);
 
 	$effect(() => {
 		// Read the actual values to make this effect reactive to changes
@@ -148,6 +217,7 @@
 			const handlePopstate = async () => {
 				selectedPackage = null;
 				selectedApp = null;
+				initialConfig = null;
 				await initializeFromUrl();
 			};
 			window.addEventListener('popstate', handlePopstate);
@@ -179,7 +249,7 @@
 		</div>
 
 		<div class="flex-1 overflow-hidden">
-			{#if isLoading()}
+			{#if isLoading() || isInitializing}
 				<div class="flex h-full items-center justify-center">
 					<div class="flex items-center space-x-3">
 						<LoaderCircle class="h-5 w-5 animate-spin text-primary" />
@@ -187,7 +257,7 @@
 					</div>
 				</div>
 			{:else}
-				<AppPage selectedPackage={selectedPackage} selectedApp={selectedApp} />
+				<AppPage {selectedPackage} {selectedApp} {initialConfig} />
 			{/if}
 		</div>
 	</div>
