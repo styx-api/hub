@@ -30,7 +30,7 @@
 	let mobileActiveTab = $state('config');
 	let desktopResultsTab = $state('command');
 	let isInitialized = $state(false);
-	let niwrapExecutionData: 
+	let niwrapExecutionData:
 		| {
 				success: true;
 				cargs: string[];
@@ -50,14 +50,14 @@
 
 	$effect(() => {
 		const currentAppId = selectedApp?.id;
-		
+
 		// If app changed (but not on initial render where previousAppId is undefined)
 		if (previousAppId !== undefined && previousAppId !== currentAppId) {
 			// Clear the config when switching apps
 			descriptorConfig = {};
 			fetchSchema();
 		}
-		
+
 		previousAppId = currentAppId;
 	});
 
@@ -84,18 +84,34 @@
 		if (!niwrapExecutionData) return [];
 		const ret = [];
 		if (!niwrapExecutionData.success) return [];
+
+		const processValue = (value, keyPath) => {
+			if (typeof value === 'string') {
+				const outputFieldSchema =
+					descriptorOutputSchema && getSchemaAtPath(descriptorOutputSchema, keyPath);
+				const keyMetadata = outputFieldSchema && getSchemaMetadata(outputFieldSchema);
+				ret.push({
+					path: '/outputs/' + value,
+					title: keyMetadata?.title ?? 'Title',
+					description: keyMetadata?.description ?? 'Description',
+					label: keyPath.join('.')
+				});
+			} else if (Array.isArray(value)) {
+				value.forEach((item, idx) => {
+					processValue(item, [...keyPath, idx]);
+				});
+			} else if (value && typeof value === 'object') {
+				for (const [nestedKey, nestedValue] of Object.entries(value)) {
+					processValue(nestedValue, [...keyPath, nestedKey]);
+				}
+			}
+		};
+
+		console.log('o', JSON.stringify(niwrapExecutionData.outputObject));
 		for (const [key, value] of Object.entries(niwrapExecutionData.outputObject)) {
-			if (!(typeof value === 'string')) continue;
-			const outputFieldSchema =
-				descriptorOutputSchema && getSchemaAtPath(descriptorOutputSchema, [key]);
-			const keyMetadata = outputFieldSchema && getSchemaMetadata(outputFieldSchema);
-			ret.push({
-				path: '/outputs/' + value,
-				title: keyMetadata && (keyMetadata?.title ?? 'Title'),
-				description: keyMetadata && (keyMetadata?.description ?? 'Description'),
-				label: key
-			});
+			processValue(value, [key]);
 		}
+
 		return ret;
 	});
 
@@ -162,12 +178,12 @@
 	onMount(async () => {
 		// First, fetch the schema
 		await fetchSchema();
-		
+
 		// Use initialConfig from parent if provided
 		if (initialConfig) {
 			descriptorConfig = initialConfig;
 		}
-		
+
 		// Mark as initialized
 		isInitialized = true;
 	});
