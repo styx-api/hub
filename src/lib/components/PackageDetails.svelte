@@ -42,7 +42,7 @@
 
 	// GitHub package definition URL
 	const getPackageGithubUrl = (packageName: string) =>
-		`https://github.com/styx-api/niwrap/blob/main/packages/${packageName}.json`;
+		`https://github.com/styx-api/niwrap/blob/main/src/niwrap/${packageName}/package.json`;
 
 	$effect(() => {
 		if (!selectedPackage) return;

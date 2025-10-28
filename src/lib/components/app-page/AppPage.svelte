@@ -65,7 +65,7 @@
 	const githubUrls = $derived({
 		schemaInput: `https://github.com/styx-api/niwrap-json-schema/blob/main/${selectedPackage.name}/${selectedPackage.name}.${selectedApp.name}.input.json`,
 		schemaOutput: `https://github.com/styx-api/niwrap-json-schema/blob/main/${selectedPackage.name}/${selectedPackage.name}.${selectedApp.name}.output.json`,
-		descriptor: `https://github.com/styx-api/niwrap/blob/main/descriptors/${selectedPackage.name}/${selectedApp.name}.json`
+		descriptor: `https://github.com/styx-api/niwrap/blob/f0809f16cf77342e64cc8cfabc7e58fe0c1f106e/descriptors/${selectedPackage.name}/${selectedApp.name}.json`
 	});
 
 	const commandArgs = $derived(() => {
