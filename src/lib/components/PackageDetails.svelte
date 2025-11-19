@@ -157,7 +157,7 @@
 						</Button>
 					</div>
 					<div class="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-						<span class="font-mono font-medium">v{selectedPackage.version}</span>
+						<span class="font-mono font-medium">v{selectedPackage.version.name}</span>
 						<span class="h-1 w-1 rounded-full bg-muted-foreground/50"></span>
 						<span class="font-mono">{selectedPackage.package.name}</span>
 					</div>
@@ -210,8 +210,8 @@
 				<div class="flex items-center gap-2">
 					<Terminal class="h-4 w-4" />
 					<span>
-						<strong class="text-foreground">{selectedPackage.appCount}</strong>
-						app{selectedPackage.appCount !== 1 ? 's' : ''} available
+						<strong class="text-foreground">{selectedPackage.version.apps?.length ?? 0}</strong>
+						app{(selectedPackage.version.apps?.length ?? 0) !== 1 ? 's' : ''} available
 					</span>
 				</div>
 			</div>

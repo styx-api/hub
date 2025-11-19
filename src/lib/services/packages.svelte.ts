@@ -1,9 +1,9 @@
 import type { ProjectType, PackageType, VersionType, AppType } from './catalog';
 import {
   getProjectNiwrap,
-  iterPackagesNiwrap,
   getVersionNiwrap,
   getAppNiwrap,
+  getPackageNiwrap,
 } from './catalogNiwrap';
 import { fetchAppSchemaInput, fetchAppSchemaOutput } from './niwrapSchema';
 
@@ -18,7 +18,7 @@ type NiwrapIndex = {
 };
 
 export type Project = NiwrapIndex;
-export type Package = PackageInfo & { appCount: number };
+export type Package = PackageInfo;
 export type App = {
   name: string;
   id: string;
@@ -45,32 +45,31 @@ export function isLoading(): boolean {
 }
 
 export async function loadData(): Promise<void> {
-  if (loading) return; // Prevent duplicate loads
+  if (loading) return;
   loading = true;
   try {
     const project = await getProjectNiwrap();
+    
+    // Fetch package.json AND version.json concurrently for each package
+    const packagePromises = project.packages.map(async (packageName) => {
+      const pkg = await getPackageNiwrap(packageName);
+      const version = await getVersionNiwrap(pkg.name, pkg.default);
+      return { pkg, version };
+    });
+    
+    const results = await Promise.all(packagePromises);
+
+    // Build the index
     const packages = new Map<string, PackageInfo>();
-
-    // Load all packages with their default versions (but not apps)
-    for await (const pkg of iterPackagesNiwrap()) {
-      const defaultVersion = pkg.default;
-      const version = await getVersionNiwrap(pkg.name, defaultVersion);
-
-      packages.set(pkg.name, {
-        package: pkg,
-        version: version,
-      });
+    for (const { pkg, version } of results) {
+      packages.set(pkg.name, { package: pkg, version });
     }
 
-    index = {
-      project,
-      packages,
-    };
+    index = { project, packages };
   } catch (err) {
     console.error('Failed to load niwrap catalog:', err);
-    // Reset loadPromise on error so it can be retried
     loadPromise = null;
-    throw err; // Re-throw to let callers handle the error
+    throw err;
   } finally {
     loading = false;
   }
@@ -93,10 +92,7 @@ export async function getPackageByName(name: string): Promise<Package | null> {
   const pkgInfo = idx.packages.get(name);
   if (!pkgInfo) return null;
   
-  return {
-    ...pkgInfo,
-    appCount: pkgInfo.version.apps?.length ?? 0,
-  };
+  return pkgInfo;
 }
 
 export async function getPackageInfo(packageName: string): Promise<PackageInfo | null> {
@@ -128,17 +124,9 @@ export async function getApp(packageName: string, appName: string): Promise<AppT
 }
 
 export async function getAppInputSchema(packageName: string, appId: string) {
-  const app = await getApp(packageName, appId);
-  
-  if (!app) return null;
-  
-  return await fetchAppSchemaInput(packageName, app.name);
+  return await fetchAppSchemaInput(packageName, appId);
 }
 
 export async function getAppOutputSchema(packageName: string, appId: string) {
-  const app = await getApp(packageName, appId);
-  
-  if (!app) return null;
-  
-  return await fetchAppSchemaOutput(packageName, app.name);
+  return await fetchAppSchemaOutput(packageName, appId);
 }

@@ -180,7 +180,7 @@
 											{#if showAppCounts}
 												<div class="ml-3 flex flex-shrink-0 items-center">
 													<Badge variant="secondary" class="h-5 px-2 text-xs">
-														{pkg.appCount} app{pkg.appCount !== 1 ? 's' : ''}
+														{pkg.version.apps?.length ?? 0} app{(pkg.version.apps?.length ?? 0) !== 1 ? 's' : ''}
 													</Badge>
 												</div>
 											{/if}

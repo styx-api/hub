@@ -110,7 +110,7 @@
 						<div class="flex items-center gap-1.5">
 							<Terminal class="h-3 w-3 text-primary/70" />
 							<span class="text-xs font-medium text-muted-foreground">
-								{pkg.appCount} app{pkg.appCount !== 1 ? 's' : ''}
+								{pkg.version.apps?.length ?? 0} app{(pkg.version.apps?.length ?? 0) !== 1 ? 's' : ''}
 							</span>
 						</div>
 						<div
