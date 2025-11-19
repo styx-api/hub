@@ -46,14 +46,14 @@
 
 	$effect(() => {
 		if (!selectedPackage) return;
-		getApps(selectedPackage.name).then((response) => {
+		getApps(selectedPackage.package.name).then((response) => {
 			apps = response ?? [];
 		});
 	});
 
 	let previousPackageName: string | undefined = $state(undefined);
 	$effect(() => {
-		const currentPackageName = selectedPackage?.name;
+		const currentPackageName = selectedPackage?.package.name;
 		if (previousPackageName !== undefined && previousPackageName !== currentPackageName) {
 			selectedApp = null;
 		}
@@ -85,7 +85,7 @@
 	}
 
 	function selectPackage(packageName: string) {
-		const pkg = packages.find((p) => p.name === packageName);
+		const pkg = packages.find((p) => p.package.name === packageName);
 		selectedPackage = pkg || null;
 		closePackagePopover();
 	}
@@ -137,7 +137,7 @@
 								<div class="flex min-w-0 items-center">
 									<PackageIcon class={cn('mr-2 flex-shrink-0', compact ? 'h-3 w-3' : 'h-4 w-4')} />
 									<span class={cn('truncate', compact ? 'text-sm' : 'text-base')}>
-										{selectedPackage?.docs.title || 'Choose a package...'}
+										{selectedPackage?.package.docs?.title || 'Choose a package...'}
 									</span>
 								</div>
 								<ChevronsUpDownIcon
@@ -152,28 +152,28 @@
 							<Command.List class="max-h-64">
 								<Command.Empty>No packages found.</Command.Empty>
 								<Command.Group>
-									{#each packages as pkg (pkg.name)}
+									{#each packages as pkg (pkg.package.name)}
 										<Command.Item
-											value={pkg.docs.title ?? pkg.name}
-											onSelect={() => selectPackage(pkg.name)}
+											value={pkg.package?.docs?.title ?? pkg.package.name}
+											onSelect={() => selectPackage(pkg.package.name)}
 											class="flex cursor-pointer items-center justify-between py-3"
 										>
 											<div class="flex min-w-0 flex-1 items-center">
 												<CheckIcon
 													class={cn(
 														'mr-3 h-4 w-4 text-primary',
-														selectedPackage?.name !== pkg.name && 'text-transparent'
+														selectedPackage?.package.name !== pkg.package.name && 'text-transparent'
 													)}
 												/>
 												<div class="min-w-0 flex-1 space-y-1">
 													<div class="flex items-center gap-2">
-														<span class="truncate text-sm font-medium">{pkg.docs.title}</span>
+														<span class="truncate text-sm font-medium">{pkg.package?.docs?.title}</span>
 														<Badge variant="outline" class="h-4 px-1.5 text-xs">
-															v{pkg.version}
+															v{pkg.version.name}
 														</Badge>
 													</div>
 													<div class="truncate text-xs text-muted-foreground">
-														{pkg.docs.authors?.join(', ')}
+														{pkg.package?.docs?.authors?.join(', ')}
 													</div>
 												</div>
 											</div>

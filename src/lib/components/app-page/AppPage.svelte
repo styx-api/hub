@@ -63,9 +63,9 @@
 
 	// Computed values
 	const githubUrls = $derived({
-		schemaInput: `https://github.com/styx-api/niwrap-json-schema/blob/main/${selectedPackage.name}/${selectedPackage.name}.${selectedApp.name}.input.json`,
-		schemaOutput: `https://github.com/styx-api/niwrap-json-schema/blob/main/${selectedPackage.name}/${selectedPackage.name}.${selectedApp.name}.output.json`,
-		descriptor: `https://github.com/styx-api/niwrap/blob/f0809f16cf77342e64cc8cfabc7e58fe0c1f106e/descriptors/${selectedPackage.name}/${selectedApp.name}.json`
+		schemaInput: `https://github.com/styx-api/niwrap-json-schema/blob/main/${selectedPackage.package.name}/${selectedPackage.package.name}.${selectedApp.name}.input.json`,
+		schemaOutput: `https://github.com/styx-api/niwrap-json-schema/blob/main/${selectedPackage.package.name}/${selectedPackage.package.name}.${selectedApp.name}.output.json`,
+		descriptor:`https://github.com/styx-api/niwrap/blob/main/src/niwrap/${selectedPackage.package.name}/${selectedPackage.version.name}/${selectedApp.name}/app.json`
 	});
 
 	const commandArgs = $derived(() => {
@@ -107,7 +107,7 @@
 			}
 		};
 
-		console.log('o', JSON.stringify(niwrapExecutionData.outputObject));
+		// console.log('o', JSON.stringify(niwrapExecutionData.outputObject));
 		for (const [key, value] of Object.entries(niwrapExecutionData.outputObject)) {
 			processValue(value, [key]);
 		}
@@ -206,8 +206,8 @@
 		isLoading = true;
 		error = null;
 		try {
-			const inputSchema = await getAppInputSchema(selectedPackage.name, selectedApp.id);
-			const outputSchema = await getAppOutputSchema(selectedPackage.name, selectedApp.id);
+			const inputSchema = await getAppInputSchema(selectedPackage.package.name, selectedApp.id);
+			const outputSchema = await getAppOutputSchema(selectedPackage.package.name, selectedApp.id);
 			descriptorInputSchema = inputSchema;
 			descriptorOutputSchema = outputSchema;
 		} catch (err) {

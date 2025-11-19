@@ -33,8 +33,9 @@ export async function fetchSchemaIndex(): Promise<SchemaIndex> {
   return content;
 }
 
-export async function fetchAppSchema(schema: string): Promise<object> {
-  const downloadUrl = "https://niwrap.dev/niwrap/niwrap-json-schema/" + schema;
+
+async function fetchAppSchema(path: string): Promise<object> {
+  const downloadUrl = `https://niwrap.dev/niwrap/niwrap-json-schema/${path}`;
   const response = await fetch(downloadUrl);
 
   if (!response.ok) {
@@ -49,4 +50,14 @@ export async function fetchAppSchema(schema: string): Promise<object> {
   }
 
   return content;
+}
+
+export async function fetchAppSchemaInput(packageName: string, appName: string): Promise<object> {
+  const path = `${packageName}/${packageName}.${appName}.input.json`
+  return fetchAppSchema(path);
+}
+
+export async function fetchAppSchemaOutput(packageName: string, appName: string): Promise<object> {
+  const path = `${packageName}/${packageName}.${appName}.output.json`
+  return fetchAppSchema(path);
 }

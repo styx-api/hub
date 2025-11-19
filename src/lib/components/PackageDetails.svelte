@@ -16,7 +16,7 @@
 		Github
 	} from '@lucide/svelte';
 	import { cn } from '$lib/utils.js';
-	import { type Package, type App, getApps } from '$lib/services/packages.svelte';
+	import { type Package, type App, getApps, getVersion } from '$lib/services/packages.svelte';
 	import PackageIcon from './PackageIcon.svelte';
 
 	interface Props {
@@ -46,7 +46,7 @@
 
 	$effect(() => {
 		if (!selectedPackage) return;
-		getApps(selectedPackage.name).then((response) => {
+		getApps(selectedPackage.package.name).then((response) => {
 			apps = response ?? [];
 		});
 	});
@@ -57,7 +57,7 @@
 		return selectedApp;
 	});
 
-	const packageGithubUrl = $derived(getPackageGithubUrl(selectedPackage.name));
+	const packageGithubUrl = $derived(getPackageGithubUrl(selectedPackage.package.name));
 
 	function getPackageColorClass(packageName: string) {
 		const colors = [
@@ -90,7 +90,7 @@
 
 	async function copyContainer() {
 		try {
-			await navigator.clipboard.writeText(selectedPackage.docker);
+			await navigator.clipboard.writeText(selectedPackage.version.container ?? "<no container>");
 			copied = true;
 			setTimeout(() => (copied = false), 2000);
 		} catch (err) {
@@ -127,7 +127,7 @@
 		<!-- Decorative background elements -->
 		<div
 			class="absolute -top-20 -right-20 h-40 w-40 rounded-full bg-gradient-to-br {getPackageColorClass(
-				selectedPackage.name
+				selectedPackage.package.name
 			)} opacity-10"
 		></div>
 		<div
@@ -142,7 +142,7 @@
 				<div class="min-w-0 flex-1 space-y-2">
 					<div class="flex items-start justify-between gap-4">
 						<h2 class="min-w-0 flex-1 text-3xl font-bold tracking-tight text-foreground">
-							{selectedPackage.docs.title ?? selectedPackage.name}
+							{selectedPackage.package.docs?.title ?? selectedPackage.package.name}
 						</h2>
 						<!-- GitHub Button -->
 						<Button
@@ -159,13 +159,13 @@
 					<div class="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
 						<span class="font-mono font-medium">v{selectedPackage.version}</span>
 						<span class="h-1 w-1 rounded-full bg-muted-foreground/50"></span>
-						<span class="font-mono">{selectedPackage.name}</span>
+						<span class="font-mono">{selectedPackage.package.name}</span>
 					</div>
 				</div>
 			</div>
 			<!-- Description -->
 			<div class="space-y-3">
-				{#each (selectedPackage.docs.description ?? '')
+				{#each (selectedPackage.package.docs?.description ?? '')
 					.split('\n')
 					.filter((x) => x.trim().length > 0) as line}
 					<p class="max-w-3xl leading-relaxed text-muted-foreground">
@@ -184,14 +184,14 @@
 				<div class="flex items-center gap-2">
 					<User class="h-4 w-4" />
 					<span
-						>by <strong class="text-foreground">{selectedPackage.docs.authors?.join(', ')}</strong
+						>by <strong class="text-foreground">{selectedPackage.package?.docs?.authors?.join(', ')}</strong
 						></span
 					>
 				</div>
 				<div class="flex items-center gap-2">
 					<Container class="h-4 w-4" />
 					<code class="rounded bg-muted px-2 py-1 font-mono text-xs">
-						{selectedPackage.docker}
+						{selectedPackage.version.container}
 					</code>
 					<Button
 						variant="ghost"
@@ -216,7 +216,7 @@
 				</div>
 			</div>
 			<!-- Documentation links -->
-			{#each selectedPackage.docs.urls ?? [] as url}
+			{#each selectedPackage.package.docs?.urls ?? [] as url}
 				<Button variant="outline" size="sm" onclick={() => openUrl(url)} class="shrink-0">
 					<Globe class="mr-2 h-4 w-4" />
 					Documentation

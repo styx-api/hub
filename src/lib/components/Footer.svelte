@@ -73,10 +73,10 @@
 			class="flex flex-col items-center justify-between gap-2 text-xs text-muted-foreground sm:flex-row"
 		>
 			<p>
-				© 2025 NiWrap Hub.{#if project?.docs.description}{' ' + project.docs.description}{/if}
+				© 2025 NiWrap Hub.{#if project?.project.docs?.description}{' ' + project.project.docs.description}{/if}
 			</p>
 			{#if project}
-				<p>NiWrap v{project.version}</p>
+				<p>NiWrap v{project.project.version}</p>
 			{/if}
 		</div>
 	</div>

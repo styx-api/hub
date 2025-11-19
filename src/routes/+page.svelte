@@ -10,7 +10,6 @@
 	import { goto, replaceState } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import { resolve } from '$app/paths';
-	import { page } from '$app/stores';
 
 	import {
 		loadData,
@@ -36,9 +35,9 @@
 
 	let pageTitle = $derived(() => {
 		if (selectedApp && selectedPackage) {
-			return `${selectedApp.name} - ${selectedPackage.docs.title ?? selectedPackage.name} | NiWrap Hub`;
+			return `${selectedApp.name} - ${selectedPackage.package.docs?.title ?? selectedPackage.package.name} | NiWrap Hub`;
 		} else if (selectedPackage) {
-			return `${selectedPackage.docs.title ?? selectedPackage.name} | NiWrap Hub`;
+			return `${selectedPackage.package.docs?.title ?? selectedPackage.package.name} | NiWrap Hub`;
 		} else {
 			return 'NiWrap Hub';
 		}
@@ -106,7 +105,7 @@
 			project = projectResponse;
 
 			const niwrapJsVersion = await niwrapVersion();
-			if (niwrapJsVersion != projectResponse.version) {
+			if (niwrapJsVersion != projectResponse.project.version) {
 				console.error('NiWrap data version does not match niwrap javascript module version.');
 			}
 		}
@@ -132,7 +131,7 @@
 		}
 
 		if (packageName) {
-			const pkg = packages.find((p) => p.name === packageName);
+			const pkg = packages.find((p) => p.package.name === packageName);
 			if (pkg) {
 				selectedPackage = pkg;
 
@@ -156,7 +155,7 @@
 		const params = new URLSearchParams();
 
 		if (selectedPackage) {
-			params.set('package', selectedPackage.name);
+			params.set('package', selectedPackage.package.name);
 
 			if (selectedApp) {
 				params.set('app', selectedApp.name);

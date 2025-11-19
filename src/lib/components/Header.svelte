@@ -109,7 +109,7 @@
 					class="hidden items-center gap-1.5 rounded-md border border-muted bg-muted/30 px-2.5 py-1 sm:flex"
 				>
 					<div class="h-1.5 w-1.5 rounded-full bg-green-500"></div>
-					<span class="text-xs font-medium text-muted-foreground">v{project.version}</span>
+					<span class="text-xs font-medium text-muted-foreground">v{project.project.version}</span>
 				</div>
 			{/if}
 			<Button variant="outline" size="sm" onclick={onToggleTheme}>
@@ -160,7 +160,7 @@
 						class="flex items-center gap-1.5 rounded-md border border-muted bg-muted/30 px-2 py-1"
 					>
 						<div class="h-1.5 w-1.5 rounded-full bg-green-500"></div>
-						<span class="text-xs font-medium text-muted-foreground">v{project.version}</span>
+						<span class="text-xs font-medium text-muted-foreground">v{project.project.version}</span>
 					</div>
 				{/if}
 				<Button
@@ -193,7 +193,7 @@
 			<div class="rounded-lg border bg-muted/30 p-3">
 				<div class="flex items-center justify-between">
 					<div class="min-w-0 flex-1">
-						<p class="truncate text-sm font-medium">{selectedPackage?.name}</p>
+						<p class="truncate text-sm font-medium">{selectedPackage?.package.name}</p>
 						<p class="truncate text-xs text-muted-foreground">{selectedApp.name}</p>
 					</div>
 					<Button variant="outline" size="sm" onclick={onToggleMobileSelector}>Change</Button>
@@ -203,7 +203,7 @@
 			<div class="rounded-lg border bg-muted/30 p-3">
 				<div class="flex items-center justify-between">
 					<div class="min-w-0 flex-1">
-						<p class="truncate text-sm font-medium">{selectedPackage.name}</p>
+						<p class="truncate text-sm font-medium">{selectedPackage.package.name}</p>
 						<p class="text-xs text-muted-foreground">Select an app</p>
 					</div>
 					<Button variant="outline" size="sm" onclick={onToggleMobileSelector}>Choose App</Button>

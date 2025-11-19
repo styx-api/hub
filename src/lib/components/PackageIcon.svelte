@@ -30,7 +30,7 @@
 	};
 
 	function getPackageLogo(pkg: Package): Picture | null {
-		const hardcodedLogo = hardcodedLogos[pkg.name.toLowerCase()];
+		const hardcodedLogo = hardcodedLogos[pkg.package.name.toLowerCase()];
 		if (hardcodedLogo) return hardcodedLogo;
 		//if (pkg.logo) return pkg.logo;
 		return null;
@@ -38,7 +38,7 @@
 
 	function shouldShowLogo(pkg: Package): boolean {
 		const logoUrl = getPackageLogo(pkg);
-		return !!(logoUrl && !imageErrors.has(pkg.name));
+		return !!(logoUrl && !imageErrors.has(pkg.package.name));
 	}
 
 	function handleImageError(packageName: string) {
@@ -134,7 +134,7 @@
 		}
 	};
 
-	const packageColors = $derived(getPackageColors(pkg.name));
+	const packageColors = $derived(getPackageColors(pkg.package.name));
 	const hasLogo = $derived(shouldShowLogo(pkg));
 	const sizeConfig = $derived(sizeVariants[size]);
 
@@ -161,7 +161,7 @@
 			<div class="aspect-square w-full overflow-hidden rounded-lg">
 				<enhanced:img
 					src={getPackageLogo(pkg)!!}
-					alt="{pkg.name} logo"
+					alt="{pkg.package.name} logo"
 					class="h-full w-full object-contain"
 				/>
 			</div>
@@ -169,7 +169,7 @@
 	{:else}
 		<div class={cn('flex h-full w-full items-center justify-center', packageColors.bg)}>
 			<span class={cn('font-semibold select-none', packageColors.text, sizeConfig.text)}>
-				{getPackageIcon(pkg.name)}
+				{getPackageIcon(pkg.package.name)}
 			</span>
 		</div>
 	{/if}

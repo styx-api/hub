@@ -76,7 +76,7 @@
 		<div
 			class="grid items-start gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
 		>
-			{#each packages as pkg (pkg.name)}
+			{#each packages as pkg (pkg.package.name)}
 				<button
 					onclick={() => selectPackage(pkg)}
 					class="group relative w-full cursor-pointer overflow-hidden rounded-lg border border-border/50 bg-card p-4 text-left transition-all duration-200 hover:scale-[1.02] hover:border-primary/30 hover:shadow-lg hover:shadow-black/5 focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none"
@@ -89,7 +89,7 @@
 							variant="outline"
 							class="h-5 bg-background/80 px-2 text-xs font-medium backdrop-blur-sm"
 						>
-							v{pkg.version}
+							v{pkg.version.name}
 						</Badge>
 					</div>
 
@@ -98,10 +98,10 @@
 						<h3
 							class="text-base font-semibold transition-colors duration-200 group-hover:text-primary"
 						>
-							{pkg.docs.title ?? pkg.name}
+							{pkg.package?.docs?.title ?? pkg.package.name}
 						</h3>
 						<p class="text-xs font-medium text-muted-foreground">
-							{pkg.docs.authors?.join(', ')}
+							{pkg.package?.docs?.authors?.join(', ')}
 						</p>
 					</div>
 
