@@ -88,24 +88,17 @@
 	</div>
 
 	<!-- Terminal content -->
-	<div class="overflow-x-auto p-4">
-		<div class="flex items-center whitespace-pre">
-			<span class="mr-2 font-semibold text-gray-400 select-none">{prompt}</span>
-			{#if args.length > 0}
-				<span class="select-text"
-					><span class="font-bold text-cyan-300">{parsedCommand().executable}</span>{#if parsedCommand().arguments}<span
-						class="font-medium text-green-300"
-					>{' ' + parsedCommand().arguments}</span
-					>{/if}</span
-				>
-			{/if}
-			{#if showCursor}
-				<span
-					class="ml-1 inline-block h-5 w-2 animate-pulse bg-green-400 transition-opacity duration-200 select-none"
-					class:opacity-0={!cursorVisible}
-					class:opacity-100={cursorVisible}
-				></span>
-			{/if}
+	<div class="max-h-[200px] overflow-auto p-4">
+		<div class="flex items-start">
+			<span class="mr-2 shrink-0 font-semibold text-gray-400 select-none">{prompt}</span>
+			<div class="min-w-0 flex-1 break-words">
+				{#if args.length > 0}
+					<span class="font-bold text-cyan-300 select-text">{parsedCommand().executable}</span
+					>{#if parsedCommand().arguments}<span class="font-medium text-green-300 select-text">
+							{' ' + parsedCommand().arguments}</span
+						>{/if}
+				{/if}
+			</div>
 		</div>
 	</div>
 
@@ -124,6 +117,7 @@
 	/* Custom scrollbar styling */
 	div::-webkit-scrollbar {
 		height: 6px;
+		width: 6px;
 	}
 
 	div::-webkit-scrollbar-track {
