@@ -53,10 +53,10 @@
 		class="relative flex items-start space-x-3 rounded-lg border border-border/50 bg-muted/20 p-3"
 	>
 		<CircleQuestionMarkIcon class="absolute top-2 right-2 h-4 w-4 text-muted-foreground" />
-		<Checkbox {checked} id={fieldId} onCheckedChange={handleToggle} class="mt-0.5" />
+		<Checkbox {checked} id={fieldId+"--enabled"} onCheckedChange={handleToggle} class="mt-0.5" />
 		<div class="flex-1 space-y-1">
-			<Label for={fieldId} class="text-sm font-medium">
-				{schema.title || fieldName}
+			<Label for={fieldId+"--enabled"} class="text-sm font-medium">
+				Enable {schema.title || fieldName}
 				{#if required}<span class="ml-1 text-destructive">*</span>{/if}
 			</Label>
 			{#if schema.description}
