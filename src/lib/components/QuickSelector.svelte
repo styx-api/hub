@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { onMount, tick } from 'svelte';
+	import { tick } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import * as Command from '$lib/components/ui/command/index.js';
 	import * as Popover from '$lib/components/ui/popover/index.js';
-	import CheckIcon from '@lucide/svelte/icons/check';
-	import ChevronsUpDownIcon from '@lucide/svelte/icons/chevrons-up-down';
 	import {
+		Check,
+		ChevronsUpDown,
 		LoaderCircle,
 		Package as PackageIcon,
 		Terminal,
@@ -16,11 +16,11 @@
 		RefreshCw
 	} from '@lucide/svelte/icons';
 	import { cn } from '$lib/utils.js';
-	import { getPackages, getApps, type App, type Package } from '$lib/services/packages.svelte';
+	import { catalog, type PackageInfo } from '$lib/services/packages.svelte';
 
 	interface Props {
-		package?: Package | null;
-		app?: App | null;
+		package?: PackageInfo | null;
+		app?: string | null;
 		showAppCounts?: boolean;
 		compact?: boolean;
 	}
@@ -28,81 +28,69 @@
 	let {
 		package: selectedPackage = $bindable(null),
 		app: selectedApp = $bindable(null),
-		showAppCounts: showAppCounts = true,
+		showAppCounts = true,
 		compact = false
 	}: Props = $props();
 
-	let packages: Package[] = $state([]);
-	let apps: App[] = $state([]);
-	let loading = $state(true);
-	let error = $state('');
+	let packages: PackageInfo[] = $state([]);
+	let error: string | null = $state(null);
 	let packagePopoverOpen = $state(false);
 	let appPopoverOpen = $state(false);
 	let packageTriggerRef = $state<HTMLButtonElement | null>(null);
 	let appTriggerRef = $state<HTMLButtonElement | null>(null);
 
-	const hasPackage = $derived(!!selectedPackage);
-	const hasApp = $derived(!!selectedApp);
+	const apps = $derived(selectedPackage?.version.apps ?? []);
+	const iconSize = $derived(compact ? 'h-3 w-3' : 'h-4 w-4');
+	const textSize = $derived(compact ? 'text-sm' : 'text-base');
+	const buttonHeight = $derived(compact ? 'h-8' : 'h-10');
 
-	$effect(() => {
-		if (!selectedPackage) return;
-		getApps(selectedPackage.package.name).then((response) => {
-			apps = response ?? [];
-		});
-	});
+	// Load packages on init
+	loadPackages();
 
-	let previousPackageName: string | undefined = $state(undefined);
+	// Clear app when package changes
+	let prevPackageName: string | undefined;
 	$effect(() => {
-		const currentPackageName = selectedPackage?.package.name;
-		if (previousPackageName !== undefined && previousPackageName !== currentPackageName) {
+		const currentName = selectedPackage?.package.name;
+		if (prevPackageName !== undefined && prevPackageName !== currentName) {
 			selectedApp = null;
 		}
-		previousPackageName = currentPackageName;
+		prevPackageName = currentName;
 	});
 
 	async function loadPackages() {
 		try {
-			loading = true;
-			packages = (await getPackages()) ?? [];
+			error = null;
+			const idx = await catalog.load();
+			packages = [...idx.packages.values()];
 		} catch (err) {
-			const errorMessage = err instanceof Error ? err.message : 'Failed to load packages';
-			error = errorMessage;
-		} finally {
-			loading = false;
+			error = err instanceof Error ? err.message : 'Failed to load packages';
 		}
 	}
 
-	onMount(loadPackages);
-
-	function closePackagePopover() {
+	function selectPackage(packageName: string) {
+		selectedPackage = packages.find((p) => p.package.name === packageName) ?? null;
 		packagePopoverOpen = false;
 		tick().then(() => packageTriggerRef?.focus());
 	}
 
-	function closeAppPopover() {
+	function selectApp(app: string) {
+		selectedApp = app;
 		appPopoverOpen = false;
 		tick().then(() => appTriggerRef?.focus());
 	}
-
-	function selectPackage(packageName: string) {
-		const pkg = packages.find((p) => p.package.name === packageName);
-		selectedPackage = pkg || null;
-		closePackagePopover();
-	}
-
-	function selectApp(app: App) {
-		selectedApp = app;
-		closeAppPopover();
-	}
 </script>
 
+{#snippet appCount(count: number)}
+	<Badge variant="secondary" class="h-5 px-2 text-xs">
+		{count} app{count !== 1 ? 's' : ''}
+	</Badge>
+{/snippet}
+
 <div class="w-full space-y-4">
-	{#if loading}
+	{#if catalog.loading}
 		<div class="flex items-center justify-center py-6">
-			<div class="flex items-center space-x-3">
-				<LoaderCircle class="h-5 w-5 animate-spin text-primary" />
-				<div class="text-sm text-muted-foreground">Loading packages...</div>
-			</div>
+			<LoaderCircle class="h-5 w-5 animate-spin text-primary" />
+			<span class="ml-3 text-sm text-muted-foreground">Loading packages...</span>
 		</div>
 	{:else if error}
 		<Alert variant="destructive">
@@ -117,6 +105,7 @@
 		</Alert>
 	{:else}
 		<div class="flex items-center gap-3">
+			<!-- Package selector -->
 			<div class="min-w-0 flex-1">
 				<Popover.Root bind:open={packagePopoverOpen}>
 					<Popover.Trigger bind:ref={packageTriggerRef}>
@@ -127,22 +116,20 @@
 								size={compact ? 'sm' : 'default'}
 								class={cn(
 									'w-full justify-between text-left font-normal transition-all',
-									compact ? 'h-8' : 'h-10',
-									hasPackage && 'border-primary/50 bg-primary/5'
+									buttonHeight,
+									selectedPackage && 'border-primary/50 bg-primary/5'
 								)}
 								role="combobox"
 								aria-expanded={packagePopoverOpen}
 								aria-label="Select package"
 							>
 								<div class="flex min-w-0 items-center">
-									<PackageIcon class={cn('mr-2 flex-shrink-0', compact ? 'h-3 w-3' : 'h-4 w-4')} />
-									<span class={cn('truncate', compact ? 'text-sm' : 'text-base')}>
-										{selectedPackage?.package.docs?.title || 'Choose a package...'}
+									<PackageIcon class={cn('mr-2 flex-shrink-0', iconSize)} />
+									<span class={cn('truncate', textSize)}>
+										{selectedPackage?.package.docs?.title ?? 'Choose a package...'}
 									</span>
 								</div>
-								<ChevronsUpDownIcon
-									class={cn('ml-2 flex-shrink-0 opacity-50', compact ? 'h-3 w-3' : 'h-4 w-4')}
-								/>
+								<ChevronsUpDown class={cn('ml-2 flex-shrink-0 opacity-50', iconSize)} />
 							</Button>
 						{/snippet}
 					</Popover.Trigger>
@@ -153,35 +140,34 @@
 								<Command.Empty>No packages found.</Command.Empty>
 								<Command.Group>
 									{#each packages as pkg (pkg.package.name)}
+										{@const isSelected = selectedPackage?.package.name === pkg.package.name}
+										{@const appCountNum = pkg.version.apps?.length ?? 0}
 										<Command.Item
-											value={pkg.package?.docs?.title ?? pkg.package.name}
+											value={pkg.package.docs?.title ?? pkg.package.name}
 											onSelect={() => selectPackage(pkg.package.name)}
 											class="flex cursor-pointer items-center justify-between py-3"
 										>
 											<div class="flex min-w-0 flex-1 items-center">
-												<CheckIcon
-													class={cn(
-														'mr-3 h-4 w-4 text-primary',
-														selectedPackage?.package.name !== pkg.package.name && 'text-transparent'
-													)}
+												<Check
+													class={cn('mr-3 h-4 w-4 text-primary', !isSelected && 'text-transparent')}
 												/>
 												<div class="min-w-0 flex-1 space-y-1">
 													<div class="flex items-center gap-2">
-														<span class="truncate text-sm font-medium">{pkg.package?.docs?.title}</span>
+														<span class="truncate text-sm font-medium">
+															{pkg.package.docs?.title}
+														</span>
 														<Badge variant="outline" class="h-4 px-1.5 text-xs">
 															v{pkg.version.name}
 														</Badge>
 													</div>
 													<div class="truncate text-xs text-muted-foreground">
-														{pkg.package?.docs?.authors?.join(', ')}
+														{pkg.package.docs?.authors?.join(', ')}
 													</div>
 												</div>
 											</div>
 											{#if showAppCounts}
-												<div class="ml-3 flex flex-shrink-0 items-center">
-													<Badge variant="secondary" class="h-5 px-2 text-xs">
-														{pkg.version.apps?.length ?? 0} app{(pkg.version.apps?.length ?? 0) !== 1 ? 's' : ''}
-													</Badge>
+												<div class="ml-3 flex-shrink-0">
+													{@render appCount(appCountNum)}
 												</div>
 											{/if}
 										</Command.Item>
@@ -193,10 +179,9 @@
 				</Popover.Root>
 			</div>
 
-			<div class="flex-shrink-0 text-muted-foreground">
-				<ArrowRight class={cn(compact ? 'h-3 w-3' : 'h-4 w-4')} />
-			</div>
+			<ArrowRight class={cn('flex-shrink-0 text-muted-foreground', iconSize)} />
 
+			<!-- App selector -->
 			<div class="min-w-0 flex-1">
 				<Popover.Root bind:open={appPopoverOpen}>
 					<Popover.Trigger bind:ref={appTriggerRef}>
@@ -207,9 +192,9 @@
 								size={compact ? 'sm' : 'default'}
 								class={cn(
 									'w-full justify-between text-left font-normal transition-all',
-									compact ? 'h-8' : 'h-10',
+									buttonHeight,
 									!selectedPackage && 'opacity-50',
-									hasApp && 'border-primary/50 bg-primary/5',
+									selectedApp && 'border-primary/50 bg-primary/5',
 									selectedPackage &&
 										apps.length === 0 &&
 										'border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950'
@@ -220,24 +205,18 @@
 								disabled={!selectedPackage}
 							>
 								<div class="flex min-w-0 items-center">
-									<Terminal class={cn('mr-2 flex-shrink-0', compact ? 'h-3 w-3' : 'h-4 w-4')} />
-									<span
-										class={cn(
-											'truncate',
-											compact ? 'text-sm' : 'text-base',
-											selectedApp ? 'font-mono' : ''
-										)}
-									>
-										{!selectedPackage
-											? 'Select package first'
-											: apps.length === 0
-												? 'No apps available'
-												: selectedApp?.name || 'Choose an app...'}
+									<Terminal class={cn('mr-2 flex-shrink-0', iconSize)} />
+									<span class={cn('truncate', textSize, selectedApp && 'font-mono')}>
+										{#if !selectedPackage}
+											Select package first
+										{:else if apps.length === 0}
+											No apps available
+										{:else}
+											{selectedApp ?? 'Choose an app...'}
+										{/if}
 									</span>
 								</div>
-								<ChevronsUpDownIcon
-									class={cn('ml-2 flex-shrink-0 opacity-50', compact ? 'h-3 w-3' : 'h-4 w-4')}
-								/>
+								<ChevronsUpDown class={cn('ml-2 flex-shrink-0 opacity-50', iconSize)} />
 							</Button>
 						{/snippet}
 					</Popover.Trigger>
@@ -247,21 +226,16 @@
 							<Command.List class="max-h-48">
 								<Command.Empty>No apps found.</Command.Empty>
 								<Command.Group>
-									{#each apps as app (app.id)}
+									{#each apps as app (app)}
 										<Command.Item
-											value={app.name}
+											value={app}
 											onSelect={() => selectApp(app)}
 											class="flex cursor-pointer items-center py-2"
 										>
-											<CheckIcon
-												class={cn(
-													'mr-3 h-4 w-4 text-primary',
-													selectedApp?.id !== app.id && 'text-transparent'
-												)}
+											<Check
+												class={cn('mr-3 h-4 w-4 text-primary', selectedApp !== app && 'text-transparent')}
 											/>
-											<div class="flex-1">
-												<div class="truncate font-mono text-sm font-medium">{app.name}</div>
-											</div>
+											<span class="truncate font-mono text-sm font-medium">{app}</span>
 										</Command.Item>
 									{/each}
 								</Command.Group>

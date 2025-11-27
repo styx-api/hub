@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Package } from '$lib/services/packages.svelte';
+	import type { PackageInfo } from '$lib/services/packages.svelte';
 	import { cn } from '$lib/utils.js';
 	import type { Picture } from 'vite-imagetools';
 
@@ -13,7 +13,7 @@
 	import LogoWorkbench from '../assets/workbench.png?enhanced&w=32;48;64;80';
 
 	interface Props {
-		package: Package;
+		package: PackageInfo;
 		size?: 'sm' | 'md' | 'lg' | 'xl';
 		class?: string;
 	}
@@ -29,14 +29,14 @@
 		freesurfer: LogoFreesurfer
 	};
 
-	function getPackageLogo(pkg: Package): Picture | null {
+	function getPackageLogo(pkg: PackageInfo): Picture | null {
 		const hardcodedLogo = hardcodedLogos[pkg.package.name.toLowerCase()];
 		if (hardcodedLogo) return hardcodedLogo;
 		//if (pkg.logo) return pkg.logo;
 		return null;
 	}
 
-	function shouldShowLogo(pkg: Package): boolean {
+	function shouldShowLogo(pkg: PackageInfo): boolean {
 		const logoUrl = getPackageLogo(pkg);
 		return !!(logoUrl && !imageErrors.has(pkg.package.name));
 	}
