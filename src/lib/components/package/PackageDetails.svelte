@@ -15,7 +15,7 @@
 		Github
 	} from '@lucide/svelte';
 	import { cn } from '$lib/utils.js';
-	import { catalog, type PackageInfo } from '$lib/services/packages.svelte';
+	import { catalog, type PackageInfo } from '$lib/services/catalog';
 	import PackageIcon from './PackageIcon.svelte';
 	import { github, openExternal } from '$lib/utils/github';
 
@@ -25,12 +25,7 @@
 		showAppSelector?: boolean;
 		onAppSelected?: (appName: string) => void;
 	}
-	let {
-		package: pkg,
-		showBorder = true,
-		showAppSelector = true,
-		onAppSelected
-	}: Props = $props();
+	let { package: pkg, showBorder = true, showAppSelector = true, onAppSelected }: Props = $props();
 
 	let copied = $state(false);
 	let selectedApp: string | null = $state(null);
@@ -61,7 +56,9 @@
 		return Math.abs(hash);
 	}
 
-	const gradientClass = $derived(GRADIENT_COLORS[hashString(pkg.package.name) % GRADIENT_COLORS.length]);
+	const gradientClass = $derived(
+		GRADIENT_COLORS[hashString(pkg.package.name) % GRADIENT_COLORS.length]
+	);
 
 	async function copyContainer() {
 		const container = pkg.version.container;
@@ -141,7 +138,9 @@
 			{#if pkg.package.docs?.authors?.length}
 				<div class="flex items-center gap-2">
 					<User class="h-4 w-4" />
-					<span>by <strong class="text-foreground">{pkg.package.docs.authors.join(', ')}</strong></span>
+					<span
+						>by <strong class="text-foreground">{pkg.package.docs.authors.join(', ')}</strong></span
+					>
 				</div>
 			{/if}
 

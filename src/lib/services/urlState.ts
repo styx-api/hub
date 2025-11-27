@@ -27,9 +27,7 @@ export async function parseConfigFromUrl(): Promise<object | null> {
 
 	try {
 		const json =
-			params.get('enc') === 'gz'
-				? await decompressString(configParam)
-				: atob(configParam);
+			params.get('enc') === 'gz' ? await decompressString(configParam) : atob(configParam);
 		return JSON.parse(json);
 	} catch (err) {
 		console.error('Failed to parse config from URL:', err);

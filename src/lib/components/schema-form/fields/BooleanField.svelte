@@ -18,7 +18,7 @@
 			booleanSchema = schema;
 		}
 	});
-	
+
 	$effect(() => {
 		fieldName = getFieldLabel(path);
 		fieldId = getFieldId(path, 'number');
@@ -31,12 +31,7 @@
 
 <!-- slight variation on the usual FieldSnippet, as checkbox is left of the label -->
 <div class="relative flex items-start space-x-3 rounded-lg border border-border/50 bg-muted/20 p-3">
-	<Checkbox
-		id={fieldId}
-		checked={value === true}
-		onCheckedChange={handleChange}
-		class="mt-0.5"
-	/>
+	<Checkbox id={fieldId} checked={value === true} onCheckedChange={handleChange} class="mt-0.5" />
 	<div class="flex-1 space-y-1">
 		<Label for={fieldId} class="text-sm font-medium">
 			{booleanSchema.title || fieldName}

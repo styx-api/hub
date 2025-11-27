@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
 	import { Sun, Moon, Menu } from '@lucide/svelte';
-	import QuickSelector from '$lib/components/QuickSelector.svelte';
+	import { QuickSelector } from '$lib/components/shared';
 	import logo from '$lib/assets/logo.svg';
-	import type { PackageInfo, CatalogIndex } from '$lib/services/packages.svelte';
+	import type { PackageInfo, CatalogIndex } from '$lib/services/catalog';
 
 	interface Props {
 		selectedPackage: PackageInfo | null;
@@ -80,7 +80,7 @@
 {#snippet easterEggTooltip()}
 	{#if showEasterEgg}
 		<div
-			class="pointer-events-none absolute left-0 top-full z-50 mt-1 rounded border border-border bg-background px-2 py-1 text-xs text-muted-foreground shadow-lg"
+			class="pointer-events-none absolute top-full left-0 z-50 mt-1 rounded border border-border bg-background px-2 py-1 text-xs text-muted-foreground shadow-lg"
 		>
 			{betaMessage}
 		</div>
@@ -89,7 +89,9 @@
 
 {#snippet versionBadge()}
 	{#if index}
-		<div class="flex items-center gap-1.5 rounded-md border border-muted bg-muted/30 px-2 py-1 sm:px-2.5">
+		<div
+			class="flex items-center gap-1.5 rounded-md border border-muted bg-muted/30 px-2 py-1 sm:px-2.5"
+		>
 			<div class="h-1.5 w-1.5 rounded-full bg-green-500"></div>
 			<span class="text-xs font-medium text-muted-foreground">v{index.project.version}</span>
 		</div>
@@ -111,7 +113,8 @@
 	{@const imgSize = size === 'lg' ? 'h-7 w-7' : 'h-6 w-6'}
 	{@const titleSize = size === 'lg' ? 'text-xl lg:text-2xl' : 'text-lg'}
 	{@const roundedSize = size === 'lg' ? 'rounded-xl' : 'rounded-lg'}
-	{@const shadow = size === 'lg' ? 'shadow-md group-hover:shadow-lg' : 'shadow-sm group-hover:shadow-md'}
+	{@const shadow =
+		size === 'lg' ? 'shadow-md group-hover:shadow-lg' : 'shadow-sm group-hover:shadow-md'}
 
 	<button
 		onclick={onClearSelection}
@@ -190,7 +193,12 @@
 
 			<div class="flex items-center gap-2">
 				{@render versionBadge()}
-				<Button variant="outline" size="sm" onclick={onToggleMobileSelector} aria-label="Toggle app selector">
+				<Button
+					variant="outline"
+					size="sm"
+					onclick={onToggleMobileSelector}
+					aria-label="Toggle app selector"
+				>
 					<Menu class="h-4 w-4" />
 				</Button>
 				{@render themeToggle()}

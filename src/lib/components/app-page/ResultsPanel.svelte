@@ -19,11 +19,9 @@
 		TriangleAlert,
 		Code,
 		ExternalLink,
-
 		BracesIcon
-
 	} from '@lucide/svelte';
-	import { fetchSymbolmapForConfig } from '$lib/services/niwrapPythonSymbolmaps';
+	import { fetchSymbolmapForConfig } from '$lib/services/execution';
 
 	interface OutputFile {
 		path: string;

@@ -72,5 +72,8 @@
 {#if FieldComponent !== null}
 	<FieldComponent {schema} {value} {path} {required} {onUpdate} />
 {:else}
-	<div class="text-sm text-muted-foreground">Unsupported type: {fieldType} {JSON.stringify(schema)}</div>
+	<div class="text-sm text-muted-foreground">
+		Unsupported type: {fieldType}
+		{JSON.stringify(schema)}
+	</div>
 {/if}

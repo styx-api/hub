@@ -57,22 +57,24 @@
 			highlightedCode = highlighter.codeToHtml(code, {
 				lang: language,
 				theme: currentTheme,
-				transformers: showLineNumbers ? [
-					{
-						name: 'line-numbers',
-						line(node: any, line: any) {
-							node.children.unshift({
-								type: 'element',
-								tagName: 'span',
-								properties: {
-									class: 'line-number',
-									'data-line': line.toString()
-								},
-								children: []
-							});
-						}
-					}
-				] : []
+				transformers: showLineNumbers
+					? [
+							{
+								name: 'line-numbers',
+								line(node: any, line: any) {
+									node.children.unshift({
+										type: 'element',
+										tagName: 'span',
+										properties: {
+											class: 'line-number',
+											'data-line': line.toString()
+										},
+										children: []
+									});
+								}
+							}
+						]
+					: []
 			});
 
 			error = null;
@@ -102,8 +104,8 @@
 		// Initialize highlighting
 		isLoading = true;
 		highlightCode().then(() => {
-		  isLoading = false;
-    });
+			isLoading = false;
+		});
 
 		// Cleanup observer on component destroy
 		return () => {
@@ -113,7 +115,7 @@
 
 	// Re-highlight when dependencies change
 	$effect(() => {
-    const theme = currentTheme;
+		const theme = currentTheme;
 		if (!isLoading) {
 			highlightCode();
 		}
@@ -141,7 +143,7 @@
 					variant="ghost"
 					size="sm"
 					onclick={copyToClipboard}
-					class="h-6 w-6 p-0 cursor-pointer"
+					class="h-6 w-6 cursor-pointer p-0"
 					aria-label="Copy code"
 				>
 					{#if copied}
@@ -153,12 +155,12 @@
 			{/if}
 		</div>
 	{:else if showCopyButton}
-		<div class="absolute right-2 top-2 z-10">
+		<div class="absolute top-2 right-2 z-10">
 			<Button
 				variant="ghost"
 				size="sm"
 				onclick={copyToClipboard}
-				class="h-6 w-6 p-0 opacity-70 hover:opacity-100 transition-opacity cursor-pointer"
+				class="h-6 w-6 cursor-pointer p-0 opacity-70 transition-opacity hover:opacity-100"
 				aria-label="Copy code"
 			>
 				{#if copied}

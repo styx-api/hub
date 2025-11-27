@@ -1,16 +1,16 @@
 <script lang="ts">
-	import type { PackageInfo } from '$lib/services/packages.svelte';
+	import type { PackageInfo } from '$lib/services/catalog';
 	import { cn } from '$lib/utils.js';
 	import type { Picture } from 'vite-imagetools';
 
 	// @ts-ignore
-	import LogoAfni from '../assets/afni.png?enhanced&w=32;48;64;80';
+	import LogoAfni from '../../assets/afni.png?enhanced&w=32;48;64;80';
 	// @ts-ignore
-	import LogoFreesurfer from '../assets/freesurfer.png?enhanced&w=32;48;64;80';
+	import LogoFreesurfer from '../../assets/freesurfer.png?enhanced&w=32;48;64;80';
 	// @ts-ignore
-	import LogoFsl from '../assets/fsl.jpg?enhanced&w=32;48;64;80';
+	import LogoFsl from '../../assets/fsl.jpg?enhanced&w=32;48;64;80';
 	// @ts-ignore
-	import LogoWorkbench from '../assets/workbench.png?enhanced&w=32;48;64;80';
+	import LogoWorkbench from '../../assets/workbench.png?enhanced&w=32;48;64;80';
 
 	interface Props {
 		package: PackageInfo;

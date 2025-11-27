@@ -1,6 +1,6 @@
 <!-- Footer.svelte -->
 <script lang="ts">
-	import type { CatalogIndex } from '$lib/services/packages.svelte';
+	import type { CatalogIndex } from '$lib/services/catalog';
 	import { URLS } from '$lib/constants/urls';
 
 	interface Props {
@@ -34,10 +34,7 @@
 	<div class="space-y-1 text-xs">
 		{#each items as { label, href }}
 			{#if href}
-				
-				<a {href}
-					class="block text-muted-foreground transition-colors hover:text-foreground"
-				>
+				<a {href} class="block text-muted-foreground transition-colors hover:text-foreground">
 					{label}
 				</a>
 			{:else}
@@ -66,9 +63,12 @@
 	</div>
 
 	<div class="mt-6 border-t pt-4">
-		<div class="flex flex-col items-center justify-between gap-2 text-xs text-muted-foreground sm:flex-row">
+		<div
+			class="flex flex-col items-center justify-between gap-2 text-xs text-muted-foreground sm:flex-row"
+		>
 			<p>
-				© 2025 NiWrap Hub.{#if index?.project.docs?.description}{' '}{index.project.docs.description}{/if}
+				© 2025 NiWrap Hub.{#if index?.project.docs?.description}{' '}{index.project.docs
+						.description}{/if}
 			</p>
 			{#if index}
 				<p>NiWrap v{index.project.version}</p>

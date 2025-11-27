@@ -43,7 +43,7 @@
 	<div class="sticky top-0 z-20 bg-background pb-1">
 		<div class="flex items-center justify-between">
 			<h3 class="text-sm font-medium">{schema.title || fieldName}</h3>
-			<Button variant="ghost" size="sm" onclick={addItem} class="h-7 px-2 text-xs cursor-pointer">
+			<Button variant="ghost" size="sm" onclick={addItem} class="h-7 cursor-pointer px-2 text-xs">
 				<Plus class="mr-1 h-3 w-3" />Add
 			</Button>
 		</div>
@@ -62,11 +62,11 @@
 						<span class="font-medium">{itemSchema.title}</span>
 					{/if}
 				</div>
-				<Button 
-					variant="ghost" 
-					size="sm" 
-					onclick={() => removeItem(index)} 
-					class="h-6 w-6 p-0 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400 transition-colors duration-200 cursor-pointer"
+				<Button
+					variant="ghost"
+					size="sm"
+					onclick={() => removeItem(index)}
+					class="h-6 w-6 cursor-pointer p-0 transition-colors duration-200 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400"
 				>
 					<Trash2 class="h-3 w-3 transition-colors duration-200" />
 				</Button>

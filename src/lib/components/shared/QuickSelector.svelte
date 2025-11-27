@@ -16,7 +16,7 @@
 		RefreshCw
 	} from '@lucide/svelte/icons';
 	import { cn } from '$lib/utils.js';
-	import { catalog, type PackageInfo } from '$lib/services/packages.svelte';
+	import { catalog, type PackageInfo } from '$lib/services/catalog';
 
 	interface Props {
 		package?: PackageInfo | null;
@@ -233,7 +233,10 @@
 											class="flex cursor-pointer items-center py-2"
 										>
 											<Check
-												class={cn('mr-3 h-4 w-4 text-primary', selectedApp !== app && 'text-transparent')}
+												class={cn(
+													'mr-3 h-4 w-4 text-primary',
+													selectedApp !== app && 'text-transparent'
+												)}
 											/>
 											<span class="truncate font-mono text-sm font-medium">{app}</span>
 										</Command.Item>

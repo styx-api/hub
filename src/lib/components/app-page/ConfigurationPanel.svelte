@@ -9,7 +9,15 @@
 	} from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
-	import { TriangleAlert, RefreshCw, LoaderCircle, Settings, Github, Share2, Check } from '@lucide/svelte';
+	import {
+		TriangleAlert,
+		RefreshCw,
+		LoaderCircle,
+		Settings,
+		Github,
+		Share2,
+		Check
+	} from '@lucide/svelte';
 
 	interface Props {
 		descriptorInputSchema: object | null;
@@ -71,12 +79,12 @@
 						size="sm"
 						onclick={handleShare}
 						class="h-8 cursor-pointer"
-						title={showCopied ? "Copied!" : "Copy shareable link"}
+						title={showCopied ? 'Copied!' : 'Copy shareable link'}
 					>
 						{#if showCopied}
-							<Check class="h-3 w-3 mr-1" />
+							<Check class="mr-1 h-3 w-3" />
 						{:else}
-							<Share2 class="h-3 w-3 mr-1" />
+							<Share2 class="mr-1 h-3 w-3" />
 						{/if}
 						<span class="hidden xl:inline">{showCopied ? 'Copied!' : 'Share'}</span>
 					</Button>
@@ -86,7 +94,7 @@
 						variant="outline"
 						size="sm"
 						onclick={() => openGithubFile(githubUrls.descriptor)}
-						class="h-8 w-8 p-0 cursor-pointer"
+						class="h-8 w-8 cursor-pointer p-0"
 						title="View descriptor on GitHub"
 					>
 						<Github class="h-3 w-3" />
@@ -122,7 +130,12 @@
 				<TriangleAlert class="h-4 w-4" />
 				<AlertDescription class="flex items-center justify-between">
 					<span>{error}</span>
-					<Button variant="outline" size="sm" onclick={onRetry} class="ml-4 shrink-0 cursor-pointer">
+					<Button
+						variant="outline"
+						size="sm"
+						onclick={onRetry}
+						class="ml-4 shrink-0 cursor-pointer"
+					>
 						<RefreshCw class="mr-1 h-3 w-3" />
 						Retry
 					</Button>

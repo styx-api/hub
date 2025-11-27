@@ -66,7 +66,9 @@
 	{:else}
 		<div class="relative">
 			{#if isFileType}
-				<div class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
+				<div
+					class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground"
+				>
 					<File size={16} />
 				</div>
 			{/if}

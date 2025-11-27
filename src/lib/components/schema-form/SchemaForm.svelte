@@ -12,7 +12,7 @@
 	// Helper function to check if value has meaningful data
 	function hasNonEmptyValues(obj: any): boolean {
 		if (!obj || typeof obj !== 'object') return false;
-		
+
 		for (const key of Object.keys(obj)) {
 			const val = obj[key];
 			if (typeof val === 'string' && val !== '') return true;
@@ -33,7 +33,7 @@
 			}
 			previousSchema = schema;
 		}
-	})
+	});
 
 	// Simple update handler
 	function handleUpdate(path: SchemaPath, newValue: any) {

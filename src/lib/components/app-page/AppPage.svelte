@@ -3,8 +3,8 @@
 	import ConfigurationPanel from './ConfigurationPanel.svelte';
 	import ResultsPanel from './ResultsPanel.svelte';
 	import { Settings, Terminal as TerminalIcon, FileCode, ExternalLink } from '@lucide/svelte';
-	import { niwrapDeathMessage, niwrapExecute } from '../../services/niwrapExecution';
-	import { catalog, type PackageInfo } from '$lib/services/packages.svelte';
+	import { niwrapDeathMessage, niwrapExecute } from '$lib/services/execution';
+	import { catalog, type PackageInfo } from '$lib/services/catalog';
 	import { getSchemaAtPath, getSchemaMetadata } from '$lib/services/schema/schemaUtils';
 	import type { AppType } from '$lib/services/catalog';
 	import { github, openExternal } from '$lib/utils/github';
@@ -21,12 +21,12 @@
 	let { package: pkg, app, initialConfig = null }: Props = $props();
 
 	// State
-	let appData: AppType | null = $state(null);
-	let inputSchema: object | null = $state(null);
-	let outputSchema: object | null = $state(null);
-	let config: object = $state({});
+	let appData = $state<AppType | null>(null);
+	let inputSchema = $state<object | null>(null);
+	let outputSchema = $state<object | null>(null);
+	let config = $state<object>({});
 	let isLoading = $state(true);
-	let error: string | null = $state(null);
+	let error = $state<string | null>(null);
 	let mobileActiveTab = $state('config');
 	let desktopResultsTab = $state('command');
 
@@ -35,7 +35,7 @@
 		| { success: false; error: string };
 
 	let executionResult = $state<ExecutionResult | null>(null);
-	
+
 	// Track which app the current execution belongs to
 	let executedForApp = $state<string | null>(null);
 
@@ -105,7 +105,7 @@
 	$effect(() => {
 		// This effect runs when `app` changes
 		const currentApp = app;
-		
+
 		// Clear stale execution results immediately
 		if (executedForApp !== currentApp) {
 			executionResult = null;
@@ -228,17 +228,13 @@
 		</p>
 
 		<div class="flex flex-wrap justify-center gap-3">
-			<Button
-				variant="default" onclick={() => openExternal(URLS.contributingNiwrap)}
-			>
+			<Button variant="default" onclick={() => openExternal(URLS.contributingNiwrap)}>
 				<FileCode class="mr-2 h-4 w-4" />
 				Contributing guide
 				<ExternalLink class="ml-2 h-3 w-3" />
 			</Button>
 
-			<Button
-				variant="outline" onclick={() => openExternal(githubUrls.descriptor)}
-			>
+			<Button variant="outline" onclick={() => openExternal(githubUrls.descriptor)}>
 				View app manifest
 				<ExternalLink class="ml-2 h-3 w-3" />
 			</Button>

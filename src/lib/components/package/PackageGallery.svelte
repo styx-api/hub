@@ -2,7 +2,7 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { LoaderCircle, CircleAlert, RefreshCw, Terminal } from '@lucide/svelte/icons';
-	import { catalog, type PackageInfo } from '$lib/services/packages.svelte';
+	import { catalog, type PackageInfo } from '$lib/services/catalog';
 	import PackageIcon from './PackageIcon.svelte';
 
 	interface Props {
@@ -51,9 +51,7 @@
 		</Alert>
 	</div>
 {:else}
-	<div
-		class="grid items-start gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
-	>
+	<div class="grid items-start gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
 		{#each packages as pkg (pkg.package.name)}
 			<button
 				onclick={() => onPackageSelected?.(pkg)}
@@ -70,7 +68,9 @@
 				</div>
 
 				<div class="mb-4 space-y-2">
-					<h3 class="text-base font-semibold transition-colors duration-200 group-hover:text-primary">
+					<h3
+						class="text-base font-semibold transition-colors duration-200 group-hover:text-primary"
+					>
 						{pkg.package.docs?.title ?? pkg.package.name}
 					</h3>
 					<p class="text-xs font-medium text-muted-foreground">
@@ -85,10 +85,14 @@
 							{pkg.version.apps?.length ?? 0} app{(pkg.version.apps?.length ?? 0) !== 1 ? 's' : ''}
 						</span>
 					</div>
-					<div class="h-1.5 w-1.5 rounded-full bg-primary/20 transition-colors duration-200 group-hover:bg-primary/40"></div>
+					<div
+						class="h-1.5 w-1.5 rounded-full bg-primary/20 transition-colors duration-200 group-hover:bg-primary/40"
+					></div>
 				</div>
 
-				<div class="absolute inset-0 rounded-lg bg-gradient-to-br from-primary/5 to-primary/10 opacity-0 transition-opacity duration-200 group-hover:opacity-100"></div>
+				<div
+					class="absolute inset-0 rounded-lg bg-gradient-to-br from-primary/5 to-primary/10 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+				></div>
 			</button>
 		{/each}
 	</div>

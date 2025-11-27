@@ -2,14 +2,14 @@
 	import { browser } from '$app/environment';
 	import { Separator } from '$lib/components/ui/separator';
 	import { LoaderCircle } from '@lucide/svelte';
-	import Header from '$lib/components/Header.svelte';
-	import Footer from '$lib/components/Footer.svelte';
-	import PackageDetails from '$lib/components/PackageDetails.svelte';
-	import PackageGallery from '$lib/components/PackageGallery.svelte';
+	import { Header } from '$lib/components/layout';
+	import { Footer } from '$lib/components/layout';
+	import { PackageDetails } from '$lib/components/package';
+	import { PackageGallery } from '$lib/components/package';
 	import AppPage from '$lib/components/app-page/AppPage.svelte';
-	import { catalog, type PackageInfo } from '$lib/services/packages.svelte';
+	import { catalog, type PackageInfo } from '$lib/services/catalog';
 	import { theme } from '$lib/services/theme.svelte';
-	import { niwrapVersion, preloadNiwrap } from '$lib/services/niwrapExecution';
+	import { niwrapVersion, preloadNiwrap } from '$lib/services/execution';
 	import {
 		parseUrlState,
 		parseConfigFromUrl,
@@ -83,10 +83,7 @@
 		selectedApp;
 
 		if (browser && catalog.index && !isInitializing) {
-			updateUrl(
-				selectedPackage?.package.name ?? null,
-				selectedApp
-			);
+			updateUrl(selectedPackage?.package.name ?? null, selectedApp);
 		}
 	});
 

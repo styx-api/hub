@@ -3,13 +3,7 @@
 <script>
 	import { Label } from '$lib/components/ui/label';
 
-	let {
-		title,
-		description = null,
-		required = false,
-		labelFor = null,
-		children
-	} = $props();
+	let { title, description = null, required = false, labelFor = null, children } = $props();
 </script>
 
 <div class="space-y-2">

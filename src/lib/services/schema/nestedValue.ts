@@ -8,16 +8,16 @@ export type NestedValue = unknown;
 
 /**
  * Safely retrieves a nested value using dot-notation path traversal.
- * 
+ *
  * @param obj Source object to traverse
  * @param path Dot-notation path (e.g., "user.profile.name", "items.0.title")
  * @returns Value at path or undefined if path doesn't exist
  */
 export function getNestedValue(obj: unknown, path: NestedPath): NestedValue {
 	if (!path) return obj;
-	
+
 	return path.split('.').reduce((current, key) => {
-		return current != null && typeof current === 'object' 
+		return current != null && typeof current === 'object'
 			? (current as Record<string, unknown>)[key]
 			: undefined;
 	}, obj);
@@ -26,7 +26,7 @@ export function getNestedValue(obj: unknown, path: NestedPath): NestedValue {
 /**
  * Immutably updates a nested value using structural sharing.
  * Preserves existing array/object distinctions and extends arrays as needed.
- * 
+ *
  * @param obj Source object/array (remains unmodified)
  * @param path Dot-notation path to update location
  * @param value New value to set
@@ -53,25 +53,25 @@ export function updateNestedValue<T>(obj: T, path: NestedPath, value: NestedValu
 /**
  * Immutably removes a nested property using structural sharing.
  * Automatically cleans up empty parent objects and arrays.
- * 
+ *
  * @param obj Source object/array (remains unmodified)
  * @param path Dot-notation path to property to remove
  * @returns New object/array with property removed and empty parents cleaned
  */
 export function deleteNestedProperty<T>(obj: T, path: NestedPath): T {
 	if (!path) return obj;
-	
+
 	const keys = path.split('.');
-	
+
 	// Check if path exists before attempting deletion
 	if (getNestedValue(obj, path) === undefined) {
 		return obj;
 	}
-	
+
 	const result = cloneContainer(obj);
 	const pathToParent = keys.slice(0, -1).join('.');
 	const finalKey = keys[keys.length - 1];
-	
+
 	if (pathToParent) {
 		// Navigate to parent and clone path
 		let current: any = result;
@@ -80,7 +80,7 @@ export function deleteNestedProperty<T>(obj: T, path: NestedPath): T {
 			current[key] = cloneContainer(current[key]);
 			current = current[key];
 		}
-		
+
 		// Remove the final property
 		removeValueAtKey(current, finalKey);
 	} else {
@@ -93,7 +93,7 @@ export function deleteNestedProperty<T>(obj: T, path: NestedPath): T {
 
 function cloneContainer<T>(obj: T): T {
 	if (Array.isArray(obj)) return [...obj] as T;
-	if (obj != null && typeof obj === 'object') return { ...obj as object } as T;
+	if (obj != null && typeof obj === 'object') return { ...(obj as object) } as T;
 	return obj;
 }
 
@@ -101,7 +101,7 @@ function traverseToKey(current: any, key: string): any {
 	if (Array.isArray(current) && isNumericKey(key)) {
 		const index = parseInt(key, 10);
 		extendArrayToIndex(current, index);
-		
+
 		if (!isObject(current[index])) {
 			current[index] = {};
 		} else {
@@ -125,7 +125,7 @@ function setValueAtKey(current: any, key: string, value: NestedValue): void {
 		current[index] = value;
 		return;
 	}
-	
+
 	current[key] = value;
 }
 
@@ -137,7 +137,7 @@ function removeValueAtKey(current: any, key: string): void {
 		}
 		return;
 	}
-	
+
 	if (isObject(current)) {
 		delete (current as Record<string, unknown>)[key];
 	}
@@ -165,31 +165,29 @@ function cleanEmptyContainers(obj: unknown): unknown {
 	if (obj === null || obj === undefined) {
 		return obj;
 	}
-	
+
 	if (Array.isArray(obj)) {
-		const cleaned = obj
-			.map(cleanEmptyContainers)
-			.filter(item => !isEmptyContainer(item));
-		
+		const cleaned = obj.map(cleanEmptyContainers).filter((item) => !isEmptyContainer(item));
+
 		return cleaned.length > 0 ? cleaned : undefined;
 	}
-	
+
 	if (typeof obj === 'object') {
 		const cleaned: Record<string, unknown> = {};
 		let hasValidProps = false;
-		
+
 		for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
 			const cleanedValue = cleanEmptyContainers(value);
-			
+
 			if (!isEmptyContainer(cleanedValue)) {
 				cleaned[key] = cleanedValue;
 				hasValidProps = true;
 			}
 		}
-		
+
 		return hasValidProps ? cleaned : undefined;
 	}
-	
+
 	return obj;
 }
 
