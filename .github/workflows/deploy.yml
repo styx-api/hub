@@ -40,6 +40,15 @@ jobs:
         with:
           path: 'build/'
 
+      - name: Deploy to Cloudflare Pages
+        id: cloudflare-deployment
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy build/ --project-name=hub --branch=main
+
+
   deploy:
     environment:
       name: github-pages
@@ -48,5 +57,5 @@ jobs:
     needs: build
     steps:
       - name: Deploy to GitHub Pages
-        id: deployment
+        id: github-deployment
         uses: actions/deploy-pages@v4
