@@ -2,6 +2,7 @@
 <script lang="ts">
 	import FieldRenderer from './FieldRenderer.svelte';
 	import { getSchemaDefaultValue } from '../../services/schema/defaultValue';
+	import { reconcileValueWithSchema } from '../../services/schema/reconcile';
 	import { isSchemaObject, type JSONSchema } from '$lib/services/schema/schema';
 	import type { SchemaPath } from '$lib/services/schema/schemaUtils';
 
@@ -27,9 +28,12 @@
 	// reset value when schema changes, but preserve existing non-empty values
 	$effect(() => {
 		if (schema && schema !== previousSchema) {
-			// Only reset if value doesn't have meaningful data
 			if (!hasNonEmptyValues(value)) {
 				value = getSchemaDefaultValue(schema) || {};
+			} else {
+				// Reconcile existing value against the new schema to fix type mismatches
+				// (e.g. when loading URL state from an older schema version)
+				value = reconcileValueWithSchema(value, schema);
 			}
 			previousSchema = schema;
 		}
@@ -55,7 +59,7 @@
 		// Navigate to the parent of the target
 		let current = updated;
 		for (let i = 0; i < path.length - 1; i++) {
-			if (!current[path[i]]) {
+			if (!current[path[i]] || typeof current[path[i]] !== 'object') {
 				current[path[i]] = {};
 			}
 			current = current[path[i]];

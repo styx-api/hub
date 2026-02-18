@@ -30,7 +30,7 @@
 			<p class="text-xs text-muted-foreground">{schema.description}</p>
 		{/if}
 	</div>
-	{#if schema.properties && value}
+	{#if schema.properties && value && typeof value === 'object'}
 		{#each Object.entries(schema.properties) as [key, propSchema]}
 			{#if key !== '@type' && isSchemaObject(propSchema)}
 				<FieldRenderer
