@@ -23,13 +23,17 @@
 		app?: string | null;
 		showAppCounts?: boolean;
 		compact?: boolean;
+		onPackageSelected?: (pkg: PackageInfo) => void;
+		onAppSelected?: (app: string) => void;
 	}
 
 	let {
-		package: selectedPackage = $bindable(null),
-		app: selectedApp = $bindable(null),
+		package: selectedPackage = null,
+		app: selectedApp = null,
 		showAppCounts = true,
-		compact = false
+		compact = false,
+		onPackageSelected,
+		onAppSelected
 	}: Props = $props();
 
 	let packages: PackageInfo[] = $state([]);
@@ -47,16 +51,6 @@
 	// Load packages on init
 	loadPackages();
 
-	// Clear app when package changes
-	let prevPackageName: string | undefined;
-	$effect(() => {
-		const currentName = selectedPackage?.package.name;
-		if (prevPackageName !== undefined && prevPackageName !== currentName) {
-			selectedApp = null;
-		}
-		prevPackageName = currentName;
-	});
-
 	async function loadPackages() {
 		try {
 			error = null;
@@ -68,13 +62,14 @@
 	}
 
 	function selectPackage(packageName: string) {
-		selectedPackage = packages.find((p) => p.package.name === packageName) ?? null;
+		const pkg = packages.find((p) => p.package.name === packageName);
+		if (pkg) onPackageSelected?.(pkg);
 		packagePopoverOpen = false;
 		tick().then(() => packageTriggerRef?.focus());
 	}
 
 	function selectApp(app: string) {
-		selectedApp = app;
+		onAppSelected?.(app);
 		appPopoverOpen = false;
 		tick().then(() => appTriggerRef?.focus());
 	}

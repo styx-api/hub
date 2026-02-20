@@ -14,17 +14,21 @@
 		onClearSelection: () => void;
 		onToggleTheme: () => void;
 		onToggleMobileSelector: () => void;
+		onPackageSelected: (pkg: PackageInfo) => void;
+		onAppSelected: (app: string) => void;
 	}
 
 	let {
-		selectedPackage = $bindable(),
-		selectedApp = $bindable(),
+		selectedPackage,
+		selectedApp,
 		index,
 		isDark,
 		showMobileSelector,
 		onClearSelection,
 		onToggleTheme,
-		onToggleMobileSelector
+		onToggleMobileSelector,
+		onPackageSelected,
+		onAppSelected
 	}: Props = $props();
 
 	// Easter egg state
@@ -140,7 +144,13 @@
 				<h3 class="text-sm font-medium">Select App</h3>
 				<Button variant="ghost" size="sm" onclick={onToggleMobileSelector}>×</Button>
 			</div>
-			<QuickSelector bind:package={selectedPackage} bind:app={selectedApp} compact={true} />
+			<QuickSelector
+				package={selectedPackage}
+				app={selectedApp}
+				compact={true}
+				{onPackageSelected}
+				{onAppSelected}
+			/>
 		</div>
 	{:else}
 		{@const title = selectedApp
@@ -173,7 +183,13 @@
 		{@render logoButton('lg')}
 
 		<div class="max-w-2xl flex-1">
-			<QuickSelector bind:package={selectedPackage} bind:app={selectedApp} compact={false} />
+			<QuickSelector
+				package={selectedPackage}
+				app={selectedApp}
+				compact={false}
+				{onPackageSelected}
+				{onAppSelected}
+			/>
 		</div>
 
 		<div class="flex shrink-0 items-center gap-3">

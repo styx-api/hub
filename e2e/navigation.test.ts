@@ -211,4 +211,117 @@ test.describe('Navigation', () => {
 		// Should not crash — gallery should be visible as fallback
 		await expect(packageCards(page).first()).toBeVisible({ timeout: 10000 });
 	});
+
+	test('QuickSelector package switch clears app selection from URL', async ({ page }) => {
+		// Start on an app page
+		await page.goto('/?package=ants&app=antsRegistration');
+		await waitForLoad(page);
+		await expect(page).toHaveURL(/[?&]app=antsRegistration/, { timeout: 10000 });
+
+		// Switch package via header QuickSelector
+		const packageCombobox = page.getByRole('combobox', { name: 'Select package' }).first();
+		await packageCombobox.click();
+		const packageInput = page.getByPlaceholder('Search packages...');
+		await packageInput.fill('dcm2niix');
+		const option = page.locator('[role="option"]').filter({ hasText: 'dcm2niix' }).first();
+		await expect(option).toBeVisible({ timeout: 5000 });
+		await option.click();
+
+		// URL should have the new package but no app param
+		await expect(page).toHaveURL(/[?&]package=dcm2niix/, { timeout: 10000 });
+		expect(page.url()).not.toMatch(/[?&]app=/);
+	});
+
+	test('QuickSelector app switch updates URL', async ({ page }) => {
+		// Start on a package details page (no app selected)
+		await page.goto('/?package=ants');
+		await waitForLoad(page);
+
+		// Select an app via the header QuickSelector
+		const appCombobox = page.getByRole('combobox', { name: 'Select app' }).first();
+		await expect(appCombobox).toBeVisible({ timeout: 10000 });
+		await appCombobox.click();
+		const appOption = page.locator('[role="option"]').first();
+		await expect(appOption).toBeVisible({ timeout: 5000 });
+		const appName = (await appOption.textContent())?.trim();
+		await appOption.click();
+
+		// URL should now include the app parameter
+		await expect(page).toHaveURL(/[?&]app=/, { timeout: 10000 });
+		if (appName) {
+			expect(page.url()).toContain(`app=${appName}`);
+		}
+	});
+
+	test('multi-step back/forward navigation across 3+ history entries', async ({ page }) => {
+		// Home → package → app: creates 3 history entries
+		await page.goto('/');
+		await waitForLoad(page);
+		const homeUrl = page.url();
+
+		// Step 1: select a package
+		await packageCards(page).first().click();
+		await expect(page).toHaveURL(/[?&]package=/, { timeout: 10000 });
+		const packageUrl = page.url();
+
+		// Step 2: select an app
+		const appCombobox = page.getByRole('combobox', { name: 'Select app' }).first();
+		await expect(appCombobox).toBeVisible({ timeout: 10000 });
+		await appCombobox.click();
+		const appOption = page.locator('[role="option"]').first();
+		await expect(appOption).toBeVisible({ timeout: 5000 });
+		await appOption.click();
+		await expect(page).toHaveURL(/[?&]app=/, { timeout: 10000 });
+		const appUrl = page.url();
+
+		// Back to package details
+		await page.goBack();
+		await expect(page).toHaveURL(packageUrl, { timeout: 10000 });
+
+		// Back to home
+		await page.goBack();
+		await expect(page).toHaveURL(homeUrl, { timeout: 10000 });
+		await expect(packageCards(page).first()).toBeVisible({ timeout: 10000 });
+
+		// Forward to package details
+		await page.goForward();
+		await expect(page).toHaveURL(packageUrl, { timeout: 10000 });
+		// Gallery should not be visible — we should see package details
+		await expect(packageCards(page).first()).toBeHidden({ timeout: 10000 });
+
+		// Forward to app page
+		await page.goForward();
+		await expect(page).toHaveURL(appUrl, { timeout: 10000 });
+		await expect(page.getByRole('heading', { name: 'Results' })).toBeVisible({ timeout: 15000 });
+
+		// Back to package details again (verify repeated traversal works)
+		await page.goBack();
+		await expect(page).toHaveURL(packageUrl, { timeout: 10000 });
+	});
+
+	test('config URL → switch package → back restores config state', async ({ page }) => {
+		// Navigate to an app with a config in the URL
+		// Use a simple base64-encoded config: {"dimensionality": 3}
+		const config = btoa(JSON.stringify({ dimensionality: 3 }));
+		await page.goto(`/?package=ants&app=antsRegistration&config=${config}`);
+		await waitForLoad(page);
+		await expect(page.getByRole('heading', { name: 'Results' })).toBeVisible({ timeout: 15000 });
+
+		// Switch package via header
+		const packageCombobox = page.getByRole('combobox', { name: 'Select package' }).first();
+		await packageCombobox.click();
+		const packageInput = page.getByPlaceholder('Search packages...');
+		await packageInput.fill('dcm2niix');
+		const option = page.locator('[role="option"]').filter({ hasText: 'dcm2niix' }).first();
+		await expect(option).toBeVisible({ timeout: 5000 });
+		await option.click();
+
+		// URL should now be dcm2niix (no app)
+		await expect(page).toHaveURL(/[?&]package=dcm2niix/, { timeout: 10000 });
+
+		// Go back — should restore to the ants app page
+		await page.goBack();
+		await expect(page).toHaveURL(/[?&]package=ants/, { timeout: 10000 });
+		await expect(page).toHaveURL(/[?&]app=antsRegistration/, { timeout: 10000 });
+	});
 });
