@@ -4,6 +4,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Check, Copy } from '@lucide/svelte';
 	import { copyToClipboard } from '$lib/utils/clipboard';
+	import { toast } from 'svelte-sonner';
 	import type { BundledLanguage, BundledTheme } from 'shiki';
 	import { getShikiHighlighter } from '$lib/services/highlighter';
 
@@ -130,6 +131,7 @@
 			}, 2000);
 		} catch (err) {
 			console.error('Failed to copy code:', err);
+			toast.error('Failed to copy to clipboard');
 		}
 	}
 </script>

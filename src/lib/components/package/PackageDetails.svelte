@@ -15,6 +15,8 @@
 		Github
 	} from '@lucide/svelte';
 	import { cn } from '$lib/utils.js';
+	import { copyToClipboard } from '$lib/utils/clipboard';
+	import { toast } from 'svelte-sonner';
 	import { type PackageInfo } from '$lib/services/catalog';
 	import PackageIcon from './PackageIcon.svelte';
 	import { github, openExternal } from '$lib/utils/github';
@@ -65,11 +67,12 @@
 		if (!container) return;
 
 		try {
-			await navigator.clipboard.writeText(container);
+			await copyToClipboard(container);
 			copied = true;
 			setTimeout(() => (copied = false), 2000);
 		} catch (err) {
 			console.error('Failed to copy:', err);
+			toast.error('Failed to copy to clipboard');
 		}
 	}
 

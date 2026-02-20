@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { cn } from '$lib/utils';
 	import { copyToClipboard } from '$lib/utils/clipboard';
+	import { toast } from 'svelte-sonner';
 
 	interface Props {
 		text: string;
@@ -41,6 +42,7 @@
 			}, 2000);
 		} catch (err) {
 			console.error('Failed to copy to clipboard:', err);
+			toast.error('Failed to copy to clipboard');
 		}
 	}
 
