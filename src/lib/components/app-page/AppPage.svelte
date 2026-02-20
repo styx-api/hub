@@ -59,37 +59,55 @@
 					: ['# No command generated']
 	);
 
-	const outputFiles = $derived.by(() => {
+	interface OutputEntry {
+		keyPath: (string | number)[];
+		filePath: string;
+		pythonAccessor: string;
+		title: string | null;
+		description: string | null;
+		isRoot: boolean;
+	}
+
+	function buildPythonAccessor(keyPath: (string | number)[]): string {
+		return (
+			'result.' +
+			keyPath
+				.map((k) => (typeof k === 'number' ? `[${k}]` : k))
+				.join('.')
+				.replace(/\.\[/g, '[')
+		);
+	}
+
+	const outputEntries = $derived.by((): OutputEntry[] => {
 		if (!executionResult?.success || executedForApp !== app) return [];
 
-		const results: Array<{
-			path: string;
-			title: string;
-			description: string;
-			label: string;
-		}> = [];
+		const results: OutputEntry[] = [];
 
-		function processValue(value: unknown, keyPath: (string | number)[]) {
+		function processValue(value: unknown, keyPath: (string | number)[], isRoot: boolean) {
 			if (typeof value === 'string') {
 				const fieldSchema = outputSchema && getSchemaAtPath(outputSchema, keyPath);
 				const metadata = fieldSchema ? getSchemaMetadata(fieldSchema) : null;
 				results.push({
-					path: '/outputs/' + value,
-					title: metadata?.title ?? 'Title',
-					description: metadata?.description ?? 'Description',
-					label: keyPath.join('.')
+					keyPath,
+					filePath: value,
+					pythonAccessor: buildPythonAccessor(keyPath),
+					title: metadata?.title ?? null,
+					description: metadata?.description ?? null,
+					isRoot
 				});
 			} else if (Array.isArray(value)) {
-				value.forEach((item, idx) => processValue(item, [...keyPath, idx]));
+				value.forEach((item, idx) => processValue(item, [...keyPath, idx], false));
 			} else if (value && typeof value === 'object') {
 				for (const [key, nested] of Object.entries(value)) {
-					processValue(nested, [...keyPath, key]);
+					processValue(nested, [...keyPath, key], false);
 				}
 			}
 		}
 
-		for (const [key, value] of Object.entries(executionResult.outputObject)) {
-			processValue(value, [key]);
+		const entries = Object.entries(executionResult.outputObject);
+		for (const [key, value] of entries) {
+			const isRoot = key === 'root';
+			processValue(value, [key], isRoot);
 		}
 
 		return results;
@@ -280,7 +298,7 @@
 					<TabsContent value="results" class="mt-6">
 						<ResultsPanel
 							{commandArgs}
-							{outputFiles}
+							{outputEntries}
 							descriptorConfig={config}
 							{niwrapError}
 							{hasConfig}
@@ -323,7 +341,7 @@
 				<div class="space-y-6 py-6 lg:py-8">
 					<ResultsPanel
 						{commandArgs}
-						{outputFiles}
+						{outputEntries}
 						descriptorConfig={config}
 						{niwrapError}
 						{hasConfig}

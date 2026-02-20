@@ -11,11 +11,11 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import Terminal from './Terminal.svelte';
-	import FileTreeView from './FileTreeView.svelte';
+	import OutputList from './OutputList.svelte';
 	import CodeBlock from './CodeBlock.svelte';
 	import {
 		Terminal as TerminalIcon,
-		FolderTree,
+		FileOutput,
 		TriangleAlert,
 		Code,
 		ExternalLink,
@@ -23,16 +23,18 @@
 	} from '@lucide/svelte';
 	import { createPythonStaticCallFromConfig } from '$lib/services/execution/pythonCodeGen';
 
-	interface OutputFile {
-		path: string;
-		title: string;
-		description: string;
-		label: string;
+	interface OutputEntry {
+		keyPath: (string | number)[];
+		filePath: string;
+		pythonAccessor: string;
+		title: string | null;
+		description: string | null;
+		isRoot: boolean;
 	}
 
 	interface Props {
 		commandArgs: string[];
-		outputFiles: OutputFile[];
+		outputEntries: OutputEntry[];
 		descriptorConfig: object;
 		niwrapError: string | null;
 		hasConfig: boolean;
@@ -43,7 +45,7 @@
 
 	let {
 		commandArgs,
-		outputFiles,
+		outputEntries,
 		descriptorConfig,
 		niwrapError,
 		hasConfig,
@@ -52,7 +54,8 @@
 		activeTab = $bindable('command')
 	}: Props = $props();
 
-	const hasOutputs = $derived(outputFiles.length > 0);
+	const fileCount = $derived(outputEntries.filter((e) => !e.isRoot).length);
+	const hasOutputs = $derived(outputEntries.length > 0);
 
 	let pythonCode = $state<string | null>(null);
 	let pythonCodeError = $state<Error | null>(null);
@@ -92,11 +95,11 @@
 				<span class:hidden={isMobile} class="xl:inline">Command</span>
 			</TabsTrigger>
 			<TabsTrigger value="outputs" disabled={!hasOutputs} class="flex items-center gap-2">
-				<FolderTree class="h-3 w-3" />
+				<FileOutput class="h-3 w-3" />
 				<span class:hidden={isMobile} class="xl:inline">Outputs</span>
-				{#if hasOutputs}
+				{#if fileCount > 0}
 					<Badge variant="secondary" class="ml-1 h-4 px-1 text-xs">
-						{outputFiles.length}
+						{fileCount}
 					</Badge>
 				{/if}
 			</TabsTrigger>
@@ -163,9 +166,7 @@
 					{/if}
 				</CardHeader>
 				<CardContent>
-					<div class="rounded-lg bg-muted/50 p-4">
-						<FileTreeView files={outputFiles} />
-					</div>
+					<OutputList entries={outputEntries} />
 				</CardContent>
 			</Card>
 		</TabsContent>
