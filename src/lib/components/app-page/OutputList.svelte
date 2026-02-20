@@ -57,9 +57,7 @@
 
 		<div class="space-y-1">
 			{#each fileEntries as entry}
-				<div
-					class="group rounded-md px-3 py-2 transition-colors hover:bg-accent/50"
-				>
+				<div class="group rounded-md px-3 py-2 transition-colors hover:bg-accent/50">
 					<div class="flex items-center justify-between gap-2">
 						<div class="flex min-w-0 items-center gap-2">
 							<FileText class="h-4 w-4 flex-shrink-0 text-muted-foreground" />

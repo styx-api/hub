@@ -41,6 +41,9 @@
 	// Track which app the current execution belongs to
 	let executedForApp = $state<string | null>(null);
 
+	// Generation counter to discard stale execution results
+	let executionGeneration = 0;
+
 	// Derived
 	const hasDescriptor = $derived(appData?.source != null);
 
@@ -154,10 +157,12 @@
 			return;
 		}
 
-		// Execute and tag result with current app
+		// Increment generation so any in-flight execution is discarded
+		const gen = ++executionGeneration;
+
 		niwrapExecute(currentConfig).then((result) => {
-			// Only update if we're still on the same app
-			if (app === currentApp) {
+			// Only apply if this is still the latest execution
+			if (gen === executionGeneration) {
 				executionResult = result;
 				executedForApp = currentApp;
 			}
@@ -173,6 +178,7 @@
 		outputSchema = null;
 		executionResult = null;
 		executedForApp = null;
+		executionGeneration++;
 
 		try {
 			appData = (await catalog.getApp(packageName, appName)) ?? null;

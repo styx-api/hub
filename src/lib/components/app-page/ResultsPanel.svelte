@@ -134,7 +134,6 @@
 									: 'Copy and run this command in your terminal'}
 							</CardDescription>
 						</div>
-						<div class="flex gap-2"></div>
 					</CardHeader>
 					<CardContent>
 						<Terminal args={commandArgs} prompt="$ " showCursor={true} class="font-mono text-sm" />

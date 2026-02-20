@@ -117,7 +117,7 @@ function generateForType(type: string, schema: JSONSchema, visited: Set<JSONSche
 		case 'integer':
 			return isIntegerSchema(schema) ? generateNumber(schema, true) : 0;
 		case 'boolean':
-			return isBooleanSchema(schema) ? false : false;
+			return false;
 		default:
 			return null;
 	}
