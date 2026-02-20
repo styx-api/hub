@@ -11,6 +11,8 @@
 	import { URLS } from '$lib/constants/urls';
 	import { Button } from '$lib/components/ui/button';
 	import { compressString } from '$lib/utils/compression';
+	import { copyToClipboard } from '$lib/utils/clipboard';
+	import { toast } from 'svelte-sonner';
 
 	interface Props {
 		package: PackageInfo;
@@ -207,10 +209,11 @@
 	async function handleShare() {
 		try {
 			const url = await createShareableUrl();
-			await navigator.clipboard.writeText(url);
-			// TODO: toast notification
+			await copyToClipboard(url);
+			toast.success('Link copied to clipboard!');
 		} catch (err) {
 			console.error('Failed to copy to clipboard:', err);
+			toast.error('Failed to copy link to clipboard');
 		}
 	}
 </script>

@@ -3,6 +3,7 @@
 	import { cn } from '$lib/utils';
 	import { Button } from '$lib/components/ui/button';
 	import { Check, Copy } from '@lucide/svelte';
+	import { copyToClipboard } from '$lib/utils/clipboard';
 	import type { BundledLanguage, BundledTheme } from 'shiki';
 	import { getShikiHighlighter } from '$lib/services/highlighter';
 
@@ -120,9 +121,9 @@
 		}
 	});
 
-	async function copyToClipboard() {
+	async function handleCopy() {
 		try {
-			await navigator.clipboard.writeText(code);
+			await copyToClipboard(code);
 			copied = true;
 			setTimeout(() => {
 				copied = false;
@@ -141,7 +142,7 @@
 				<Button
 					variant="ghost"
 					size="sm"
-					onclick={copyToClipboard}
+					onclick={handleCopy}
 					class="h-6 w-6 cursor-pointer p-0"
 					aria-label="Copy code"
 				>
@@ -158,7 +159,7 @@
 			<Button
 				variant="ghost"
 				size="sm"
-				onclick={copyToClipboard}
+				onclick={handleCopy}
 				class="h-6 w-6 cursor-pointer p-0 opacity-70 transition-opacity hover:opacity-100"
 				aria-label="Copy code"
 			>

@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { ChevronRight, ChevronDown, FileText, FolderOpen, Copy } from '@lucide/svelte';
 	import { cn } from '$lib/utils';
+	import { copyToClipboard } from '$lib/utils/clipboard';
+	import { toast } from 'svelte-sonner';
 
 	// Types
 	interface FileData {
@@ -91,42 +93,14 @@
 		event.stopPropagation();
 		event.preventDefault();
 
-		// Try modern clipboard API first
-		if (navigator.clipboard && window.isSecureContext) {
-			navigator.clipboard
-				.writeText(label)
-				.then(() => {
-					console.log('Copied to clipboard:', label);
-				})
-				.catch((err) => {
-					console.error('Failed to copy:', err);
-					// Fallback to older method
-					fallbackCopy(label);
-				});
-		} else {
-			// Fallback for older browsers or non-secure contexts
-			fallbackCopy(label);
-		}
-	}
-
-	function fallbackCopy(text: string) {
-		const textArea = document.createElement('textarea');
-		textArea.value = text;
-		textArea.style.position = 'fixed';
-		textArea.style.left = '-999999px';
-		textArea.style.top = '-999999px';
-		document.body.appendChild(textArea);
-		textArea.focus();
-		textArea.select();
-
-		try {
-			document.execCommand('copy');
-			console.log('Copied using fallback:', text);
-		} catch (err) {
-			console.error('Fallback copy failed:', err);
-		}
-
-		document.body.removeChild(textArea);
+		copyToClipboard(label)
+			.then(() => {
+				toast.success('Copied to clipboard!');
+			})
+			.catch((err) => {
+				console.error('Failed to copy:', err);
+				toast.error('Failed to copy to clipboard');
+			});
 	}
 </script>
 

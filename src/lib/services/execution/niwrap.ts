@@ -54,7 +54,6 @@ async function loadNiwrap(): Promise<any> {
 export async function preloadNiwrap(): Promise<void> {
 	try {
 		await loadNiwrap();
-		console.log('NiWrap module preloaded successfully');
 	} catch (error) {
 		console.error('Failed to preload NiWrap module:', error);
 	}
@@ -115,7 +114,6 @@ export async function niwrapExecute(config: object): Promise<
 		const errorString = error instanceof Error ? error.message : String(error);
 		console.error(error);
 		console.error('NiWrap execution failed:', errorString);
-		console.log('niwrap params was:', config);
 
 		return {
 			success: false,

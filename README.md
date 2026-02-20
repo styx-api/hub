@@ -1,38 +1,79 @@
-# sv
+# NiWrap Hub
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+An interactive web playground for browsing, configuring, and generating commands for neuroimaging tools from the [NiWrap/Styx](https://github.com/styx-api/niwrap) catalog. Users select packages, fill out dynamic forms built from JSON schemas, and get shareable command-line invocations.
 
-## Creating a project
+**Live at: [niwrap.dev](https://niwrap.dev)**
 
-If you're seeing this, you've probably already done this step. Congrats!
+## Tech Stack
 
-```sh
-# create a new project in the current directory
-npx sv create
+- **Framework:** SvelteKit 2 (Svelte 5) with TypeScript
+- **Build:** Vite, `@sveltejs/adapter-static` (static site)
+- **UI:** shadcn-svelte (Bits UI), Tailwind CSS 4, Lucide icons
+- **Testing:** Vitest (unit), Playwright (E2E)
 
-# create a new project in my-app
-npx sv create my-app
+## Getting Started
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) 22+
+- npm
+
+### Install
+
+```bash
+npm install
 ```
 
-## Developing
+### Development
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
+```bash
 npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
 ```
 
-## Building
+## Scripts
 
-To create a production version of your app:
+| Command              | Description                                 |
+| -------------------- | ------------------------------------------- |
+| `npm run dev`        | Local dev server                            |
+| `npm run build`      | Production build                            |
+| `npm run preview`    | Preview production build                    |
+| `npm run check`      | Type-check (svelte-kit sync + svelte-check) |
+| `npm run lint`       | Prettier + ESLint                           |
+| `npm run format`     | Auto-format with Prettier                   |
+| `npm run test`       | Unit tests (Vitest)                         |
+| `npm run test:watch` | Unit tests (watch mode)                     |
+| `npm run test:e2e`   | E2E tests (Playwright)                      |
+| `npm run test:all`   | Unit + E2E tests                            |
 
-```sh
-npm run build
+## Project Structure
+
+```
+src/
+├── routes/              # SvelteKit pages (+page.svelte, +layout.svelte)
+├── lib/
+│   ├── components/
+│   │   ├── app-page/    # Main app UI (panels, terminal, code block)
+│   │   ├── layout/      # Header, Footer
+│   │   ├── package/     # Package selection gallery
+│   │   ├── schema-form/ # Dynamic form generation from JSON schemas
+│   │   ├── shared/      # QuickSelector and shared components
+│   │   └── ui/          # shadcn-svelte primitives (Button, Input, Dialog…)
+│   ├── services/
+│   │   ├── catalog/     # Fetches package catalog from niwrap.dev
+│   │   ├── execution/   # Command building, syntax highlighting (Shiki)
+│   │   ├── schema/      # JSON schema utilities (defaults, reconciliation, validation)
+│   │   └── urlState.ts  # Serialize/deserialize config to URL params
+│   ├── utils/           # Compression, GitHub helpers, general utils
+│   └── constants/       # URLs and external links
+e2e/                     # Playwright E2E tests
+static/                  # Static assets (robots.txt)
 ```
 
-You can preview the production build with `npm run preview`.
+## Deployment
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+The site is deployed via CI/CD on push to `main`:
+
+- **Cloudflare Pages** — primary hosting at [niwrap.dev](https://niwrap.dev)
+- **GitHub Pages** — secondary mirror
+
+CI runs lint, type-check, unit tests, and E2E tests before deploying.

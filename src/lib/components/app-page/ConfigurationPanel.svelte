@@ -18,7 +18,7 @@
 		descriptorConfig: object;
 		isLoading: boolean;
 		error: string | null;
-		githubUrls: { schemaInput: string; descriptor: string };
+		githubUrls: { descriptor: string };
 		isMobile?: boolean;
 		onRetry: () => void;
 		onShare?: () => void;
