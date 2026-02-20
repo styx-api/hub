@@ -20,6 +20,8 @@
 	// UI state
 	let showMobileSelector = $state(false);
 	let isInitializing = $state(true);
+	// Plain (non-reactive) flag to prevent URL update effect from firing during popstate
+	let isRestoringFromPopstate = false;
 
 	// Selection state
 	let selectedPackage: PackageInfo | null = $state(null);
@@ -81,12 +83,21 @@
 		}
 	}
 
+	// Clear initialConfig when selection changes (covers binding-based changes from QuickSelector)
+	$effect(() => {
+		void selectedPackage;
+		void selectedApp;
+		if (!isInitializing && !isRestoringFromPopstate) {
+			initialConfig = null;
+		}
+	});
+
 	// Update URL when selection changes
 	$effect(() => {
 		void selectedPackage;
 		void selectedApp;
 
-		if (browser && catalog.index && !isInitializing) {
+		if (browser && catalog.index && !isInitializing && !isRestoringFromPopstate) {
 			updateUrl(selectedPackage?.package.name ?? null, selectedApp);
 		}
 	});
@@ -96,10 +107,12 @@
 		if (!browser || !catalog.index) return;
 
 		const handlePopstate = async () => {
+			isRestoringFromPopstate = true;
 			selectedPackage = null;
 			selectedApp = null;
 			initialConfig = null;
 			await loadSelectionFromUrl(catalog.index!.packages);
+			isRestoringFromPopstate = false;
 		};
 
 		window.addEventListener('popstate', handlePopstate);
