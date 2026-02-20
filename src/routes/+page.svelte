@@ -157,7 +157,6 @@
 	<Header
 		{selectedPackage}
 		{selectedApp}
-		index={catalog.index}
 		isDark={theme.isDark}
 		onClearSelection={clearSelection}
 		onToggleTheme={() => theme.toggle()}

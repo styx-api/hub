@@ -83,19 +83,18 @@ test.describe('Navigation', () => {
 		// Wait for the desktop "Results" heading (only rendered when !isMobile)
 		await expect(page.getByRole('heading', { name: 'Results' })).toBeVisible({ timeout: 15000 });
 
-		// Switch package via header QuickSelector
-		const packageCombobox = page.getByRole('combobox', { name: 'Select package' }).first();
-		await packageCombobox.click();
+		// Switch package via unified header QuickSelector
+		const quickSelector = page.getByRole('combobox', { name: 'Search packages and apps' });
+		await quickSelector.click();
 
 		// Type to filter and select dcm2niix
-		const packageInput = page.getByPlaceholder('Search packages...');
-		await packageInput.fill('dcm2niix');
+		await page.getByPlaceholder('Search...').fill('dcm2niix');
 		const dcm2niixOption = page.locator('[role="option"]').filter({ hasText: 'dcm2niix' }).first();
 		await expect(dcm2niixOption).toBeVisible({ timeout: 5000 });
 		await dcm2niixOption.click();
 
-		// Select an app from dcm2niix
-		const appCombobox = page.getByRole('combobox', { name: 'Select app' }).first();
+		// Now on dcm2niix package details — select an app via the PackageDetails combobox
+		const appCombobox = page.getByRole('combobox', { name: 'Select app' });
 		await expect(appCombobox).toBeVisible({ timeout: 10000 });
 		await appCombobox.click();
 		const appOption = page.locator('[role="option"]').first();
@@ -218,11 +217,10 @@ test.describe('Navigation', () => {
 		await waitForLoad(page);
 		await expect(page).toHaveURL(/[?&]app=antsRegistration/, { timeout: 10000 });
 
-		// Switch package via header QuickSelector
-		const packageCombobox = page.getByRole('combobox', { name: 'Select package' }).first();
-		await packageCombobox.click();
-		const packageInput = page.getByPlaceholder('Search packages...');
-		await packageInput.fill('dcm2niix');
+		// Switch package via unified header QuickSelector
+		const quickSelector = page.getByRole('combobox', { name: 'Search packages and apps' });
+		await quickSelector.click();
+		await page.getByPlaceholder('Search...').fill('dcm2niix');
 		const option = page.locator('[role="option"]').filter({ hasText: 'dcm2niix' }).first();
 		await expect(option).toBeVisible({ timeout: 5000 });
 		await option.click();
@@ -237,13 +235,18 @@ test.describe('Navigation', () => {
 		await page.goto('/?package=ants');
 		await waitForLoad(page);
 
-		// Select an app via the header QuickSelector
-		const appCombobox = page.getByRole('combobox', { name: 'Select app' }).first();
-		await expect(appCombobox).toBeVisible({ timeout: 10000 });
-		await appCombobox.click();
-		const appOption = page.locator('[role="option"]').first();
+		// Select an app via the unified header QuickSelector
+		// When opened with a package selected, the dropdown shows the package's apps
+		const quickSelector = page.getByRole('combobox', { name: 'Search packages and apps' });
+		await quickSelector.click();
+
+		// App items have font-mono class; pick the first app (skip package items)
+		const appOption = page
+			.locator('[role="option"]')
+			.filter({ has: page.locator('.font-mono') })
+			.first();
 		await expect(appOption).toBeVisible({ timeout: 5000 });
-		const appName = (await appOption.textContent())?.trim();
+		const appName = (await appOption.locator('.font-mono').textContent())?.trim();
 		await appOption.click();
 
 		// URL should now include the app parameter
@@ -307,11 +310,10 @@ test.describe('Navigation', () => {
 		await waitForLoad(page);
 		await expect(page.getByRole('heading', { name: 'Results' })).toBeVisible({ timeout: 15000 });
 
-		// Switch package via header
-		const packageCombobox = page.getByRole('combobox', { name: 'Select package' }).first();
-		await packageCombobox.click();
-		const packageInput = page.getByPlaceholder('Search packages...');
-		await packageInput.fill('dcm2niix');
+		// Switch package via unified header QuickSelector
+		const quickSelector = page.getByRole('combobox', { name: 'Search packages and apps' });
+		await quickSelector.click();
+		await page.getByPlaceholder('Search...').fill('dcm2niix');
 		const option = page.locator('[role="option"]').filter({ hasText: 'dcm2niix' }).first();
 		await expect(option).toBeVisible({ timeout: 5000 });
 		await option.click();

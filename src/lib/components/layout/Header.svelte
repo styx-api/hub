@@ -3,13 +3,12 @@
 	import { Sun, Moon, Star } from '@lucide/svelte';
 	import { QuickSelector } from '$lib/components/shared';
 	import logo from '$lib/assets/logo.svg';
-	import type { PackageInfo, CatalogIndex } from '$lib/services/catalog';
+	import type { PackageInfo } from '$lib/services/catalog';
 	import { URLS } from '$lib/constants/urls';
 
 	interface Props {
 		selectedPackage: PackageInfo | null;
 		selectedApp: string | null;
-		index: CatalogIndex | null;
 		isDark: boolean;
 		onClearSelection: () => void;
 		onToggleTheme: () => void;
@@ -20,7 +19,6 @@
 	let {
 		selectedPackage,
 		selectedApp,
-		index,
 		isDark,
 		onClearSelection,
 		onToggleTheme,

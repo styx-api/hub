@@ -49,9 +49,7 @@
 
 	// Build flat app index once packages load
 	const allApps = $derived<AppEntry[]>(
-		packages.flatMap((pkg) =>
-			(pkg.version.apps ?? []).map((app) => ({ name: app, package: pkg }))
-		)
+		packages.flatMap((pkg) => (pkg.version.apps ?? []).map((app) => ({ name: app, package: pkg })))
 	);
 
 	const searchTerms = $derived(
@@ -74,13 +72,7 @@
 		searchTerms.length === 0
 			? packages.slice(0, MAX_PACKAGES)
 			: packages
-					.filter((p) =>
-						matchesAllTerms(
-							searchTerms,
-							p.package.docs?.title ?? '',
-							p.package.name
-						)
-					)
+					.filter((p) => matchesAllTerms(searchTerms, p.package.docs?.title ?? '', p.package.name))
 					.slice(0, MAX_PACKAGES)
 	);
 
@@ -100,9 +92,7 @@
 
 	// When a package is selected and no search, show its apps (unsliced)
 	const selectedPackageApps = $derived(
-		searchTerms.length === 0 && selectedPackage
-			? (selectedPackage.version.apps ?? [])
-			: []
+		searchTerms.length === 0 && selectedPackage ? (selectedPackage.version.apps ?? []) : []
 	);
 
 	// The app list currently being displayed (whichever is active)
@@ -116,9 +106,7 @@
 	);
 
 	const packageLabel = $derived(
-		selectedPackage
-			? (selectedPackage.package.docs?.title ?? selectedPackage.package.name)
-			: null
+		selectedPackage ? (selectedPackage.package.docs?.title ?? selectedPackage.package.name) : null
 	);
 	const hasSelection = $derived(!!selectedPackage);
 
@@ -252,7 +240,10 @@
 									>
 										<div class="flex min-w-0 flex-1 items-center">
 											<Check
-												class={cn('mr-2 h-3.5 w-3.5 text-primary', !isSelected && 'text-transparent')}
+												class={cn(
+													'mr-2 h-3.5 w-3.5 text-primary',
+													!isSelected && 'text-transparent'
+												)}
 											/>
 											<PackageIcon class="mr-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
 											<span class="truncate text-sm font-medium">
@@ -280,7 +271,10 @@
 									>
 										<div class="flex min-w-0 flex-1 items-center">
 											<Check
-												class={cn('mr-2 h-3.5 w-3.5 text-primary', !isSelected && 'text-transparent')}
+												class={cn(
+													'mr-2 h-3.5 w-3.5 text-primary',
+													!isSelected && 'text-transparent'
+												)}
 											/>
 											<Terminal class="mr-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
 											<span class="truncate font-mono text-sm">{entry.name}</span>
@@ -309,7 +303,10 @@
 									>
 										<div class="flex min-w-0 flex-1 items-center">
 											<Check
-												class={cn('mr-2 h-3.5 w-3.5 text-primary', !isSelected && 'text-transparent')}
+												class={cn(
+													'mr-2 h-3.5 w-3.5 text-primary',
+													!isSelected && 'text-transparent'
+												)}
 											/>
 											<Terminal class="mr-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
 											<span class="truncate font-mono text-sm">{appName}</span>

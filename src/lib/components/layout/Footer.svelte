@@ -16,7 +16,9 @@
 		<nav class="flex flex-wrap items-center justify-center gap-y-1">
 			{#each links as { label, href }, i}
 				{#if i > 0}
-					<span class="px-1 text-xs leading-none text-muted-foreground/30" aria-hidden="true">&middot;</span>
+					<span class="px-1 text-xs leading-none text-muted-foreground/30" aria-hidden="true"
+						>&middot;</span
+					>
 				{/if}
 				<a
 					{href}
@@ -28,8 +30,6 @@
 				</a>
 			{/each}
 		</nav>
-		<p class="text-[11px] text-muted-foreground/50">
-			Open source neuroimaging tool wrappers
-		</p>
+		<p class="text-[11px] text-muted-foreground/50">Open source neuroimaging tool wrappers</p>
 	</div>
 </footer>
