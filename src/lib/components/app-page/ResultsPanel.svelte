@@ -56,25 +56,17 @@
 
 	let pythonCode = $state<string | null>(null);
 	let pythonCodeError = $state<Error | null>(null);
-	let isLoadingPython = $state<boolean>(false);
-
 	$effect(() => {
-		// Don't clear existing code immediately - just mark as loading
-		isLoadingPython = true;
 		pythonCodeError = null;
 
 		createPythonStaticCallFromConfig(descriptorConfig)
 			.then((code) => {
 				pythonCode = code;
-				isLoadingPython = false;
 			})
 			.catch((error) => {
 				pythonCodeError = error;
-				isLoadingPython = false;
 			});
 	});
-
-	// let command = $derived<string>(quoteCommandLineArgs(commandArgs));
 
 	function openGithubFile(url: string) {
 		window.open(url, '_blank', 'noopener,noreferrer');

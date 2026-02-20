@@ -1,4 +1,3 @@
-<!-- fields/NumberField.svelte -->
 <script lang="ts">
 	import { Input } from '$lib/components/ui/input';
 	import * as Select from '$lib/components/ui/select';
@@ -24,7 +23,7 @@
 			numberSchema = schema;
 			isInteger = isInt;
 			hasEnum = Array.isArray(numberSchema.enum) && numberSchema.enum.length > 0;
-			enumOptions = hasEnum ? (simpleClone(numberSchema.enum!!) as number[]) : [];
+			enumOptions = hasEnum ? (simpleClone(numberSchema.enum!) as number[]) : [];
 		}
 	});
 

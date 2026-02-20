@@ -1,22 +1,12 @@
-<!-- fields/ObjectField.svelte -->
 <script lang="ts">
-	// import { Badge } from '$lib/components/ui/badge';
 	import FieldRenderer from '../FieldRenderer.svelte';
 	import type { FieldProps } from '../types';
-	import { isObjectSchema, isSchemaObject, type JSONSchema } from '$lib/services/schema/schema';
+	import { isSchemaObject } from '$lib/services/schema/schema';
 	import { getFieldLabel } from '../utils';
 
-	let { schema, value, path, required, onUpdate }: FieldProps = $props();
-
-	let objectSchema: JSONSchema.Object = $state({});
+	let { schema, value, path, onUpdate }: FieldProps = $props();
 
 	let fieldName: string = $state('');
-
-	$effect(() => {
-		if (isObjectSchema(schema)) {
-			objectSchema = schema;
-		}
-	});
 
 	$effect(() => {
 		fieldName = getFieldLabel(path);

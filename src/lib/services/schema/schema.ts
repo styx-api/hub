@@ -1,10 +1,6 @@
 import type { JSONSchema } from 'json-schema-typed/draft-2020-12';
 export type { JSONSchema };
 
-// function equalsString<T extends string>(obj: unknown, s: T): obj is T {
-//   return typeof obj === 'string' && obj === s;
-// }
-
 // Base type guard to check if it's the object form
 export function isSchemaObject(obj: JSONSchema): obj is JSONSchema.Interface {
 	return typeof obj === 'object' && obj !== null;

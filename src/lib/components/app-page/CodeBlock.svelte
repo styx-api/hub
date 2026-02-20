@@ -1,4 +1,3 @@
-<!-- CodeBlock.svelte -->
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { cn } from '$lib/utils';
@@ -115,7 +114,7 @@
 
 	// Re-highlight when dependencies change
 	$effect(() => {
-		const theme = currentTheme;
+		void currentTheme;
 		if (!isLoading) {
 			highlightCode();
 		}
@@ -184,6 +183,7 @@
 			<pre class="overflow-x-auto p-4 text-sm"><code>{code}</code></pre>
 		{:else}
 			<div class="overflow-x-auto">
+				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 				{@html highlightedCode}
 			</div>
 		{/if}

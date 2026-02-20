@@ -1,4 +1,3 @@
-<!-- fields/StringField.svelte -->
 <script lang="ts">
 	import { Input } from '$lib/components/ui/input';
 	import * as Select from '$lib/components/ui/select';
@@ -23,7 +22,7 @@
 		if (isStringSchema(schema)) {
 			stringSchema = schema;
 			hasEnum = Array.isArray(stringSchema.enum) && stringSchema.enum.length > 0;
-			enumOptions = hasEnum ? (simpleClone(stringSchema.enum!!) as string[]) : [];
+			enumOptions = hasEnum ? (simpleClone(stringSchema.enum!) as string[]) : [];
 			isFileType = (schema as any)?.['x-styx-type'] === 'file';
 		}
 	});

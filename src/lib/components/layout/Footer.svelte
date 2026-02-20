@@ -1,4 +1,3 @@
-<!-- Footer.svelte -->
 <script lang="ts">
 	import type { CatalogIndex } from '$lib/services/catalog';
 	import { URLS } from '$lib/constants/urls';
@@ -67,8 +66,8 @@
 			class="flex flex-col items-center justify-between gap-2 text-xs text-muted-foreground sm:flex-row"
 		>
 			<p>
-				© 2025 NiWrap Hub.{#if index?.project.docs?.description}{' '}{index.project.docs
-						.description}{/if}
+				© 2025 NiWrap Hub.{#if index?.project.docs?.description}
+					{index.project.docs.description}{/if}
 			</p>
 			{#if index}
 				<p>NiWrap v{index.project.version}</p>

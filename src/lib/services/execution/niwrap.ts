@@ -22,6 +22,7 @@ async function loadNiwrap(): Promise<any> {
 		try {
 			// Try ESM first (preferred for modern browsers)
 			try {
+				// @ts-expect-error Dynamic URL import has no type declarations
 				const module = await import('https://niwrap.dev/niwrap/js/index.esm.js');
 				niwrapModule = module;
 				return niwrapModule;
@@ -29,6 +30,7 @@ async function loadNiwrap(): Promise<any> {
 				console.warn('Failed to load ESM module, falling back to CJS:', esmError);
 
 				// Fallback to CJS - though this might need special handling in browser
+				// @ts-expect-error Dynamic URL import has no type declarations
 				const module = await import('https://niwrap.dev/niwrap/js/index.cjs.js');
 				niwrapModule = module;
 				return niwrapModule;

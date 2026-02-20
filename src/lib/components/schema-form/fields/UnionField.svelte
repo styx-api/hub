@@ -1,4 +1,3 @@
-<!-- fields/UnionField.svelte -->
 <script lang="ts">
 	import * as Select from '$lib/components/ui/select/index.js';
 	import { Separator } from '$lib/components/ui/separator';
@@ -10,7 +9,7 @@
 	import { type RequireField } from '$lib/utils/utils';
 	import { getFieldLabel } from '../utils';
 
-	let { schema, value, path, required, onUpdate }: FieldProps = $props();
+	let { schema, value, path, onUpdate }: FieldProps = $props();
 
 	type TypeAlternativeInfo = {
 		value: string;

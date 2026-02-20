@@ -3,13 +3,13 @@
 	import { cn } from '$lib/utils.js';
 	import type { Picture } from 'vite-imagetools';
 
-	// @ts-ignore
+	// @ts-expect-error vite-imagetools enhanced import
 	import LogoAfni from '../../assets/afni.png?enhanced&w=32;48;64;80';
-	// @ts-ignore
+	// @ts-expect-error vite-imagetools enhanced import
 	import LogoFreesurfer from '../../assets/freesurfer.png?enhanced&w=32;48;64;80';
-	// @ts-ignore
+	// @ts-expect-error vite-imagetools enhanced import
 	import LogoFsl from '../../assets/fsl.jpg?enhanced&w=32;48;64;80';
-	// @ts-ignore
+	// @ts-expect-error vite-imagetools enhanced import
 	import LogoWorkbench from '../../assets/workbench.png?enhanced&w=32;48;64;80';
 
 	interface Props {
@@ -39,11 +39,6 @@
 	function shouldShowLogo(pkg: PackageInfo): boolean {
 		const logoUrl = getPackageLogo(pkg);
 		return !!(logoUrl && !imageErrors.has(pkg.package.name));
-	}
-
-	function handleImageError(packageName: string) {
-		imageErrors.add(packageName);
-		imageErrors = imageErrors;
 	}
 
 	function getPackageIcon(packageName: string) {
@@ -160,7 +155,7 @@
 		>
 			<div class="aspect-square w-full overflow-hidden rounded-lg">
 				<enhanced:img
-					src={getPackageLogo(pkg)!!}
+					src={getPackageLogo(pkg)!}
 					alt="{pkg.package.name} logo"
 					class="h-full w-full object-contain"
 				/>

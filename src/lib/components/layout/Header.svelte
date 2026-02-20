@@ -51,7 +51,7 @@
 			: BETA_MESSAGES[Math.min(betaClicks - 1, BETA_MESSAGES.length - 1)]
 	);
 
-	function handleBetaClick(event: MouseEvent) {
+	function handleBetaClick(event: Event) {
 		event.stopPropagation();
 		betaClicks++;
 		showEasterEgg = true;
@@ -66,15 +66,13 @@
 </script>
 
 {#snippet betaBadge()}
-	<sup
-		class="ml-1.5 cursor-pointer rounded bg-purple-600 px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-white transition-transform hover:scale-110 active:scale-95 dark:bg-purple-500"
+	<button
+		class="ml-1.5 cursor-pointer rounded bg-purple-600 px-1.5 py-0.5 align-super text-[10px] font-bold tracking-wide text-white transition-transform hover:scale-110 active:scale-95 dark:bg-purple-500"
 		onclick={handleBetaClick}
-		onkeydown={(e) => e.key === 'Enter' && handleBetaClick(e)}
-		role="button"
-		tabindex="0"
+		type="button"
 	>
 		BETA
-	</sup>
+	</button>
 {/snippet}
 
 {#snippet easterEggTooltip()}

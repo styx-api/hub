@@ -45,7 +45,7 @@
 		let updated;
 		try {
 			updated = JSON.parse(JSON.stringify(value || {}));
-		} catch (e) {
+		} catch {
 			// Fallback to creating new object if JSON fails
 			updated = { ...value };
 		}

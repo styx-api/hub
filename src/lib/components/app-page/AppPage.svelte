@@ -70,7 +70,7 @@
 		function processValue(value: unknown, keyPath: (string | number)[]) {
 			if (typeof value === 'string') {
 				const fieldSchema = outputSchema && getSchemaAtPath(outputSchema, keyPath);
-				const metadata = fieldSchema && getSchemaMetadata(fieldSchema);
+				const metadata = fieldSchema ? getSchemaMetadata(fieldSchema) : null;
 				results.push({
 					path: '/outputs/' + value,
 					title: metadata?.title ?? 'Title',

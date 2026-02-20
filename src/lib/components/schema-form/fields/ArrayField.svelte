@@ -1,4 +1,3 @@
-<!-- fields/ArrayField.svelte -->
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
 	import { Plus, Trash2 } from '@lucide/svelte';

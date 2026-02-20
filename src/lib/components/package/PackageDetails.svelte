@@ -15,7 +15,7 @@
 		Github
 	} from '@lucide/svelte';
 	import { cn } from '$lib/utils.js';
-	import { catalog, type PackageInfo } from '$lib/services/catalog';
+	import { type PackageInfo } from '$lib/services/catalog';
 	import PackageIcon from './PackageIcon.svelte';
 	import { github, openExternal } from '$lib/utils/github';
 

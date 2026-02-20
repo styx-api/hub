@@ -131,7 +131,7 @@
 </script>
 
 <div class={cn('w-full', className)}>
-	{#each Object.entries(tree).sort( ([, a], [, b]) => (a.type === 'folder' ? -1 : 1) ) as [name, node]}
+	{#each Object.entries(tree).sort(([, a]) => (a.type === 'folder' ? -1 : 1)) as [name, node]}
 		{@render renderTree(node, name, '')}
 	{/each}
 </div>
@@ -240,7 +240,7 @@
 
 		{#if hasChildren && isExpanded}
 			<div class="ml-4 border-l border-border pl-2">
-				{#each Object.entries(node.children).sort( ([, a], [, b]) => (a.type === 'folder' ? -1 : 1) ) as [childName, childNode]}
+				{#each Object.entries(node.children).sort( ([, a]) => (a.type === 'folder' ? -1 : 1) ) as [childName, childNode]}
 					{@render renderTree(childNode, childName, currentPath)}
 				{/each}
 			</div>
@@ -252,6 +252,7 @@
 	.line-clamp-2 {
 		display: -webkit-box;
 		-webkit-line-clamp: 2;
+		line-clamp: 2;
 		-webkit-box-orient: vertical;
 		overflow: hidden;
 	}

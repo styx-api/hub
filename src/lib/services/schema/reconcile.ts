@@ -20,7 +20,7 @@ import { getSchemaDefaultValue } from './defaultValue';
  * value alongside the schema and replaces mismatched subtrees with schema
  * defaults while preserving values that still conform.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 export function reconcileValueWithSchema(value: any, schema: JSONSchema): any {
 	if (!isSchemaObject(schema)) return value;
 
@@ -60,7 +60,7 @@ export function reconcileValueWithSchema(value: any, schema: JSONSchema): any {
 		}
 
 		// Recurse into each property
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 		const result: Record<string, any> = { ...value };
 		for (const [key, propSchema] of Object.entries(schema.properties)) {
 			if (key in result) {
@@ -85,13 +85,13 @@ export function reconcileValueWithSchema(value: any, schema: JSONSchema): any {
 
 	// Primitive schemas: check that the value type matches
 	if (isStringSchema(schema)) {
-		return typeof value === 'string' ? value : getSchemaDefaultValue(schema) ?? '';
+		return typeof value === 'string' ? value : (getSchemaDefaultValue(schema) ?? '');
 	}
 	if (isIntegerSchema(schema) || isNumberSchema(schema)) {
-		return typeof value === 'number' ? value : getSchemaDefaultValue(schema) ?? 0;
+		return typeof value === 'number' ? value : (getSchemaDefaultValue(schema) ?? 0);
 	}
 	if (isBooleanSchema(schema)) {
-		return typeof value === 'boolean' ? value : getSchemaDefaultValue(schema) ?? false;
+		return typeof value === 'boolean' ? value : (getSchemaDefaultValue(schema) ?? false);
 	}
 	if (isNullSchema(schema)) {
 		return null;
@@ -104,7 +104,7 @@ export function reconcileValueWithSchema(value: any, schema: JSONSchema): any {
 /**
  * Checks whether a value's runtime type is compatible with a schema's expected type.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 function valueMatchesSchemaType(value: any, schema: JSONSchema): boolean {
 	if (!isSchemaObject(schema)) return false;
 

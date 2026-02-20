@@ -21,3 +21,11 @@ Thumbs.db
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Test artifacts
+/playwright-report/
+/test-results/
+
+# Claude
+/.claude/
+CLAUDE.md

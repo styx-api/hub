@@ -27,13 +27,17 @@
 	let initialConfig: object | null = $state(null);
 
 	// Derived
-	const pageTitle = $derived(
-		selectedApp && selectedPackage
-			? `${selectedApp} - ${selectedPackage.package.docs?.title ?? selectedPackage.package.name} | NiWrap Hub`
-			: selectedPackage
-				? `${selectedPackage.package.docs?.title ?? selectedPackage.package.name} | NiWrap Hub`
-				: 'NiWrap Hub'
-	);
+	function getPageTitle(pkg: PackageInfo | null, app: string | null): string {
+		if (app && pkg) {
+			return `${app} - ${pkg.package.docs?.title ?? pkg.package.name} | NiWrap Hub`;
+		}
+		if (pkg) {
+			return `${pkg.package.docs?.title ?? pkg.package.name} | NiWrap Hub`;
+		}
+		return 'NiWrap Hub';
+	}
+
+	const pageTitle = $derived(getPageTitle(selectedPackage, selectedApp));
 
 	// Initialize
 	if (browser) {
@@ -79,8 +83,8 @@
 
 	// Update URL when selection changes
 	$effect(() => {
-		selectedPackage;
-		selectedApp;
+		void selectedPackage;
+		void selectedApp;
 
 		if (browser && catalog.index && !isInitializing) {
 			updateUrl(selectedPackage?.package.name ?? null, selectedApp);

@@ -15,7 +15,7 @@ import {
  * Generate a minimal default value that conforms to the given JSON Schema.
  * Only generates required fields and respects explicit defaults/const values.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 export function getSchemaDefaultValue(schema: JSONSchema, visited = new Set<JSONSchema>()): any {
 	// Prevent infinite recursion
 	if (!schema || visited.has(schema)) {
@@ -30,7 +30,6 @@ export function getSchemaDefaultValue(schema: JSONSchema, visited = new Set<JSON
 	}
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function generateValue(schema: JSONSchema, visited: Set<JSONSchema>): any {
 	// Handle boolean schemas
 	if (typeof schema === 'boolean') {
@@ -103,7 +102,6 @@ function inferType(schema: JSONSchema): string {
 	return 'null';
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function generateForType(type: string, schema: JSONSchema, visited: Set<JSONSchema>): any {
 	if (!isSchemaObject(schema)) return null;
 
@@ -125,9 +123,7 @@ function generateForType(type: string, schema: JSONSchema, visited: Set<JSONSche
 	}
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function generateObject(schema: JSONSchema.Object, visited: Set<JSONSchema>): Record<string, any> {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const result: Record<string, any> = {};
 	const required = new Set(schema.required || []);
 
@@ -143,7 +139,6 @@ function generateObject(schema: JSONSchema.Object, visited: Set<JSONSchema>): Re
 	return result;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function generateArray(schema: JSONSchema.Array, visited: Set<JSONSchema>): any[] {
 	const minItems = schema.minItems || 0;
 
@@ -152,7 +147,6 @@ function generateArray(schema: JSONSchema.Array, visited: Set<JSONSchema>): any[
 		return [];
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const result: any[] = [];
 
 	// Handle prefixItems (tuples)
