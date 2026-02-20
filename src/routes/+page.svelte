@@ -1,9 +1,8 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { Separator } from '$lib/components/ui/separator';
 	import { LoaderCircle } from '@lucide/svelte';
-	import { Header } from '$lib/components/layout';
-	import { Footer } from '$lib/components/layout';
+	import { Header, Footer } from '$lib/components/layout';
+
 	import { PackageDetails } from '$lib/components/package';
 	import { PackageGallery } from '$lib/components/package';
 	import AppPage from '$lib/components/app-page/AppPage.svelte';
@@ -18,7 +17,6 @@
 	} from '$lib/services/urlState';
 
 	// UI state
-	let showMobileSelector = $state(false);
 	let isInitializing = $state(true);
 
 	// Selection state
@@ -128,7 +126,6 @@
 	function clearSelection() {
 		selectedPackage = null;
 		selectedApp = null;
-		showMobileSelector = false;
 		initialConfig = null;
 	}
 
@@ -140,7 +137,6 @@
 
 	function handleAppSelected(app: string) {
 		selectedApp = app;
-		showMobileSelector = false;
 		initialConfig = null;
 	}
 </script>
@@ -163,14 +159,11 @@
 		{selectedApp}
 		index={catalog.index}
 		isDark={theme.isDark}
-		{showMobileSelector}
 		onClearSelection={clearSelection}
 		onToggleTheme={() => theme.toggle()}
-		onToggleMobileSelector={() => (showMobileSelector = !showMobileSelector)}
 		onPackageSelected={handlePackageSelected}
 		onAppSelected={handleAppSelected}
 	/>
-	<Separator class="hidden md:block" />
 {/snippet}
 
 {#if selectedPackage && selectedApp}
@@ -205,6 +198,6 @@
 			{/if}
 		</div>
 
-		<Footer index={catalog.index} />
+		<Footer />
 	</div>
 {/if}

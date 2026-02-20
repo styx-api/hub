@@ -9,9 +9,9 @@
 		Check,
 		ChevronsUpDown,
 		LoaderCircle,
+		Search,
 		Package as PackageIcon,
 		Terminal,
-		ArrowRight,
 		CircleAlert,
 		RefreshCw
 	} from '@lucide/svelte/icons';
@@ -21,7 +21,6 @@
 	interface Props {
 		package?: PackageInfo | null;
 		app?: string | null;
-		showAppCounts?: boolean;
 		compact?: boolean;
 		onPackageSelected?: (pkg: PackageInfo) => void;
 		onAppSelected?: (app: string) => void;
@@ -30,7 +29,6 @@
 	let {
 		package: selectedPackage = null,
 		app: selectedApp = null,
-		showAppCounts = true,
 		compact = false,
 		onPackageSelected,
 		onAppSelected
@@ -38,15 +36,119 @@
 
 	let packages: PackageInfo[] = $state([]);
 	let error: string | null = $state(null);
-	let packagePopoverOpen = $state(false);
-	let appPopoverOpen = $state(false);
-	let packageTriggerRef = $state<HTMLButtonElement | null>(null);
-	let appTriggerRef = $state<HTMLButtonElement | null>(null);
+	let open = $state(false);
+	let triggerRef = $state<HTMLButtonElement | null>(null);
+	let search = $state('');
+	let appLimit = $state(50);
+	let listRef = $state<HTMLDivElement | null>(null);
 
-	const apps = $derived(selectedPackage?.version.apps ?? []);
-	const iconSize = $derived(compact ? 'h-3 w-3' : 'h-4 w-4');
-	const textSize = $derived(compact ? 'text-sm' : 'text-base');
+	interface AppEntry {
+		name: string;
+		package: PackageInfo;
+	}
+
+	// Build flat app index once packages load
+	const allApps = $derived<AppEntry[]>(
+		packages.flatMap((pkg) =>
+			(pkg.version.apps ?? []).map((app) => ({ name: app, package: pkg }))
+		)
+	);
+
+	const searchTerms = $derived(
+		search
+			.toLowerCase()
+			.trim()
+			.split(/\s+/)
+			.filter((t) => t.length > 0)
+	);
+
+	const MAX_PACKAGES = 8;
+	const APP_PAGE_SIZE = 50;
+
+	function matchesAllTerms(terms: string[], ...fields: string[]): boolean {
+		const combined = fields.join(' ').toLowerCase();
+		return terms.every((term) => combined.includes(term));
+	}
+
+	const filteredPackages = $derived(
+		searchTerms.length === 0
+			? packages.slice(0, MAX_PACKAGES)
+			: packages
+					.filter((p) =>
+						matchesAllTerms(
+							searchTerms,
+							p.package.docs?.title ?? '',
+							p.package.name
+						)
+					)
+					.slice(0, MAX_PACKAGES)
+	);
+
+	// All matching apps (unsliced — sliced in template via appLimit)
+	const filteredApps = $derived(
+		searchTerms.length === 0 || search.trim().length < 2
+			? []
+			: allApps.filter((a) =>
+					matchesAllTerms(
+						searchTerms,
+						a.name,
+						a.package.package.docs?.title ?? '',
+						a.package.package.name
+					)
+				)
+	);
+
+	// When a package is selected and no search, show its apps (unsliced)
+	const selectedPackageApps = $derived(
+		searchTerms.length === 0 && selectedPackage
+			? (selectedPackage.version.apps ?? [])
+			: []
+	);
+
+	// The app list currently being displayed (whichever is active)
+	const totalAppCount = $derived(
+		filteredApps.length > 0 ? filteredApps.length : selectedPackageApps.length
+	);
+	const hasMoreApps = $derived(totalAppCount > appLimit);
+
+	const hasResults = $derived(
+		filteredPackages.length > 0 || filteredApps.length > 0 || selectedPackageApps.length > 0
+	);
+
+	const packageLabel = $derived(
+		selectedPackage
+			? (selectedPackage.package.docs?.title ?? selectedPackage.package.name)
+			: null
+	);
+	const hasSelection = $derived(!!selectedPackage);
+
 	const buttonHeight = $derived(compact ? 'h-8' : 'h-10');
+	const textSize = $derived(compact ? 'text-sm' : 'text-base');
+
+	// Reset app limit when search changes or popover opens
+	$effect(() => {
+		void search;
+		appLimit = APP_PAGE_SIZE;
+	});
+
+	function showMore() {
+		if (!listRef) {
+			appLimit += APP_PAGE_SIZE;
+			return;
+		}
+		const scrollTop = listRef.scrollTop;
+		// Prevent cmdk from resetting scroll during re-render
+		listRef.style.overflow = 'hidden';
+		appLimit += APP_PAGE_SIZE;
+		tick().then(() => {
+			requestAnimationFrame(() => {
+				if (listRef) {
+					listRef.scrollTop = scrollTop;
+					listRef.style.overflow = '';
+				}
+			});
+		});
+	}
 
 	// Load packages on init
 	loadPackages();
@@ -61,27 +163,23 @@
 		}
 	}
 
-	function selectPackage(packageName: string) {
-		const pkg = packages.find((p) => p.package.name === packageName);
-		if (pkg) onPackageSelected?.(pkg);
-		packagePopoverOpen = false;
-		tick().then(() => packageTriggerRef?.focus());
+	function handleSelectPackage(pkg: PackageInfo) {
+		onPackageSelected?.(pkg);
+		open = false;
+		search = '';
+		tick().then(() => triggerRef?.focus());
 	}
 
-	function selectApp(app: string) {
-		onAppSelected?.(app);
-		appPopoverOpen = false;
-		tick().then(() => appTriggerRef?.focus());
+	function handleSelectApp(entry: AppEntry) {
+		onPackageSelected?.(entry.package);
+		onAppSelected?.(entry.name);
+		open = false;
+		search = '';
+		tick().then(() => triggerRef?.focus());
 	}
 </script>
 
-{#snippet appCount(count: number)}
-	<Badge variant="secondary" class="h-5 px-2 text-xs">
-		{count} app{count !== 1 ? 's' : ''}
-	</Badge>
-{/snippet}
-
-<div class="w-full space-y-4">
+<div class="w-full">
 	{#if catalog.loading}
 		<div class="flex items-center justify-center py-6">
 			<LoaderCircle class="h-5 w-5 animate-spin text-primary" />
@@ -99,149 +197,146 @@
 			</AlertDescription>
 		</Alert>
 	{:else}
-		<div class="flex items-center gap-3">
-			<!-- Package selector -->
-			<div class="min-w-0 flex-1">
-				<Popover.Root bind:open={packagePopoverOpen}>
-					<Popover.Trigger bind:ref={packageTriggerRef}>
-						{#snippet child({ props })}
-							<Button
-								{...props}
-								variant="outline"
-								size={compact ? 'sm' : 'default'}
-								class={cn(
-									'w-full justify-between text-left font-normal transition-all',
-									buttonHeight,
-									selectedPackage && 'border-primary/50 bg-primary/5'
-								)}
-								role="combobox"
-								aria-expanded={packagePopoverOpen}
-								aria-label="Select package"
-							>
-								<div class="flex min-w-0 items-center">
-									<PackageIcon class={cn('mr-2 flex-shrink-0', iconSize)} />
-									<span class={cn('truncate', textSize)}>
-										{selectedPackage?.package.docs?.title ?? 'Choose a package...'}
-									</span>
-								</div>
-								<ChevronsUpDown class={cn('ml-2 flex-shrink-0 opacity-50', iconSize)} />
-							</Button>
-						{/snippet}
-					</Popover.Trigger>
-					<Popover.Content class="w-96 p-0" align="start">
-						<Command.Root>
-							<Command.Input placeholder="Search packages..." class="h-9" />
-							<Command.List class="max-h-64">
-								<Command.Empty>No packages found.</Command.Empty>
-								<Command.Group>
-									{#each packages as pkg (pkg.package.name)}
-										{@const isSelected = selectedPackage?.package.name === pkg.package.name}
-										{@const appCountNum = pkg.version.apps?.length ?? 0}
-										<Command.Item
-											value={pkg.package.docs?.title ?? pkg.package.name}
-											onSelect={() => selectPackage(pkg.package.name)}
-											class="flex cursor-pointer items-center justify-between py-3"
-										>
-											<div class="flex min-w-0 flex-1 items-center">
-												<Check
-													class={cn('mr-3 h-4 w-4 text-primary', !isSelected && 'text-transparent')}
-												/>
-												<div class="min-w-0 flex-1 space-y-1">
-													<div class="flex items-center gap-2">
-														<span class="truncate text-sm font-medium">
-															{pkg.package.docs?.title}
-														</span>
-														<Badge variant="outline" class="h-4 px-1.5 text-xs">
-															v{pkg.version.name}
-														</Badge>
-													</div>
-													<div class="truncate text-xs text-muted-foreground">
-														{pkg.package.docs?.authors?.join(', ')}
-													</div>
-												</div>
-											</div>
-											{#if showAppCounts}
-												<div class="ml-3 flex-shrink-0">
-													{@render appCount(appCountNum)}
-												</div>
-											{/if}
-										</Command.Item>
-									{/each}
-								</Command.Group>
-							</Command.List>
-						</Command.Root>
-					</Popover.Content>
-				</Popover.Root>
-			</div>
+		<Popover.Root bind:open>
+			<Popover.Trigger bind:ref={triggerRef}>
+				{#snippet child({ props })}
+					<Button
+						{...props}
+						variant="outline"
+						class={cn(
+							'w-full justify-between text-left font-normal',
+							buttonHeight,
+							hasSelection && 'border-primary/50 bg-primary/5'
+						)}
+						role="combobox"
+						aria-expanded={open}
+						aria-label="Search packages and apps"
+					>
+						<div class="flex min-w-0 items-center">
+							{#if selectedApp && packageLabel}
+								<Terminal class="mr-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+								<span class="truncate text-xs text-muted-foreground">{packageLabel}</span>
+								<span class="mx-1.5 text-xs text-muted-foreground/50">/</span>
+								<span class={cn('truncate font-mono font-medium', textSize)}>{selectedApp}</span>
+							{:else if packageLabel}
+								<PackageIcon class="mr-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+								<span class={cn('truncate', textSize)}>{packageLabel}</span>
+							{:else}
+								<Search class="mr-2 h-3.5 w-3.5 shrink-0 opacity-50" />
+								<span class={cn('truncate text-muted-foreground', textSize)}>
+									Search packages and apps...
+								</span>
+							{/if}
+						</div>
+						<ChevronsUpDown class="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
+					</Button>
+				{/snippet}
+			</Popover.Trigger>
+			<Popover.Content class="w-96 p-0" align="start">
+				<Command.Root shouldFilter={false}>
+					<Command.Input placeholder="Search..." class="h-9" bind:value={search} />
+					<Command.List class="max-h-80" bind:ref={listRef}>
+						{#if !hasResults}
+							<Command.Empty>No results found.</Command.Empty>
+						{/if}
 
-			<ArrowRight class={cn('flex-shrink-0 text-muted-foreground', iconSize)} />
-
-			<!-- App selector -->
-			<div class="min-w-0 flex-1">
-				<Popover.Root bind:open={appPopoverOpen}>
-					<Popover.Trigger bind:ref={appTriggerRef}>
-						{#snippet child({ props })}
-							<Button
-								{...props}
-								variant="outline"
-								size={compact ? 'sm' : 'default'}
-								class={cn(
-									'w-full justify-between text-left font-normal transition-all',
-									buttonHeight,
-									!selectedPackage && 'opacity-50',
-									selectedApp && 'border-primary/50 bg-primary/5',
-									selectedPackage &&
-										apps.length === 0 &&
-										'border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950'
-								)}
-								role="combobox"
-								aria-expanded={appPopoverOpen}
-								aria-label="Select app"
-								disabled={!selectedPackage}
-							>
-								<div class="flex min-w-0 items-center">
-									<Terminal class={cn('mr-2 flex-shrink-0', iconSize)} />
-									<span class={cn('truncate', textSize, selectedApp && 'font-mono')}>
-										{#if !selectedPackage}
-											Select package first
-										{:else if apps.length === 0}
-											No apps available
-										{:else}
-											{selectedApp ?? 'Choose an app...'}
-										{/if}
-									</span>
-								</div>
-								<ChevronsUpDown class={cn('ml-2 flex-shrink-0 opacity-50', iconSize)} />
-							</Button>
-						{/snippet}
-					</Popover.Trigger>
-					<Popover.Content class="w-80 p-0" align="start">
-						<Command.Root>
-							<Command.Input placeholder="Search apps..." class="h-9" />
-							<Command.List class="max-h-48">
-								<Command.Empty>No apps found.</Command.Empty>
-								<Command.Group>
-									{#each apps as app (app)}
-										<Command.Item
-											value={app}
-											onSelect={() => selectApp(app)}
-											class="flex cursor-pointer items-center py-2"
-										>
+						{#if filteredPackages.length > 0}
+							<Command.Group heading="Packages">
+								{#each filteredPackages as pkg (pkg.package.name)}
+									{@const isSelected = selectedPackage?.package.name === pkg.package.name}
+									{@const appCount = pkg.version.apps?.length ?? 0}
+									<Command.Item
+										value={pkg.package.name}
+										onSelect={() => handleSelectPackage(pkg)}
+										class="flex cursor-pointer items-center justify-between py-2"
+									>
+										<div class="flex min-w-0 flex-1 items-center">
 											<Check
-												class={cn(
-													'mr-3 h-4 w-4 text-primary',
-													selectedApp !== app && 'text-transparent'
-												)}
+												class={cn('mr-2 h-3.5 w-3.5 text-primary', !isSelected && 'text-transparent')}
 											/>
-											<span class="truncate font-mono text-sm font-medium">{app}</span>
-										</Command.Item>
-									{/each}
-								</Command.Group>
-							</Command.List>
-						</Command.Root>
-					</Popover.Content>
-				</Popover.Root>
-			</div>
-		</div>
+											<PackageIcon class="mr-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+											<span class="truncate text-sm font-medium">
+												{pkg.package.docs?.title ?? pkg.package.name}
+											</span>
+										</div>
+										<Badge variant="secondary" class="ml-2 h-5 shrink-0 px-1.5 text-xs">
+											{appCount}
+										</Badge>
+									</Command.Item>
+								{/each}
+							</Command.Group>
+						{/if}
+
+						{#if filteredApps.length > 0}
+							<Command.Group heading="Apps">
+								{#each filteredApps.slice(0, appLimit) as entry (entry.package.package.name + '/' + entry.name)}
+									{@const isSelected =
+										selectedPackage?.package.name === entry.package.package.name &&
+										selectedApp === entry.name}
+									<Command.Item
+										value={entry.package.package.name + '/' + entry.name}
+										onSelect={() => handleSelectApp(entry)}
+										class="flex cursor-pointer items-center justify-between py-2"
+									>
+										<div class="flex min-w-0 flex-1 items-center">
+											<Check
+												class={cn('mr-2 h-3.5 w-3.5 text-primary', !isSelected && 'text-transparent')}
+											/>
+											<Terminal class="mr-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+											<span class="truncate font-mono text-sm">{entry.name}</span>
+										</div>
+										<span class="ml-2 shrink-0 text-xs text-muted-foreground">
+											{entry.package.package.docs?.title ?? entry.package.package.name}
+										</span>
+									</Command.Item>
+								{/each}
+							</Command.Group>
+						{/if}
+
+						{#if selectedPackageApps.length > 0}
+							<Command.Group heading={packageLabel ?? 'Apps'}>
+								{#each selectedPackageApps.slice(0, appLimit) as appName (appName)}
+									{@const isSelected = selectedApp === appName}
+									<Command.Item
+										value={selectedPackage?.package.name + '/' + appName}
+										onSelect={() => {
+											onAppSelected?.(appName);
+											open = false;
+											search = '';
+											tick().then(() => triggerRef?.focus());
+										}}
+										class="flex cursor-pointer items-center py-2"
+									>
+										<div class="flex min-w-0 flex-1 items-center">
+											<Check
+												class={cn('mr-2 h-3.5 w-3.5 text-primary', !isSelected && 'text-transparent')}
+											/>
+											<Terminal class="mr-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+											<span class="truncate font-mono text-sm">{appName}</span>
+										</div>
+									</Command.Item>
+								{/each}
+							</Command.Group>
+						{/if}
+
+						{#if search.trim().length > 0 && search.trim().length < 2}
+							<div class="px-4 py-3 text-center text-xs text-muted-foreground">
+								Type 2+ characters to search apps
+							</div>
+						{/if}
+
+						{#if hasMoreApps}
+							<Command.Item
+								value="__show_more__"
+								onSelect={showMore}
+								class="flex cursor-pointer items-center justify-center py-2 text-xs text-muted-foreground"
+							>
+								Show {Math.min(APP_PAGE_SIZE, totalAppCount - appLimit)} more of {totalAppCount} results...
+							</Command.Item>
+						{/if}
+					</Command.List>
+				</Command.Root>
+			</Popover.Content>
+		</Popover.Root>
 	{/if}
 </div>
