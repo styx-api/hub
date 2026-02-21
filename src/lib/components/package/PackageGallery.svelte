@@ -55,50 +55,40 @@
 		{#each packages as pkg (pkg.package.name)}
 			<button
 				onclick={() => onPackageSelected?.(pkg)}
-				class="group relative w-full cursor-pointer overflow-hidden rounded-lg border border-border/50 bg-card p-4 text-left transition-all duration-200 hover:scale-[1.02] hover:border-primary/30 hover:shadow-lg hover:shadow-black/5 focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none"
+				class="group w-full cursor-pointer rounded-lg border border-border bg-card p-5 text-left transition-colors duration-200 hover:border-primary/40 hover:shadow-md focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none"
 			>
-				<div class="mb-3 flex items-center justify-between">
-					<PackageIcon package={pkg} class="group-hover:shadow-md" />
-					<Badge
-						variant="outline"
-						class="h-5 bg-background/80 px-2 text-xs font-medium backdrop-blur-sm"
-					>
-						v{pkg.version.name}
-					</Badge>
-				</div>
-
-				<div class="mb-4 space-y-2">
+				<div class="mb-3 flex items-center gap-3">
+					<PackageIcon package={pkg} size="sm" class="shrink-0" />
 					<h3
-						class="text-base font-semibold transition-colors duration-200 group-hover:text-primary"
+						class="line-clamp-2 flex min-h-10 min-w-0 flex-1 items-center text-sm leading-5 font-semibold transition-colors duration-200 group-hover:text-primary"
 					>
 						{pkg.package.docs?.title ?? pkg.package.name}
 					</h3>
+				</div>
+
+				<div class="mb-4 flex min-h-8 items-center">
 					{#if pkg.package.docs?.affiliation?.length}
-						<p class="text-xs font-medium text-muted-foreground">
+						<p class="line-clamp-2 text-xs text-muted-foreground">
 							{pkg.package.docs.affiliation.join(', ')}
 						</p>
 					{:else if pkg.package.docs?.authors?.length}
-						<p class="text-xs font-medium text-muted-foreground">
+						<p class="line-clamp-2 text-xs text-muted-foreground">
 							{pkg.package.docs.authors.join(', ')}
 						</p>
 					{/if}
 				</div>
 
-				<div class="flex items-center justify-between border-t border-border/50 pt-3">
+				<div class="flex items-center justify-between border-t border-border pt-3">
 					<div class="flex items-center gap-1.5">
-						<Terminal class="h-3 w-3 text-primary/70" />
-						<span class="text-xs font-medium text-muted-foreground">
+						<Terminal class="h-3 w-3 text-muted-foreground" />
+						<span class="text-xs text-muted-foreground">
 							{pkg.version.apps?.length ?? 0} app{(pkg.version.apps?.length ?? 0) !== 1 ? 's' : ''}
 						</span>
 					</div>
-					<div
-						class="h-1.5 w-1.5 rounded-full bg-primary/20 transition-colors duration-200 group-hover:bg-primary/40"
-					></div>
+					<Badge variant="outline" class="h-5 px-2 text-xs font-medium">
+						v{pkg.version.name}
+					</Badge>
 				</div>
-
-				<div
-					class="absolute inset-0 rounded-lg bg-gradient-to-br from-primary/5 to-primary/10 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-				></div>
 			</button>
 		{/each}
 	</div>
