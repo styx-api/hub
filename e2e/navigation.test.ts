@@ -12,6 +12,20 @@ function packageCards(page: Page) {
 	return page.locator('button.rounded-lg.border');
 }
 
+/** Click an app from the package details app list. */
+async function selectAppFromList(page: Page, index = 0) {
+	const appButton = page.locator('.font-mono.text-sm.text-foreground').nth(index);
+	await expect(appButton).toBeVisible({ timeout: 10000 });
+	await appButton.click();
+}
+
+/** Assert we're on the package details page (app list visible). */
+async function expectPackageDetails(page: Page) {
+	// Package details always shows app list items
+	const appListItem = page.locator('.font-mono.text-sm.text-foreground').first();
+	await expect(appListItem).toBeVisible({ timeout: 10000 });
+}
+
 test.describe('Navigation', () => {
 	test('page loads and shows NiWrap Hub title', async ({ page }) => {
 		await page.goto('/');
@@ -47,15 +61,8 @@ test.describe('Navigation', () => {
 		await packageCards(page).first().click();
 		await expect(page).toHaveURL(/[?&]package=/, { timeout: 10000 });
 
-		// Open the app selector combobox (use aria-label to disambiguate from header comboboxes)
-		const combobox = page.getByRole('combobox', { name: 'Select app' }).first();
-		await expect(combobox).toBeVisible({ timeout: 10000 });
-		await combobox.click();
-
-		// Select the first app from the dropdown
-		const appItem = page.locator('[role="option"]').first();
-		await expect(appItem).toBeVisible({ timeout: 5000 });
-		await appItem.click();
+		// Select the first app from the list
+		await selectAppFromList(page);
 
 		// URL should now include both package and app
 		await expect(page).toHaveURL(/[?&]app=/, { timeout: 10000 });
@@ -93,13 +100,8 @@ test.describe('Navigation', () => {
 		await expect(dcm2niixOption).toBeVisible({ timeout: 5000 });
 		await dcm2niixOption.click();
 
-		// Now on dcm2niix package details — select an app via the PackageDetails combobox
-		const appCombobox = page.getByRole('combobox', { name: 'Select app' });
-		await expect(appCombobox).toBeVisible({ timeout: 10000 });
-		await appCombobox.click();
-		const appOption = page.locator('[role="option"]').first();
-		await expect(appOption).toBeVisible({ timeout: 5000 });
-		await appOption.click();
+		// Now on dcm2niix package details — select an app from the list
+		await selectAppFromList(page);
 
 		// Wait for new app page to load with results
 		await waitForLoad(page);
@@ -125,13 +127,8 @@ test.describe('Navigation', () => {
 		await expect(page).toHaveURL(/[?&]package=/, { timeout: 10000 });
 		const packageUrl = page.url();
 
-		// Select an app
-		const appCombobox = page.getByRole('combobox', { name: 'Select app' }).first();
-		await expect(appCombobox).toBeVisible({ timeout: 10000 });
-		await appCombobox.click();
-		const appOption = page.locator('[role="option"]').first();
-		await expect(appOption).toBeVisible({ timeout: 5000 });
-		await appOption.click();
+		// Select an app from the list
+		await selectAppFromList(page);
 		await expect(page).toHaveURL(/[?&]app=/, { timeout: 10000 });
 
 		// Go back — should return to package details (no app param)
@@ -155,13 +152,8 @@ test.describe('Navigation', () => {
 		await expect(page).toHaveURL(/[?&]package=/, { timeout: 10000 });
 		const packageUrl = page.url();
 
-		// Select an app
-		const appCombobox = page.getByRole('combobox', { name: 'Select app' }).first();
-		await expect(appCombobox).toBeVisible({ timeout: 10000 });
-		await appCombobox.click();
-		const appOption = page.locator('[role="option"]').first();
-		await expect(appOption).toBeVisible({ timeout: 5000 });
-		await appOption.click();
+		// Select an app from the list
+		await selectAppFromList(page);
 		await expect(page).toHaveURL(/[?&]app=/, { timeout: 10000 });
 		const appUrl = page.url();
 
@@ -183,9 +175,8 @@ test.describe('Navigation', () => {
 		await page.goto('/?package=ants');
 		await waitForLoad(page);
 
-		// Package should be selected — we should see the app selector, not the gallery
-		const appCombobox = page.getByRole('combobox', { name: 'Select app' }).first();
-		await expect(appCombobox).toBeVisible({ timeout: 10000 });
+		// Package should be selected — we should see package details, not the gallery
+		await expectPackageDetails(page);
 
 		// Gallery should not be visible
 		await expect(packageCards(page).first()).toBeHidden();
@@ -267,13 +258,8 @@ test.describe('Navigation', () => {
 		await expect(page).toHaveURL(/[?&]package=/, { timeout: 10000 });
 		const packageUrl = page.url();
 
-		// Step 2: select an app
-		const appCombobox = page.getByRole('combobox', { name: 'Select app' }).first();
-		await expect(appCombobox).toBeVisible({ timeout: 10000 });
-		await appCombobox.click();
-		const appOption = page.locator('[role="option"]').first();
-		await expect(appOption).toBeVisible({ timeout: 5000 });
-		await appOption.click();
+		// Step 2: select an app from the list
+		await selectAppFromList(page);
 		await expect(page).toHaveURL(/[?&]app=/, { timeout: 10000 });
 		const appUrl = page.url();
 

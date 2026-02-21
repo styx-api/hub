@@ -28,6 +28,7 @@ export interface DocsType {
 	title?: string;
 	description?: string;
 	authors?: string[];
+	affiliation?: string[];
 	literature?: string[];
 	urls?: string[];
 }

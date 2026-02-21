@@ -73,9 +73,15 @@
 					>
 						{pkg.package.docs?.title ?? pkg.package.name}
 					</h3>
-					<p class="text-xs font-medium text-muted-foreground">
-						{pkg.package.docs?.authors?.join(', ')}
-					</p>
+					{#if pkg.package.docs?.affiliation?.length}
+						<p class="text-xs font-medium text-muted-foreground">
+							{pkg.package.docs.affiliation.join(', ')}
+						</p>
+					{:else if pkg.package.docs?.authors?.length}
+						<p class="text-xs font-medium text-muted-foreground">
+							{pkg.package.docs.authors.join(', ')}
+						</p>
+					{/if}
 				</div>
 
 				<div class="flex items-center justify-between border-t border-border/50 pt-3">
