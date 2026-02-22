@@ -547,6 +547,98 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
 		title: 'Intraclass Correlation Coefficient',
 		description: 'A measure of measurement reliability or agreement between raters.'
 	},
+	{
+		terms: ['ANOVA'],
+		title: 'Analysis of Variance',
+		description: 'A statistical test for comparing means across multiple groups.'
+	},
+	{
+		terms: ['REML'],
+		title: 'Restricted Maximum Likelihood',
+		description:
+			'An estimation method for variance components that accounts for fixed effects in mixed models.'
+	},
+	{
+		terms: ['MCMC'],
+		title: 'Markov Chain Monte Carlo',
+		description:
+			'A class of sampling algorithms for estimating posterior distributions in Bayesian analysis.'
+	},
+	{
+		terms: ['SVD'],
+		title: 'Singular Value Decomposition',
+		description:
+			'A matrix factorization method used for dimensionality reduction and noise filtering.'
+	},
+	{
+		terms: ['DOF', 'dof'],
+		title: 'Degrees of Freedom',
+		description: 'The number of independent values free to vary in a statistical model.'
+	},
+	{
+		terms: ['RMS'],
+		title: 'Root Mean Square',
+		description:
+			'A statistical measure of the magnitude of a varying quantity, often used for motion estimates.'
+	},
+	{
+		terms: ['MSE'],
+		title: 'Mean Squared Error',
+		description: 'The average of the squared differences between predicted and observed values.'
+	},
+	{
+		terms: ['SEM'],
+		title: 'Standard Error of the Mean',
+		description: 'A measure of how precisely the sample mean estimates the population mean.'
+	},
+	{
+		terms: ['FPR'],
+		title: 'False Positive Rate',
+		description: 'The proportion of negative cases incorrectly classified as positive.'
+	},
+	{
+		terms: ['ROC'],
+		title: 'Receiver Operating Characteristic',
+		description:
+			'A curve plotting true positive rate against false positive rate across classification thresholds.'
+	},
+	{
+		terms: ['MI'],
+		title: 'Mutual Information',
+		description:
+			'A similarity metric for image registration that measures shared information between two images.'
+	},
+	{
+		terms: ['NMI'],
+		title: 'Normalized Mutual Information',
+		description:
+			'A normalized variant of mutual information commonly used as a cost function in inter-modal registration.'
+	},
+	{
+		terms: ['SSD'],
+		title: 'Sum of Squared Differences',
+		description:
+			'A similarity metric for image registration that sums pixelwise intensity differences squared.'
+	},
+
+	// QC & motion metrics
+	{
+		terms: ['TSNR'],
+		title: 'Temporal Signal-to-Noise Ratio',
+		description:
+			'The ratio of mean signal to temporal standard deviation, a measure of fMRI data quality.'
+	},
+	{
+		terms: ['DVARS'],
+		title: 'Derivative of RMS Variance',
+		description:
+			'A measure of the rate of change of BOLD signal across the brain at each time point.'
+	},
+	{
+		terms: ['FD'],
+		title: 'Framewise Displacement',
+		description: 'A scalar measure of head motion between consecutive fMRI volumes.'
+	},
 
 	// Statistical correction
 	{
