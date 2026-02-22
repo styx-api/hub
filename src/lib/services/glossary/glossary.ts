@@ -296,6 +296,23 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
 		title: 'Brain Imaging Data Structure',
 		description: 'A standard for organizing and describing neuroimaging datasets.'
 	},
+	{
+		terms: ['MIF'],
+		title: 'MRtrix Image Format',
+		description:
+			'The native image file format used by MRtrix3 for storing neuroimaging data with header metadata.'
+	},
+	{
+		terms: ['TRK'],
+		title: 'TrackVis Track Format',
+		description: 'A binary file format for storing streamline tractography results.'
+	},
+	{
+		terms: ['STL'],
+		title: 'Stereolithography Format',
+		description:
+			'A surface mesh file format used for 3D surface representations of brain structures.'
+	},
 
 	// Imaging modalities & sequences
 	{
@@ -440,6 +457,30 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
 	},
 
 	// Diffusion metrics & fiber tracking
+	{
+		terms: ['fixel'],
+		title: 'Fixel',
+		description:
+			'A specific fiber population within a single voxel, used in fixel-based analysis to study individual fiber bundles.'
+	},
+	{
+		terms: ['ACT'],
+		title: 'Anatomically-Constrained Tractography',
+		description:
+			'A tractography framework that uses tissue segmentation to improve biological plausibility of reconstructed tracts.'
+	},
+	{
+		terms: ['AFD'],
+		title: 'Apparent Fiber Density',
+		description:
+			'A fixel-based measure of the density of a specific fiber population within a voxel.'
+	},
+	{
+		terms: ['SH'],
+		title: 'Spherical Harmonics',
+		description:
+			'A mathematical basis for representing functions on a sphere, used to model diffusion orientation distributions.'
+	},
 	{
 		terms: ['CSD'],
 		title: 'Constrained Spherical Deconvolution',
@@ -713,6 +754,12 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
 		description: 'A brain atlas that parcellates the cortex into anatomical regions.'
 	},
 	{
+		terms: ['RAI'],
+		title: 'Right-Anterior-Inferior',
+		description:
+			'A neuroimaging coordinate system convention where axes point right, anterior, and inferior (AFNI default).'
+	},
+	{
 		terms: ['RAS'],
 		title: 'Right-Anterior-Superior',
 		description:
@@ -773,5 +820,37 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
 		title: 'Cross-Correlation',
 		description:
 			'A similarity metric used in image registration to measure alignment between images.'
+	},
+	{
+		terms: ['BBR'],
+		title: 'Boundary-Based Registration',
+		description:
+			'A registration method that aligns images by optimizing contrast at tissue boundaries (e.g. white/gray matter).'
+	},
+	{
+		terms: ['N4'],
+		title: 'N4 Bias Field Correction',
+		description:
+			'An algorithm for correcting intensity non-uniformity (bias field) artifacts in MRI, from the ANTs toolkit.'
+	},
+	{
+		terms: ['FC'],
+		title: 'Functional Connectivity',
+		description:
+			'The statistical association between time series of spatially distinct brain regions.'
+	},
+
+	// FreeSurfer parcellation labels
+	{
+		terms: ['aparc'],
+		title: 'Automatic Cortical Parcellation',
+		description:
+			'A FreeSurfer atlas that divides the cortical surface into anatomical regions based on gyral and sulcal geometry.'
+	},
+	{
+		terms: ['aseg'],
+		title: 'Automatic Subcortical Segmentation',
+		description:
+			'A FreeSurfer atlas that labels subcortical brain structures such as hippocampus, amygdala, and thalamus.'
 	}
 ];
