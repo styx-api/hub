@@ -393,6 +393,28 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
 		description: 'The main static magnetic field of an MRI scanner.'
 	},
 	{
+		terms: ['RF'],
+		title: 'Radio Frequency',
+		description: 'Electromagnetic pulses used to excite hydrogen nuclei in MRI.'
+	},
+	{
+		terms: ['PD'],
+		title: 'Proton Density',
+		description: 'An MRI contrast reflecting the concentration of hydrogen protons in tissue.'
+	},
+	{
+		terms: ['PE'],
+		title: 'Phase Encoding',
+		description:
+			'The MRI gradient direction along which spatial position is encoded by phase shifts.'
+	},
+	{
+		terms: ['MT'],
+		title: 'Magnetization Transfer',
+		description:
+			'An MRI technique that generates contrast based on interactions between free and bound water protons.'
+	},
+	{
 		terms: ['T1w'],
 		title: 'T1-Weighted',
 		description:
@@ -462,6 +484,17 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
 		terms: ['MD'],
 		title: 'Mean Diffusivity',
 		description: 'A DTI-derived measure of the average rate of water diffusion in tissue.'
+	},
+	{
+		terms: ['AD'],
+		title: 'Axial Diffusivity',
+		description: 'A DTI-derived measure of water diffusion along the principal fiber direction.'
+	},
+	{
+		terms: ['RD'],
+		title: 'Radial Diffusivity',
+		description:
+			'A DTI-derived measure of water diffusion perpendicular to the principal fiber direction.'
 	},
 
 	// Brain tissue & anatomy
@@ -604,5 +637,49 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
 		title: 'Left-Posterior-Superior',
 		description:
 			'A neuroimaging coordinate system convention where axes point left, posterior, and superior (DICOM default).'
+	},
+	{
+		terms: ['AP'],
+		title: 'Anterior-Posterior',
+		description: 'A phase encoding direction running from the front to the back of the head.'
+	},
+	{
+		terms: ['PA'],
+		title: 'Posterior-Anterior',
+		description: 'A phase encoding direction running from the back to the front of the head.'
+	},
+	{
+		terms: ['LR'],
+		title: 'Left-Right',
+		description: 'A direction or phase encoding axis running from left to right.'
+	},
+	{
+		terms: ['RL'],
+		title: 'Right-Left',
+		description: 'A direction or phase encoding axis running from right to left.'
+	},
+	{
+		terms: ['SI'],
+		title: 'Superior-Inferior',
+		description: 'A direction or phase encoding axis running from top to bottom of the head.'
+	},
+
+	// Other
+	{
+		terms: ['CT'],
+		title: 'Computed Tomography',
+		description:
+			'An X-ray-based imaging technique that produces cross-sectional images of the body.'
+	},
+	{
+		terms: ['QC'],
+		title: 'Quality Control',
+		description: 'The process of checking data or results for artifacts, errors, or quality issues.'
+	},
+	{
+		terms: ['CC'],
+		title: 'Cross-Correlation',
+		description:
+			'A similarity metric used in image registration to measure alignment between images.'
 	}
 ];
