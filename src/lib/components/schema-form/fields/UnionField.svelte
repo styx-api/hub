@@ -8,6 +8,7 @@
 	import { isUnion } from '$lib/services/schema/schemaUtils';
 	import { type RequireField } from '$lib/utils/utils';
 	import { getFieldLabel } from '../utils';
+	import GlossaryText from './GlossaryText.svelte';
 
 	let { schema, value, path, onUpdate }: FieldProps = $props();
 
@@ -72,7 +73,9 @@
 			</Badge>
 		</div>
 		{#if schema.description}
-			<p class="mt-1 text-sm leading-relaxed text-foreground/70">{schema.description}</p>
+			<p class="mt-1 text-sm leading-relaxed text-foreground/70">
+				<GlossaryText text={schema.description} />
+			</p>
 		{/if}
 	</div>
 

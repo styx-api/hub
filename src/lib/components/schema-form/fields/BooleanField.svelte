@@ -4,6 +4,7 @@
 	import { isBooleanSchema, type JSONSchema } from '$lib/services/schema/schema';
 	import type { FieldProps } from '../types';
 	import { getFieldId, getFieldLabel } from '../utils';
+	import GlossaryText from './GlossaryText.svelte';
 
 	let { schema, value, path, required, onUpdate }: FieldProps = $props();
 
@@ -39,7 +40,9 @@
 			{#if required}<span class="ml-1 text-destructive">*</span>{/if}
 		</Label>
 		{#if booleanSchema.description}
-			<p class="text-sm leading-relaxed text-foreground/70">{booleanSchema.description}</p>
+			<p class="text-sm leading-relaxed text-foreground/70">
+				<GlossaryText text={booleanSchema.description} />
+			</p>
 		{/if}
 	</div>
 </div>

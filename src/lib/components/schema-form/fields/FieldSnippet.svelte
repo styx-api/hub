@@ -2,6 +2,7 @@
 
 <script>
 	import { Label } from '$lib/components/ui/label';
+	import GlossaryText from './GlossaryText.svelte';
 
 	let { title, description = null, required = false, labelFor = null, children } = $props();
 </script>
@@ -12,7 +13,7 @@
 		{#if required}<span class="ml-1 text-destructive">*</span>{/if}
 	</Label>
 	{#if description}
-		<p class="text-sm leading-relaxed text-foreground/70">{description}</p>
+		<p class="text-sm leading-relaxed text-foreground/70"><GlossaryText text={description} /></p>
 	{/if}
 	{@render children()}
 </div>

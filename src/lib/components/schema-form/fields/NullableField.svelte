@@ -7,6 +7,7 @@
 	import type { FieldProps } from '../types';
 	import { isNullSchema, isSchemaObject, type JSONSchema } from '$lib/services/schema/schema';
 	import { getFieldId, getFieldLabel } from '../utils';
+	import GlossaryText from './GlossaryText.svelte';
 
 	let { schema, value, path, required, onUpdate }: FieldProps = $props();
 
@@ -62,7 +63,9 @@
 				<Badge variant="outline" class="px-1.5 py-0 text-[10px]">Optional</Badge>
 			</div>
 			{#if schema.description}
-				<p class="text-sm leading-relaxed text-foreground/70">{schema.description}</p>
+				<p class="text-sm leading-relaxed text-foreground/70">
+					<GlossaryText text={schema.description} />
+				</p>
 			{/if}
 		</div>
 	</div>

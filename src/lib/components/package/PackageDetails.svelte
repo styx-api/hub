@@ -23,6 +23,7 @@
 	import { type PackageInfo } from '$lib/services/catalog';
 	import PackageIcon from './PackageIcon.svelte';
 	import { github } from '$lib/utils/github';
+	import GlossaryText from '$lib/components/schema-form/fields/GlossaryText.svelte';
 
 	interface Props {
 		package: PackageInfo;
@@ -174,7 +175,9 @@
 			{#if pkg.package.docs?.description}
 				<div class="space-y-2">
 					{#each pkg.package.docs.description.split('\n').filter((line) => line.trim()) as line}
-						<p class="max-w-prose text-sm leading-relaxed text-muted-foreground">{line}</p>
+						<p class="max-w-prose text-sm leading-relaxed text-muted-foreground">
+							<GlossaryText text={line} />
+						</p>
 					{/each}
 				</div>
 			{/if}

@@ -3,6 +3,7 @@
 	import type { FieldProps } from '../types';
 	import { isSchemaObject } from '$lib/services/schema/schema';
 	import { getFieldLabel } from '../utils';
+	import GlossaryText from './GlossaryText.svelte';
 
 	let { schema, value, path, onUpdate }: FieldProps = $props();
 
@@ -17,7 +18,9 @@
 	<div>
 		<span class="text-sm font-semibold text-foreground">{schema.title || fieldName}</span>
 		{#if schema.description}
-			<p class="mt-1 text-sm leading-relaxed text-foreground/70">{schema.description}</p>
+			<p class="mt-1 text-sm leading-relaxed text-foreground/70">
+				<GlossaryText text={schema.description} />
+			</p>
 		{/if}
 	</div>
 

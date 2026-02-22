@@ -1,0 +1,608 @@
+export interface GlossaryEntry {
+	terms: string[];
+	title: string;
+	description: string;
+}
+
+/**
+ * Neuroimaging abbreviations and terms sourced from the NiWrap/Styx catalog.
+ * `terms` lists exact casing variations that should match.
+ * Matching is case-sensitive so common English words (fast, first, bold, etc.)
+ * only trigger when written in their uppercase/acronym form.
+ */
+export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
+	// Software suites
+	{
+		terms: ['FreeSurfer'],
+		title: 'FreeSurfer',
+		description:
+			'Software suite for processing and analyzing brain MRI images, including cortical surface reconstruction.'
+	},
+	{
+		terms: ['AFNI', 'afni'],
+		title: 'Analysis of Functional NeuroImages',
+		description: 'A software suite for processing and analyzing fMRI data.'
+	},
+	{
+		terms: ['ANTs', 'ANTS'],
+		title: 'Advanced Normalization Tools',
+		description: 'A software suite for image registration and segmentation.'
+	},
+	{
+		terms: ['FSL'],
+		title: 'FMRIB Software Library',
+		description: 'A comprehensive library of neuroimaging analysis tools.'
+	},
+	{
+		terms: ['SPM'],
+		title: 'Statistical Parametric Mapping',
+		description: 'A software package for analyzing brain imaging data.'
+	},
+	{
+		terms: ['MRtrix3'],
+		title: 'MRtrix3',
+		description:
+			'A software suite for diffusion MRI analysis including tractography, fixel-based analysis, and connectivity.'
+	},
+	{
+		terms: ['MRtrix'],
+		title: 'MRtrix',
+		description: 'A software suite for advanced diffusion MRI processing and fiber tractography.'
+	},
+	{
+		terms: ['ITK'],
+		title: 'Insight Toolkit',
+		description:
+			'An open-source library for image segmentation and registration used by many neuroimaging tools.'
+	},
+	{
+		terms: ['VTK'],
+		title: 'Visualization Toolkit',
+		description:
+			'An open-source library for 3D computer graphics, image processing, and visualization.'
+	},
+	{
+		terms: ['FastSurfer'],
+		title: 'FastSurfer',
+		description:
+			'A deep learning-based alternative to FreeSurfer for fast brain segmentation and surface reconstruction.'
+	},
+	{
+		terms: ['dcm2niix'],
+		title: 'dcm2niix',
+		description: 'A tool for converting DICOM and PAR/REC images to NIfTI format.'
+	},
+	{
+		terms: ['Convert3D', 'C3D', 'c3d'],
+		title: 'Convert3D',
+		description: 'A command-line tool for converting and processing 3D medical images.'
+	},
+	{
+		terms: ['NIfTyReg', 'niftyreg'],
+		title: 'NIfTyReg',
+		description: 'A software package for efficient medical image registration.'
+	},
+	{
+		terms: ['TORTOISE'],
+		title: 'TORTOISE',
+		description:
+			'Tolerably Obsessive Registration and Tensor Optimization Indolent Software Ensemble for diffusion MRI processing.'
+	},
+	{
+		terms: ['HCP'],
+		title: 'Human Connectome Project',
+		description:
+			'A large-scale project mapping neural connections in the human brain, with associated pipelines and data formats.'
+	},
+
+	// AFNI tools
+	{
+		terms: ['SUMA'],
+		title: 'Surface Mapper',
+		description: 'An AFNI program for surface-based brain visualization and analysis.'
+	},
+
+	// FreeSurfer deep learning tools
+	{
+		terms: ['SynthSeg'],
+		title: 'SynthSeg',
+		description:
+			'A FreeSurfer deep learning tool for brain segmentation that works on any MRI contrast without retraining.'
+	},
+	{
+		terms: ['SynthSR'],
+		title: 'SynthSR',
+		description:
+			'A FreeSurfer deep learning tool for super-resolution and contrast synthesis of brain MRI.'
+	},
+	{
+		terms: ['SynthStrip'],
+		title: 'SynthStrip',
+		description:
+			'A FreeSurfer deep learning tool for robust skull stripping across MRI contrasts and ages.'
+	},
+
+	// Connectome Workbench
+	{
+		terms: ['Connectome Workbench'],
+		title: 'Connectome Workbench',
+		description:
+			'A visualization and analysis tool for surface and volume neuroimaging data, especially HCP-style CIFTI files.'
+	},
+
+	// FSL tools
+	{
+		terms: ['BEDPOSTX'],
+		title: 'Bayesian Estimation of Diffusion Parameters Obtained using Sampling Techniques',
+		description: 'An FSL tool for modeling crossing fibers in diffusion data.'
+	},
+	{
+		terms: ['PROBTRACKX'],
+		title: 'Probabilistic Tractography',
+		description: 'An FSL tool for probabilistic fiber tracking from diffusion data.'
+	},
+	{
+		terms: ['MELODIC'],
+		title: 'Multivariate Exploratory Linear Optimized Decomposition into Independent Components',
+		description: 'An FSL tool for ICA-based analysis.'
+	},
+	{
+		terms: ['MCFLIRT'],
+		title: 'Motion Correction FLIRT',
+		description: 'An FSL tool for intra-modal motion correction of fMRI time series.'
+	},
+	{
+		terms: ['SIENAX'],
+		title: 'Structural Image Evaluation using Normalization of Atrophy (Cross-sectional)',
+		description: 'An FSL tool for cross-sectional brain volume estimation normalized for head size.'
+	},
+	{
+		terms: ['BIANCA'],
+		title: 'Brain Intensity AbNormality Classification Algorithm',
+		description: 'An FSL tool for detecting white matter hyperintensities.'
+	},
+	{
+		terms: ['SIENA'],
+		title: 'Structural Image Evaluation using Normalization of Atrophy',
+		description: 'An FSL tool for longitudinal brain atrophy measurement between two time points.'
+	},
+	{
+		terms: ['TOPUP'],
+		title: 'TOPUP',
+		description:
+			'An FSL tool for estimating and correcting susceptibility-induced distortions in EPI data.'
+	},
+	{
+		terms: ['FLIRT'],
+		title: "FMRIB's Linear Image Registration Tool",
+		description: 'An FSL tool for affine (linear) image registration.'
+	},
+	{
+		terms: ['FNIRT'],
+		title: "FMRIB's Nonlinear Image Registration Tool",
+		description: 'An FSL tool for nonlinear (warp) image registration.'
+	},
+	{
+		terms: ['FIRST'],
+		title: "FMRIB's Integrated Registration and Segmentation Tool",
+		description: 'An FSL tool for subcortical structure segmentation.'
+	},
+	{
+		terms: ['SUSAN'],
+		title: 'Smallest Univalue Segment Assimilating Nucleus',
+		description: 'An FSL noise reduction algorithm that preserves edges during smoothing.'
+	},
+	{
+		terms: ['PRELUDE'],
+		title: 'Phase Region Expanding Labeller for Unwrapping Discrete Estimates',
+		description: 'An FSL tool for 3D phase unwrapping.'
+	},
+	{
+		terms: ['FUGUE'],
+		title: 'FMRIB Utility for Geometrically Unwarping EPIs',
+		description: 'An FSL tool for EPI distortion correction using field maps.'
+	},
+	{
+		terms: ['EDDY'],
+		title: 'EDDY Current Correction',
+		description:
+			'An FSL tool for correcting eddy current distortions and subject movement in diffusion data.'
+	},
+	{
+		terms: ['TBSS'],
+		title: 'Tract-Based Spatial Statistics',
+		description: 'An FSL tool for voxelwise analysis of diffusion data along white matter tracts.'
+	},
+	{
+		terms: ['FEAT'],
+		title: "FMRIB's Expert Analysis Tool",
+		description: 'An FSL tool for model-based fMRI statistical analysis.'
+	},
+	{
+		terms: ['FAST'],
+		title: "FMRIB's Automated Segmentation Tool",
+		description: 'An FSL tool for brain tissue segmentation.'
+	},
+	{
+		terms: ['BET'],
+		title: 'Brain Extraction Tool',
+		description: 'An FSL tool for removing non-brain tissue from MRI images.'
+	},
+	{
+		terms: ['RANDOMISE'],
+		title: 'RANDOMISE',
+		description: 'An FSL tool for non-parametric permutation inference on neuroimaging data.'
+	},
+	{
+		terms: ['PALM'],
+		title: 'Permutation Analysis of Linear Models',
+		description: 'A tool for non-parametric inference using sign-flipping and permutation tests.'
+	},
+	{
+		terms: ['COPE'],
+		title: 'Contrast of Parameter Estimates',
+		description:
+			'A statistical map representing a weighted combination of parameter estimates in GLM analysis.'
+	},
+	{
+		terms: ['VARCOPE'],
+		title: 'Variance of Contrast of Parameter Estimates',
+		description: 'The estimated variance of a COPE, used for higher-level mixed-effects analysis.'
+	},
+	{
+		terms: ['FLAME'],
+		title: "FMRIB's Local Analysis of Mixed Effects",
+		description: 'An FSL method for mixed-effects group-level fMRI analysis.'
+	},
+
+	// File formats
+	{
+		terms: ['NIfTI', 'NIFTI', 'Nifti', 'nifti'],
+		title: 'Neuroimaging Informatics Technology Initiative',
+		description: 'Standard file format (.nii) for storing brain imaging data.'
+	},
+	{
+		terms: ['DICOM', 'Dicom'],
+		title: 'Digital Imaging and Communications in Medicine',
+		description: 'Standard format for medical imaging data from scanners.'
+	},
+	{
+		terms: ['CIFTI'],
+		title: 'Connectivity Informatics Technology Initiative',
+		description: 'A file format combining surface and volume neuroimaging data.'
+	},
+	{
+		terms: ['GIFTI'],
+		title: 'Geometry Informatics Technology Initiative',
+		description: 'A file format for brain surface geometry data.'
+	},
+	{
+		terms: ['MINC'],
+		title: 'Medical Imaging NetCDF',
+		description: 'A file format for medical imaging data used in neuroimaging research.'
+	},
+	{
+		terms: ['MGH'],
+		title: 'Massachusetts General Hospital Format',
+		description: 'A neuroimaging file format used by FreeSurfer.'
+	},
+	{
+		terms: ['MGZ'],
+		title: 'Compressed MGH Format',
+		description: 'A gzip-compressed variant of the MGH file format used by FreeSurfer.'
+	},
+	{
+		terms: ['BIDS'],
+		title: 'Brain Imaging Data Structure',
+		description: 'A standard for organizing and describing neuroimaging datasets.'
+	},
+
+	// Imaging modalities & sequences
+	{
+		terms: ['MPRAGE'],
+		title: 'Magnetization Prepared Rapid Gradient Echo',
+		description:
+			'A T1-weighted MRI sequence commonly used for high-resolution structural brain imaging.'
+	},
+	{
+		terms: ['FLAIR'],
+		title: 'Fluid-Attenuated Inversion Recovery',
+		description: 'An MRI sequence that suppresses CSF signal to reveal lesions.'
+	},
+	{
+		terms: ['rsfMRI', 'rs-fMRI'],
+		title: 'Resting-State Functional MRI',
+		description: 'Measures spontaneous brain activity when a subject is at rest.'
+	},
+	{
+		terms: ['fMRI', 'FMRI'],
+		title: 'Functional Magnetic Resonance Imaging',
+		description: 'Measures brain activity by detecting changes in blood oxygenation.'
+	},
+	{
+		terms: ['BOLD'],
+		title: 'Blood-Oxygen-Level-Dependent',
+		description: 'The MRI contrast mechanism underlying fMRI.'
+	},
+	{
+		terms: ['SWI'],
+		title: 'Susceptibility Weighted Imaging',
+		description:
+			'An MRI technique sensitive to magnetic susceptibility differences between tissues.'
+	},
+	{
+		terms: ['DTI'],
+		title: 'Diffusion Tensor Imaging',
+		description: 'An MRI technique that maps white matter tract orientation using water diffusion.'
+	},
+	{
+		terms: ['DWI'],
+		title: 'Diffusion-Weighted Imaging',
+		description: 'An MRI technique sensitive to the diffusion of water molecules in tissue.'
+	},
+	{
+		terms: ['EPI'],
+		title: 'Echo-Planar Imaging',
+		description: 'A fast MRI acquisition method commonly used in fMRI and diffusion imaging.'
+	},
+	{
+		terms: ['MRI'],
+		title: 'Magnetic Resonance Imaging',
+		description: 'A non-invasive imaging technique using magnetic fields and radio waves.'
+	},
+	{
+		terms: ['PET'],
+		title: 'Positron Emission Tomography',
+		description: 'A nuclear imaging technique that measures metabolic processes.'
+	},
+	{
+		terms: ['MEG'],
+		title: 'Magnetoencephalography',
+		description: 'A technique for mapping brain activity by recording magnetic fields.'
+	},
+	{
+		terms: ['EEG'],
+		title: 'Electroencephalography',
+		description: 'A technique for recording electrical activity of the brain.'
+	},
+
+	// MRI parameters
+	{
+		terms: ['FWHM', 'fwhm'],
+		title: 'Full Width at Half Maximum',
+		description: 'A measure of spatial smoothing kernel size.'
+	},
+	{
+		terms: ['FOV'],
+		title: 'Field of View',
+		description: 'The extent of the area captured by the MRI scanner.'
+	},
+	{
+		terms: ['TR'],
+		title: 'Repetition Time',
+		description: 'The time interval between successive RF excitation pulses in an MRI sequence.'
+	},
+	{
+		terms: ['TE'],
+		title: 'Echo Time',
+		description: 'The time between RF excitation and signal measurement in an MRI sequence.'
+	},
+	{
+		terms: ['B0'],
+		title: 'B0 Field',
+		description: 'The main static magnetic field of an MRI scanner.'
+	},
+	{
+		terms: ['T1w'],
+		title: 'T1-Weighted',
+		description:
+			'An MRI contrast where tissues with short T1 relaxation times (e.g. white matter) appear bright.'
+	},
+	{
+		terms: ['T2w'],
+		title: 'T2-Weighted',
+		description:
+			'An MRI contrast where tissues with long T2 relaxation times (e.g. CSF) appear bright.'
+	},
+	{
+		terms: ['T1'],
+		title: 'T1-Weighted',
+		description:
+			'An MRI contrast where tissues with short T1 relaxation times (e.g. white matter) appear bright.'
+	},
+	{
+		terms: ['T2'],
+		title: 'T2-Weighted',
+		description:
+			'An MRI contrast where tissues with long T2 relaxation times (e.g. CSF) appear bright.'
+	},
+
+	// Diffusion metrics & fiber tracking
+	{
+		terms: ['CSD'],
+		title: 'Constrained Spherical Deconvolution',
+		description: 'A method for estimating fiber orientation distributions from diffusion data.'
+	},
+	{
+		terms: ['FOD', 'fODF'],
+		title: 'Fiber Orientation Distribution',
+		description: 'A function describing the distribution of fiber orientations within a voxel.'
+	},
+	{
+		terms: ['ODF'],
+		title: 'Orientation Distribution Function',
+		description:
+			'A function describing the probability of diffusion in each direction within a voxel.'
+	},
+	{
+		terms: ['GFA'],
+		title: 'Generalized Fractional Anisotropy',
+		description:
+			'A diffusion anisotropy measure derived from the ODF, generalizing FA beyond the tensor model.'
+	},
+	{
+		terms: ['bval'],
+		title: 'b-value File',
+		description:
+			'A text file listing diffusion weighting strengths for each volume in a DWI acquisition.'
+	},
+	{
+		terms: ['bvec'],
+		title: 'b-vector File',
+		description:
+			'A text file listing diffusion gradient directions for each volume in a DWI acquisition.'
+	},
+	{
+		terms: ['FA'],
+		title: 'Fractional Anisotropy',
+		description:
+			'A DTI-derived measure of white matter microstructural integrity (0 = isotropic, 1 = anisotropic).'
+	},
+	{
+		terms: ['MD'],
+		title: 'Mean Diffusivity',
+		description: 'A DTI-derived measure of the average rate of water diffusion in tissue.'
+	},
+
+	// Brain tissue & anatomy
+	{
+		terms: ['GM'],
+		title: 'Gray Matter',
+		description:
+			'Brain tissue containing neuronal cell bodies, found in the cortex and subcortical nuclei.'
+	},
+	{
+		terms: ['WM'],
+		title: 'White Matter',
+		description: 'Brain tissue containing myelinated axons that connect brain regions.'
+	},
+	{
+		terms: ['CSF'],
+		title: 'Cerebrospinal Fluid',
+		description: 'The clear fluid surrounding the brain and spinal cord.'
+	},
+	{
+		terms: ['WMH'],
+		title: 'White Matter Hyperintensity',
+		description:
+			'Bright regions on FLAIR MRI indicating white matter damage, often associated with aging or vascular disease.'
+	},
+
+	// Analysis methods
+	{
+		terms: ['ICA'],
+		title: 'Independent Component Analysis',
+		description: 'A method for separating a signal into independent sub-components.'
+	},
+	{
+		terms: ['PCA'],
+		title: 'Principal Component Analysis',
+		description: 'A dimensionality reduction technique.'
+	},
+	{
+		terms: ['GLM'],
+		title: 'General Linear Model',
+		description: 'A statistical framework used for fMRI activation analysis.'
+	},
+	{
+		terms: ['HRF'],
+		title: 'Hemodynamic Response Function',
+		description: 'Models the blood flow response to neural activity in fMRI.'
+	},
+	{
+		terms: ['ICC'],
+		title: 'Intraclass Correlation Coefficient',
+		description: 'A measure of measurement reliability or agreement between raters.'
+	},
+
+	// Statistical correction
+	{
+		terms: ['TFCE'],
+		title: 'Threshold-Free Cluster Enhancement',
+		description: 'A statistical method that avoids arbitrary cluster-forming thresholds.'
+	},
+	{
+		terms: ['FDR'],
+		title: 'False Discovery Rate',
+		description: 'A statistical method for correcting multiple comparisons in neuroimaging.'
+	},
+	{
+		terms: ['FWE'],
+		title: 'Family-Wise Error',
+		description: 'A method for controlling the probability of any false positive across all tests.'
+	},
+	{
+		terms: ['SNR'],
+		title: 'Signal-to-Noise Ratio',
+		description: 'A measure of signal strength relative to background noise.'
+	},
+	{
+		terms: ['CNR'],
+		title: 'Contrast-to-Noise Ratio',
+		description: 'A measure of contrast between tissues relative to noise.'
+	},
+
+	// ROIs & morphometry
+	{
+		terms: ['ROI'],
+		title: 'Region of Interest',
+		description: 'A specific brain area selected for targeted analysis.'
+	},
+	{
+		terms: ['VOI'],
+		title: 'Volume of Interest',
+		description: 'A 3D region selected for analysis, similar to ROI.'
+	},
+	{
+		terms: ['VBM'],
+		title: 'Voxel-Based Morphometry',
+		description: 'A technique for analyzing local differences in brain tissue composition.'
+	},
+
+	// Perfusion
+	{
+		terms: ['CBF'],
+		title: 'Cerebral Blood Flow',
+		description: 'A measure of blood supply to brain tissue.'
+	},
+	{
+		terms: ['ASL'],
+		title: 'Arterial Spin Labeling',
+		description: 'A non-invasive MRI technique for measuring cerebral blood flow.'
+	},
+
+	// Atlases & coordinate systems
+	{
+		terms: ['MNI'],
+		title: 'Montreal Neurological Institute',
+		description: 'A standard brain coordinate space (MNI-152) used for spatial normalization.'
+	},
+	{
+		terms: ['Talairach'],
+		title: 'Talairach-Tournoux Atlas',
+		description: 'Stereotactic atlas coordinate system for mapping brain structures.'
+	},
+	{
+		terms: ['AAL'],
+		title: 'Automated Anatomical Labeling',
+		description: 'A brain atlas that parcellates the cortex into anatomical regions.'
+	},
+	{
+		terms: ['RAS'],
+		title: 'Right-Anterior-Superior',
+		description:
+			'A neuroimaging coordinate system convention where axes point right, anterior, and superior.'
+	},
+	{
+		terms: ['LAS'],
+		title: 'Left-Anterior-Superior',
+		description:
+			'A neuroimaging coordinate system convention where axes point left, anterior, and superior.'
+	},
+	{
+		terms: ['LPS'],
+		title: 'Left-Posterior-Superior',
+		description:
+			'A neuroimaging coordinate system convention where axes point left, posterior, and superior (DICOM default).'
+	}
+];
