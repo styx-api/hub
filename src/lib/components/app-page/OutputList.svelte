@@ -37,14 +37,16 @@
 
 <div class={cn('w-full', className)}>
 	{#if entries.length === 0}
-		<div class="flex flex-col items-center justify-center py-8 text-center">
+		<div
+			class="flex flex-col items-center justify-center rounded-lg border border-dashed border-border/50 bg-muted/20 py-8 text-center"
+		>
 			<FileX2 class="mb-2 h-8 w-8 text-muted-foreground/50" />
 			<p class="text-sm text-muted-foreground">No output files</p>
 		</div>
 	{:else}
 		{#if rootEntry}
 			<div
-				class="mb-3 flex items-center gap-2 rounded-md border border-border/50 bg-muted/30 px-3 py-2"
+				class="mb-3 flex items-center gap-2 rounded-md border border-border/30 bg-muted/20 px-3 py-2"
 			>
 				<FolderOpen class="h-4 w-4 flex-shrink-0 text-muted-foreground" />
 				<span class="font-mono text-sm text-muted-foreground">{rootEntry.filePath}</span>

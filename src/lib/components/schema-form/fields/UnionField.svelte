@@ -1,6 +1,6 @@
 <script lang="ts">
 	import * as Select from '$lib/components/ui/select/index.js';
-	import { Separator } from '$lib/components/ui/separator';
+	import { Badge } from '$lib/components/ui/badge';
 	import FieldRenderer from '../FieldRenderer.svelte';
 	import { getSchemaDefaultValue } from '../../../services/schema/defaultValue';
 	import type { FieldProps } from '../types';
@@ -62,11 +62,17 @@
 	}
 </script>
 
-<div class="relative space-y-4">
-	<div class="space-y-2">
-		<span class="text-l font-semibold text-foreground">{schema.title || fieldName}</span>
+<div class="space-y-3">
+	<div>
+		<div class="flex items-center gap-2">
+			<span class="text-sm font-semibold text-foreground">{schema.title || fieldName}</span>
+			<Badge variant="outline" class="px-1.5 py-0 text-[10px]">
+				{typeOptions.length}
+				{typeOptions.length === 1 ? 'type' : 'types'}
+			</Badge>
+		</div>
 		{#if schema.description}
-			<p class="text-xs text-muted-foreground">{schema.description}</p>
+			<p class="mt-1 text-sm leading-relaxed text-foreground/70">{schema.description}</p>
 		{/if}
 	</div>
 
@@ -82,8 +88,7 @@
 	</Select.Root>
 
 	{#if selectedSchema && isSchemaObject(selectedSchema.schema)}
-		<Separator />
-		<div class="space-y-4">
+		<div class="space-y-4 border-l-2 border-border/50 pl-4">
 			<FieldRenderer
 				schema={selectedSchema.schema}
 				{value}

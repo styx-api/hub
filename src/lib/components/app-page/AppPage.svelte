@@ -243,7 +243,7 @@
 </script>
 
 {#snippet missingDescriptorCta()}
-	<div class="flex flex-col items-center justify-center py-16 text-center">
+	<div class="flex flex-col items-center justify-center py-20 text-center">
 		<div class="mb-6 rounded-full bg-muted p-4">
 			<FileCode class="h-10 w-10 text-muted-foreground" />
 		</div>
@@ -288,7 +288,7 @@
 						</TabsTrigger>
 					</TabsList>
 
-					<TabsContent value="config" class="mt-6">
+					<TabsContent value="config" class="mt-4">
 						<ConfigurationPanel
 							descriptorInputSchema={inputSchema}
 							bind:descriptorConfig={config}
@@ -301,7 +301,7 @@
 						/>
 					</TabsContent>
 
-					<TabsContent value="results" class="mt-6">
+					<TabsContent value="results" class="mt-4">
 						<ResultsPanel
 							{commandArgs}
 							{outputEntries}
@@ -342,7 +342,7 @@
 			</div>
 		</div>
 
-		<div class="w-1/2 overflow-y-auto bg-muted/20">
+		<div class="w-1/2 overflow-y-auto bg-background">
 			<div class="container mx-auto max-w-none px-6 lg:px-8">
 				<div class="space-y-6 py-6 lg:py-8">
 					<ResultsPanel

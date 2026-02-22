@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { Label } from '$lib/components/ui/label';
+	import { Badge } from '$lib/components/ui/badge';
 	import FieldRenderer from '../FieldRenderer.svelte';
 	import { getSchemaDefaultValue } from '../../../services/schema/defaultValue';
 	import type { FieldProps } from '../types';
 	import { isNullSchema, isSchemaObject, type JSONSchema } from '$lib/services/schema/schema';
-	import { CircleQuestionMarkIcon } from '@lucide/svelte';
 	import { getFieldId, getFieldLabel } from '../utils';
 
 	let { schema, value, path, required, onUpdate }: FieldProps = $props();
@@ -50,22 +50,24 @@
 
 <div class="space-y-3">
 	<div
-		class="relative flex items-start space-x-3 rounded-lg border border-border/50 bg-muted/20 p-3"
+		class="flex items-start space-x-3 rounded-md px-3 py-2.5 transition-colors hover:bg-muted/40"
 	>
-		<CircleQuestionMarkIcon class="absolute top-2 right-2 h-4 w-4 text-muted-foreground" />
 		<Checkbox {checked} id={fieldId + '--enabled'} onCheckedChange={handleToggle} class="mt-0.5" />
 		<div class="flex-1 space-y-1">
-			<Label for={fieldId + '--enabled'} class="text-sm font-medium">
-				Enable {schema.title || fieldName}
-				{#if required}<span class="ml-1 text-destructive">*</span>{/if}
-			</Label>
+			<div class="flex items-center gap-2">
+				<Label for={fieldId + '--enabled'} class="text-sm font-medium">
+					Enable {schema.title || fieldName}
+					{#if required}<span class="ml-1 text-destructive">*</span>{/if}
+				</Label>
+				<Badge variant="outline" class="px-1.5 py-0 text-[10px]">Optional</Badge>
+			</div>
 			{#if schema.description}
-				<p class="text-xs text-muted-foreground">{schema.description}</p>
+				<p class="text-sm leading-relaxed text-foreground/70">{schema.description}</p>
 			{/if}
 		</div>
 	</div>
 	{#if checked && nonNullSchema && isSchemaObject(nonNullSchema)}
-		<div class="ml-6 border-l-2 border-primary/20 pl-4">
+		<div class="mt-3 ml-4 border-l-2 border-border/50 pl-4">
 			<FieldRenderer schema={nonNullSchema} {value} {path} required={true} {onUpdate} />
 		</div>
 	{/if}

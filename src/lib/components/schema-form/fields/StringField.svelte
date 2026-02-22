@@ -66,7 +66,7 @@
 		<div class="relative">
 			{#if isFileType}
 				<div
-					class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground"
+					class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground/70"
 				>
 					<File size={16} />
 				</div>

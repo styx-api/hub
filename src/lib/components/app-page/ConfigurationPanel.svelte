@@ -1,6 +1,5 @@
 <script lang="ts">
 	import SchemaForm from '../schema-form/SchemaForm.svelte';
-	import { Card, CardContent, CardDescription, CardTitle } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import {
@@ -54,16 +53,10 @@
 </script>
 
 <div class="space-y-6">
-	<header class="space-y-2">
+	<header class="space-y-2 border-b border-border/30 pb-4">
 		<div class="flex items-center justify-between">
 			<div class:space-y-1={isMobile}>
-				<h1
-					class="font-semibold tracking-tight text-foreground"
-					class:text-lg={isMobile}
-					class:text-xl={!isMobile}
-				>
-					Configuration
-				</h1>
+				<h1 class="text-xl font-bold tracking-tight text-foreground">Configuration</h1>
 				<p class="text-sm text-muted-foreground">Set parameters to generate command</p>
 			</div>
 			<div class="flex gap-2">
@@ -109,16 +102,14 @@
 		</div>
 	</header>
 
-	<div class="space-y-4">
+	<div class="space-y-6">
 		{#if isLoading}
-			<Card>
-				<CardContent class="flex items-center justify-center py-12">
-					<div class="flex items-center space-x-3">
-						<LoaderCircle class="h-5 w-5 animate-spin text-primary" />
-						<div class="text-sm text-muted-foreground">Loading configuration schema...</div>
-					</div>
-				</CardContent>
-			</Card>
+			<div class="flex items-center justify-center py-12">
+				<div class="flex items-center space-x-3">
+					<LoaderCircle class="h-5 w-5 animate-spin text-primary" />
+					<div class="text-sm text-muted-foreground">Loading configuration schema...</div>
+				</div>
+			</div>
 		{:else if error}
 			<Alert variant="destructive">
 				<TriangleAlert class="h-4 w-4" />
@@ -138,15 +129,15 @@
 		{:else if descriptorInputSchema}
 			<SchemaForm schema={descriptorInputSchema} bind:value={descriptorConfig} />
 		{:else}
-			<Card>
-				<CardContent class="flex flex-col items-center justify-center py-12 text-center">
-					<div class="mb-4 rounded-full bg-muted p-3">
-						<Settings class="h-6 w-6 text-muted-foreground" />
-					</div>
-					<CardTitle class="mb-2 text-base">No Configuration Required</CardTitle>
-					<CardDescription>This app doesn't require configuration parameters.</CardDescription>
-				</CardContent>
-			</Card>
+			<div class="flex flex-col items-center justify-center py-12 text-center">
+				<div class="mb-4 rounded-full bg-muted p-3">
+					<Settings class="h-6 w-6 text-muted-foreground" />
+				</div>
+				<p class="mb-2 text-base font-semibold">No Configuration Required</p>
+				<p class="text-sm text-muted-foreground">
+					This app doesn't require configuration parameters.
+				</p>
+			</div>
 		{/if}
 	</div>
 </div>

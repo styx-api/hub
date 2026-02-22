@@ -29,7 +29,9 @@
 </script>
 
 <!-- slight variation on the usual FieldSnippet, as checkbox is left of the label -->
-<div class="relative flex items-start space-x-3 rounded-lg border border-border/50 bg-muted/20 p-3">
+<div
+	class="relative flex items-start space-x-3 rounded-md px-3 py-2.5 transition-colors hover:bg-muted/40"
+>
 	<Checkbox id={fieldId} checked={value === true} onCheckedChange={handleChange} class="mt-0.5" />
 	<div class="flex-1 space-y-1">
 		<Label for={fieldId} class="text-sm font-medium">
@@ -37,7 +39,7 @@
 			{#if required}<span class="ml-1 text-destructive">*</span>{/if}
 		</Label>
 		{#if booleanSchema.description}
-			<p class="text-xs text-muted-foreground">{booleanSchema.description}</p>
+			<p class="text-sm leading-relaxed text-foreground/70">{booleanSchema.description}</p>
 		{/if}
 	</div>
 </div>

@@ -13,24 +13,27 @@
 	});
 </script>
 
-<div class="relative space-y-4">
-	<div class="space-y-2">
-		<span class="text-l font-semibold text-foreground">{schema.title || fieldName}</span>
+<div class="space-y-4">
+	<div>
+		<span class="text-sm font-semibold text-foreground">{schema.title || fieldName}</span>
 		{#if schema.description}
-			<p class="text-xs text-muted-foreground">{schema.description}</p>
+			<p class="mt-1 text-sm leading-relaxed text-foreground/70">{schema.description}</p>
 		{/if}
 	</div>
+
 	{#if schema.properties && value && typeof value === 'object'}
-		{#each Object.entries(schema.properties) as [key, propSchema]}
-			{#if key !== '@type' && isSchemaObject(propSchema)}
-				<FieldRenderer
-					schema={propSchema}
-					value={value[key]}
-					path={[...path, key]}
-					required={schema.required?.includes(key)}
-					{onUpdate}
-				/>
-			{/if}
-		{/each}
+		<div class={path.length > 1 ? 'space-y-4 border-l-2 border-border/50 pl-4' : 'space-y-4'}>
+			{#each Object.entries(schema.properties) as [key, propSchema]}
+				{#if key !== '@type' && isSchemaObject(propSchema)}
+					<FieldRenderer
+						schema={propSchema}
+						value={value[key]}
+						path={[...path, key]}
+						required={schema.required?.includes(key)}
+						{onUpdate}
+					/>
+				{/if}
+			{/each}
+		</div>
 	{/if}
 </div>

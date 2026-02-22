@@ -6,13 +6,13 @@
 	let { title, description = null, required = false, labelFor = null, children } = $props();
 </script>
 
-<div class="space-y-2">
+<div class="space-y-1.5">
 	<Label for={labelFor}>
 		{title}
 		{#if required}<span class="ml-1 text-destructive">*</span>{/if}
 	</Label>
 	{#if description}
-		<p class="text-xs text-muted-foreground">{description}</p>
+		<p class="text-sm leading-relaxed text-foreground/70">{description}</p>
 	{/if}
 	{@render children()}
 </div>

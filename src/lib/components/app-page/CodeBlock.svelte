@@ -136,7 +136,7 @@
 	}
 </script>
 
-<div class={cn('relative overflow-hidden rounded-lg border bg-muted', className)}>
+<div class={cn('relative overflow-hidden rounded-xl border bg-muted', className)}>
 	{#if title}
 		<div class="flex items-center justify-between border-b bg-muted/50 px-4 py-2">
 			<span class="text-sm font-medium text-muted-foreground">{title}</span>
