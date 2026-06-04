@@ -1,4 +1,3 @@
-import type { RequireField } from '$lib/utils/utils';
 import { isNullSchema, isObjectSchema, isSchemaObject, type JSONSchema } from './schema';
 
 export type SchemaPath = (string | number)[];
@@ -37,13 +36,24 @@ export function getSchemaAtPath(schema: JSONSchema, path: SchemaPath): JSONSchem
 }
 
 /**
+ * The variant list of a union schema, regardless of which keyword carries it.
+ * styx2 emits unions as `oneOf` (each variant has a distinct `@type` const);
+ * v1 and hand-written schemas may use `anyOf`. Returns null when neither is present.
+ */
+export function getUnionVariants(schema: JSONSchema): readonly JSONSchema[] | null {
+	if (!isSchemaObject(schema)) return null;
+	return schema.anyOf ?? schema.oneOf ?? null;
+}
+
+/**
  * Resolves union types to the most useful schema for path traversal
  */
 function resolveUnion(schema: JSONSchema): JSONSchema | null {
-	if (!isSchemaObject(schema) || !schema.anyOf) return null;
+	const variants = getUnionVariants(schema);
+	if (!variants) return null;
 
 	// Filter out null schemas
-	const nonNullSchemas = schema.anyOf.filter((s) => !isNullSchema(s));
+	const nonNullSchemas = variants.filter((s) => !isNullSchema(s));
 
 	if (nonNullSchemas.length === 0) return null;
 	if (nonNullSchemas.length === 1) return nonNullSchemas[0];
@@ -68,31 +78,57 @@ export function getSchemaMetadata(schema: JSONSchema) {
 	};
 }
 
+/** Is a schema's `type` keyword the array form that includes `"null"`? */
+function hasNullInTypeArray(schema: JSONSchema): boolean {
+	return isSchemaObject(schema) && Array.isArray(schema.type) && schema.type.includes('null');
+}
+
 /**
- * Checks if schema is nullable (has null schema in anyOf)
+ * Checks if a schema permits null. Covers all three encodings the hub may see:
+ * a null branch in a `anyOf`/`oneOf` union, or a `type: [..., "null"]` array
+ * (how styx2's outputs schema marks an always-present-but-nullable field).
  */
 export function isNullable(schema: JSONSchema): boolean {
-	return (isObjectSchema(schema) && schema.anyOf?.some(isNullSchema)) ?? false;
+	if (!isSchemaObject(schema)) return false;
+	if (hasNullInTypeArray(schema)) return true;
+	return getUnionVariants(schema)?.some(isNullSchema) ?? false;
 }
 
 /**
- * Gets non-null schema from nullable union
+ * Gets the non-null schema from a nullable schema. For a union, returns the lone
+ * non-null branch; for a `type: [T, "null"]` array, narrows `type` to the
+ * non-null entries; otherwise returns the schema unchanged.
  */
 export function getNonNullSchema(schema: JSONSchema): JSONSchema | null {
-	if (!isObjectSchema(schema) || !isNullable(schema)) return schema;
-	return schema.anyOf?.find((s) => !isNullSchema(s)) ?? null;
+	if (!isSchemaObject(schema) || !isNullable(schema)) return schema;
+
+	const variants = getUnionVariants(schema);
+	if (variants) return variants.find((s) => !isNullSchema(s)) ?? null;
+
+	if (hasNullInTypeArray(schema) && Array.isArray(schema.type)) {
+		const nonNull = schema.type.filter((t) => t !== 'null');
+		return { ...schema, type: nonNull.length === 1 ? nonNull[0] : nonNull };
+	}
+
+	return schema;
 }
 
 /**
- * Checks if schema is a union (anyOf without null, or with multiple non-null types)
+ * Checks if a schema is a discriminated union the form should render with a
+ * variant picker: an `anyOf`/`oneOf` carrying more than one non-null branch. A
+ * single-branch union plus `null` is merely nullable, not a union.
  */
-export function isUnion(schema: JSONSchema): schema is RequireField<JSONSchema.Object, 'anyOf'> {
-	if (!isObjectSchema(schema)) return false;
+export function isUnion(schema: JSONSchema): boolean {
+	const variants = getUnionVariants(schema);
+	if (!variants || variants.length <= 1) return false;
+	return variants.filter((s) => !isNullSchema(s)).length > 1;
+}
 
-	if (schema.anyOf && schema.anyOf.length > 1) {
-		const nonNullSchemas = schema.anyOf.filter((s) => !isNullSchema(s));
-		return nonNullSchemas.length > 1;
-	}
-
-	return false;
+/**
+ * Checks if a schema is a closed enumeration. styx2 emits enums bare
+ * (`{ "enum": [...] }`) with no `type`, so the field router cannot rely on a
+ * string/number type guard to find them.
+ */
+export function isEnumSchema(schema: JSONSchema): boolean {
+	return isSchemaObject(schema) && Array.isArray(schema.enum) && schema.enum.length > 0;
 }

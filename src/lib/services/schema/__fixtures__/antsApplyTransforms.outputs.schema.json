@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "title": "antsApplyTransforms",
+  "description": "antsApplyTransforms, applied to an input image, transforms it according to a reference image and a transform (or a set of transforms).",
+  "properties": {
+    "root": {
+      "type": "string",
+      "x-styx-type": "path"
+    },
+    "output_image_outfile": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "x-styx-type": "path",
+      "description": "Warped image."
+    }
+  },
+  "required": [
+    "root",
+    "output_image_outfile"
+  ]
+}

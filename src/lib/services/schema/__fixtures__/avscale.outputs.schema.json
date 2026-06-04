@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "title": "avscale",
+  "description": "A command line tool for computing affine transformations.",
+  "properties": {
+    "root": {
+      "type": "string",
+      "x-styx-type": "path"
+    },
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "output affine transfomration file"
+    }
+  },
+  "required": [
+    "root",
+    "output"
+  ]
+}

@@ -11,3 +11,6 @@ bun.lockb
 # Test artifacts
 /playwright-report/
 /test-results/
+
+# styx2 schema fixtures - committed verbatim as the @styx/core compiler emits them
+src/lib/services/schema/__fixtures__/*.json
