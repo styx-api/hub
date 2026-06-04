@@ -87,8 +87,10 @@ test.describe('Navigation', () => {
 		await page.goto('/?package=ants&app=antsRegistration');
 		await waitForLoad(page);
 
-		// Wait for the desktop "Results" heading (only rendered when !isMobile)
-		await expect(page.getByRole('heading', { name: 'Results' })).toBeVisible({ timeout: 15000 });
+		// Wait for the desktop results column (the "Generated Command" heading, default tab)
+		await expect(page.getByRole('heading', { name: 'Generated Command' })).toBeVisible({
+			timeout: 15000
+		});
 
 		// Switch package via unified header QuickSelector
 		const quickSelector = page.getByRole('combobox', { name: 'Search packages and apps' });
@@ -105,7 +107,9 @@ test.describe('Navigation', () => {
 
 		// Wait for new app page to load with results
 		await waitForLoad(page);
-		await expect(page.getByRole('heading', { name: 'Results' })).toBeVisible({ timeout: 15000 });
+		await expect(page.getByRole('heading', { name: 'Generated Command' })).toBeVisible({
+			timeout: 15000
+		});
 
 		// URL should reflect the new package (dcm2niix), not the old one (ants)
 		await expect(page).toHaveURL(/[?&]package=dcm2niix/, { timeout: 10000 });
@@ -186,8 +190,10 @@ test.describe('Navigation', () => {
 		await page.goto('/?package=ants&app=antsRegistration');
 		await waitForLoad(page);
 
-		// Desktop "Results" heading should be visible (confirms app page is showing)
-		await expect(page.getByRole('heading', { name: 'Results' })).toBeVisible({ timeout: 15000 });
+		// Desktop results column should be visible (confirms app page is showing)
+		await expect(page.getByRole('heading', { name: 'Generated Command' })).toBeVisible({
+			timeout: 15000
+		});
 
 		// The terminal executable should be visible in the desktop view
 		const terminalExecutable = page.locator('.text-cyan-300').last();
@@ -281,7 +287,9 @@ test.describe('Navigation', () => {
 		// Forward to app page
 		await page.goForward();
 		await expect(page).toHaveURL(appUrl, { timeout: 10000 });
-		await expect(page.getByRole('heading', { name: 'Results' })).toBeVisible({ timeout: 15000 });
+		await expect(page.getByRole('heading', { name: 'Generated Command' })).toBeVisible({
+			timeout: 15000
+		});
 
 		// Back to package details again (verify repeated traversal works)
 		await page.goBack();
@@ -294,7 +302,9 @@ test.describe('Navigation', () => {
 		const config = btoa(JSON.stringify({ dimensionality: 3 }));
 		await page.goto(`/?package=ants&app=antsRegistration&config=${config}`);
 		await waitForLoad(page);
-		await expect(page.getByRole('heading', { name: 'Results' })).toBeVisible({ timeout: 15000 });
+		await expect(page.getByRole('heading', { name: 'Generated Command' })).toBeVisible({
+			timeout: 15000
+		});
 
 		// Switch package via unified header QuickSelector
 		const quickSelector = page.getByRole('combobox', { name: 'Search packages and apps' });
