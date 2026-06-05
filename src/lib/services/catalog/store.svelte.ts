@@ -3,7 +3,7 @@ import { fetchDescriptor, fetchManifest, fetchReleasesIndex } from './types';
 
 export type { PackageInfo, CatalogIndex };
 
-function toPackageInfo(pkg: ManifestPackage): PackageInfo {
+export function toPackageInfo(pkg: ManifestPackage): PackageInfo {
 	return {
 		package: { name: pkg.name, neurodeskId: pkg.neurodeskId, docs: pkg.docs },
 		version: { name: pkg.version, container: pkg.container, apps: pkg.apps.map((a) => a.name) }
@@ -76,11 +76,6 @@ class CatalogStore {
 	async getPackage(name: string): Promise<PackageInfo | undefined> {
 		const idx = await this.load();
 		return idx.packages.get(name);
-	}
-
-	async getApps(packageName: string): Promise<string[]> {
-		const pkg = await this.getPackage(packageName);
-		return pkg?.version.apps ?? [];
 	}
 
 	async getApp(packageName: string, appName: string): Promise<AppType | undefined> {
