@@ -43,8 +43,20 @@ export interface ExecuteResponse {
 	kind: 'execute';
 	id: number;
 	ok: true;
+	/** Python call snippet (`renderPythonCall`); best-effort even on command error. */
+	python: string;
+	/** TypeScript call snippet (`renderTypeScriptCall`); best-effort even on command error. */
+	typescript: string;
+	/** Set if rendering the snippets threw (rare); the snippet strings are empty then. */
+	snippetError: string | null;
 	cargs: string[];
 	outputs: unknown;
+	/**
+	 * Set if running the generated code threw (e.g. a config missing a required
+	 * input). Reported separately from `snippetError` so a config that fails
+	 * validation still shows its best-effort call snippets, as it did pre-Phase-C.
+	 */
+	commandError: string | null;
 }
 
 export interface ErrorResponse {

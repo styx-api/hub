@@ -25,8 +25,11 @@ import {
 	generateOutputsSchema,
 	generateSchema,
 	generateTypeScript,
+	renderPythonCall,
+	renderTypeScriptCall,
 	resolveOutputs,
-	solve
+	solve,
+	type CodegenContext
 } from '@styx-api/core';
 import { transform } from 'sucrase';
 import * as styxdefs from 'styxdefs';
@@ -38,6 +41,12 @@ interface CompiledTool {
 	inputSchema: object;
 	outputSchema: object;
 	execute: ExecuteFn;
+	/**
+	 * The compiled context, kept so the call snippets (H5) can be rendered per
+	 * config via `renderPythonCall` / `renderTypeScriptCall` - they need the
+	 * `BoundType` tree, which only lives here in the worker.
+	 */
+	ctx: CodegenContext;
 }
 
 // Keyed by root `@type` (`<pkg>/<app>`). Single tool shown at a time, but a small
@@ -98,7 +107,8 @@ function compileTool(
 	const tool: CompiledTool = {
 		inputSchema: generateSchema(ctx),
 		outputSchema: generateOutputsSchema(ctx),
-		execute: buildExecute(generateTypeScript(ctx), entry.executeFn)
+		execute: buildExecute(generateTypeScript(ctx), entry.executeFn),
+		ctx
 	};
 	return { appType: entry.type, tool };
 }
@@ -130,12 +140,47 @@ function handle(msg: WorkerRequest): WorkerResponse {
 	if (!tool) {
 		throw new Error(`no compiled tool for @type "${msg.appType}" - compile it first`);
 	}
+
+	// Snippets (H5) and the command (H4) both derive from the config but fail
+	// independently: a config missing a required input throws when run yet still
+	// has a meaningful best-effort call snippet (only the fields it set), so guard
+	// each so one failure doesn't blank out the other. The package import root
+	// tracks `ctx.project.name` ("niwrap"), so no `packageRoot` override is needed.
+	let python = '';
+	let typescript = '';
+	let snippetError: string | null = null;
+	try {
+		python = renderPythonCall(tool.ctx, msg.config);
+		typescript = renderTypeScriptCall(tool.ctx, msg.config);
+	} catch (err) {
+		snippetError = err instanceof Error ? err.message : String(err);
+	}
+
 	// A fresh DryRunner per run isolates `lastCargs`. The generated execute fn
 	// uses the runner we pass (it only falls back to the global runner when none
 	// is given), so no `setGlobalRunner` is needed.
-	const runner = new styxdefs.DryRunner();
-	const outputs = tool.execute(msg.config, runner);
-	return { kind: 'execute', id: msg.id, ok: true, cargs: runner.lastCargs ?? [], outputs };
+	let cargs: string[] = [];
+	let outputs: unknown = null;
+	let commandError: string | null = null;
+	try {
+		const runner = new styxdefs.DryRunner();
+		outputs = tool.execute(msg.config, runner);
+		cargs = runner.lastCargs ?? [];
+	} catch (err) {
+		commandError = err instanceof Error ? err.message : String(err);
+	}
+
+	return {
+		kind: 'execute',
+		id: msg.id,
+		ok: true,
+		python,
+		typescript,
+		snippetError,
+		cargs,
+		outputs,
+		commandError
+	};
 }
 
 self.onmessage = (ev: MessageEvent<WorkerRequest>) => {
