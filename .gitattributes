@@ -1,0 +1,10 @@
+# Normalize line endings. Store text as LF in the repo and check it out as LF on
+# every platform - this overrides a local core.autocrlf=true, so Windows
+# checkouts no longer get CRLF working copies that trip prettier's
+# endOfLine:"lf" check (CI runs on Linux and never saw this, hence the skew).
+# Git auto-detects text vs binary; the entries below just pin the known binaries.
+* text=auto eol=lf
+
+# Binary assets - never normalize or diff as text. (SVG is XML, left as text.)
+*.png binary
+*.jpg binary
