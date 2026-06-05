@@ -16,9 +16,21 @@ export interface CompileResult {
 	appType: string;
 }
 
+/**
+ * Call snippets for the current config (H5). Rendered by the worker alongside
+ * the command and attached to both result branches, so the Python / TypeScript
+ * tabs show a best-effort call even when the command itself errors. `snippetError`
+ * is set only if rendering the snippets threw (rare).
+ */
+export interface Snippets {
+	python: string;
+	typescript: string;
+	snippetError: string | null;
+}
+
 export type ExecutionResult =
-	| { success: true; cargs: string[]; outputObject: Record<string, unknown> }
-	| { success: false; error: string };
+	| ({ success: true; cargs: string[]; outputObject: Record<string, unknown> } & Snippets)
+	| ({ success: false; error: string } & Snippets);
 
 /** Distributive omit so the discriminated-union members keep their own fields. */
 type WithoutId<T> = T extends unknown ? Omit<T, 'id'> : never;
@@ -76,10 +88,15 @@ export async function compileTool(
 	return { inputSchema: res.inputSchema, outputSchema: res.outputSchema, appType: res.appType };
 }
 
+/** A failure with no snippets (the config never reached a successful render). */
+function failed(error: string): ExecutionResult {
+	return { success: false, error, python: '', typescript: '', snippetError: null };
+}
+
 export async function executeTool(config: Record<string, unknown>): Promise<ExecutionResult> {
 	const appType = config['@type'];
 	if (typeof appType !== 'string') {
-		return { success: false, error: 'Invalid config: missing @type' };
+		return failed('Invalid config: missing @type');
 	}
 	// The form's config is a Svelte `$state` proxy, which `worker.postMessage`
 	// (structured clone) cannot serialize - it throws and the request silently
@@ -87,8 +104,20 @@ export async function executeTool(config: Record<string, unknown>): Promise<Exec
 	// to a clonable plain object first.
 	const plainConfig = JSON.parse(JSON.stringify(config)) as Record<string, unknown>;
 	const res = await send({ kind: 'execute', appType, config: plainConfig });
-	if (!res.ok) return { success: false, error: res.error };
-	if (res.kind !== 'execute')
-		return { success: false, error: 'unexpected worker response for execute' };
-	return { success: true, cargs: res.cargs, outputObject: res.outputs as Record<string, unknown> };
+	if (!res.ok) return failed(res.error);
+	if (res.kind !== 'execute') return failed('unexpected worker response for execute');
+	const snippets: Snippets = {
+		python: res.python,
+		typescript: res.typescript,
+		snippetError: res.snippetError
+	};
+	// A run that threw (e.g. a missing required input) is a command failure, but
+	// its call snippets still rendered - surface them with the error.
+	if (res.commandError) return { success: false, error: res.commandError, ...snippets };
+	return {
+		success: true,
+		cargs: res.cargs,
+		outputObject: res.outputs as Record<string, unknown>,
+		...snippets
+	};
 }

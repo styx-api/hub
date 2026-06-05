@@ -42,9 +42,12 @@
 	let mobileActiveTab = $state('config');
 	let desktopResultsTab = $state('command');
 
+	// Snippet fields are optional: the compile-in-browser path (`executeTool`)
+	// always sets them, the legacy `niwrapExecute` path never does.
+	type Snippets = { python?: string; typescript?: string; snippetError?: string | null };
 	type ExecutionResult =
-		| { success: true; cargs: string[]; outputObject: Record<string, unknown> }
-		| { success: false; error: string };
+		| ({ success: true; cargs: string[]; outputObject: Record<string, unknown> } & Snippets)
+		| ({ success: false; error: string } & Snippets);
 
 	let executionResult = $state<ExecutionResult | null>(null);
 
@@ -136,6 +139,15 @@
 			? executionResult.error
 			: null
 	);
+
+	// Call snippets (H5) ride along on the execution result so they refresh with
+	// the config and survive a command error. They are only produced by the
+	// compile-in-browser path; in legacy mode they stay null and ResultsPanel
+	// shows a note pointing at the compiler flag.
+	const forCurrentApp = $derived(executionResult != null && executedForApp === app);
+	const pythonCode = $derived(forCurrentApp ? (executionResult!.python ?? null) : null);
+	const typescriptCode = $derived(forCurrentApp ? (executionResult!.typescript ?? null) : null);
+	const snippetError = $derived(forCurrentApp ? (executionResult!.snippetError ?? null) : null);
 
 	const hasConfig = $derived(Object.keys(config).length > 0);
 
@@ -340,6 +352,10 @@
 							{outputEntries}
 							descriptorConfig={config}
 							{niwrapError}
+							{pythonCode}
+							{typescriptCode}
+							{snippetError}
+							compilerEnabled={useCompiler}
 							{hasConfig}
 							{githubUrls}
 							isMobile={true}
@@ -383,6 +399,10 @@
 						{outputEntries}
 						descriptorConfig={config}
 						{niwrapError}
+						{pythonCode}
+						{typescriptCode}
+						{snippetError}
+						compilerEnabled={useCompiler}
 						{hasConfig}
 						{githubUrls}
 						isMobile={false}
