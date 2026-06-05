@@ -8,7 +8,7 @@
 export interface CompileRequest {
 	kind: 'compile';
 	id: number;
-	/** Raw Boutiques descriptor text (the niwrap `boutiques.json`). */
+	/** Raw descriptor text (the niwrap `boutiques.json` / `workbench.json`). */
 	descriptor: string;
 	/** Package name - sets the tool's `@type` prefix (`<pkg>/<app>`). */
 	packageName: string;
@@ -16,6 +16,8 @@ export interface CompileRequest {
 	appName: string;
 	/** Project name (`niwrap`) - threaded into the codegen context. */
 	projectName: string;
+	/** Descriptor format hint from the manifest (`boutiques` | `workbench`); auto-detected if omitted. */
+	format?: string;
 }
 
 export interface ExecuteRequest {

@@ -8,7 +8,6 @@
 	import AppPage from '$lib/components/app-page/AppPage.svelte';
 	import { catalog, type PackageInfo } from '$lib/services/catalog';
 	import { theme } from '$lib/services/theme.svelte';
-	import { niwrapVersion, preloadNiwrap } from '$lib/services/execution';
 	import {
 		parseUrlState,
 		parseConfigFromUrl,
@@ -45,15 +44,7 @@
 	async function initialize() {
 		isInitializing = true;
 
-		preloadNiwrap();
 		const idx = await catalog.load();
-
-		// Version check
-		const jsVersion = await niwrapVersion();
-		if (jsVersion !== idx.project.version) {
-			console.error('NiWrap data version does not match niwrap javascript module version.');
-		}
-
 		await loadSelectionFromUrl(idx.packages);
 		isInitializing = false;
 	}
