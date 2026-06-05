@@ -50,11 +50,13 @@
 		"vitest": "^4.0.18"
 	},
 	"dependencies": {
+		"@styx-api/core": "0.2.0",
 		"mode-watcher": "^1.1.0",
 		"shell-quote": "^1.8.3",
 		"shiki": "^3.12.2",
 		"shlex": "^3.0.0",
-		"styxdefs": "^0.1.0",
+		"styxdefs": "^0.2.0",
+		"sucrase": "^3.35.0",
 		"svelte-sonner": "^1.0.7"
 	}
 }

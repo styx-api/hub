@@ -4,6 +4,12 @@
 	import ResultsPanel from './ResultsPanel.svelte';
 	import { Settings, Terminal as TerminalIcon, FileCode, ExternalLink } from '@lucide/svelte';
 	import { niwrapDeathMessage, niwrapExecute } from '$lib/services/execution';
+	import {
+		compileInBrowserEnabled,
+		compileTool,
+		executeTool,
+		fetchDescriptor
+	} from '$lib/services/compiler';
 	import { catalog, type PackageInfo } from '$lib/services/catalog';
 	import { getSchemaAtPath, getSchemaMetadata } from '$lib/services/schema/schemaUtils';
 	import { streamFieldNames } from '$lib/services/schema/outputsSchema';
@@ -28,6 +34,9 @@
 	let inputSchema = $state<object | null>(null);
 	let outputSchema = $state<object | null>(null);
 	let config = $state<object>({});
+	// Whether this load is using the compile-in-browser path (Phase C). Captured
+	// per load so the execute effect routes to the same backend as the schemas.
+	let useCompiler = $state(false);
 	let isLoading = $state(true);
 	let error = $state<string | null>(null);
 	let mobileActiveTab = $state('config');
@@ -166,7 +175,10 @@
 		// Increment generation so any in-flight execution is discarded
 		const gen = ++executionGeneration;
 
-		niwrapExecute(currentConfig).then((result) => {
+		const run = useCompiler
+			? executeTool(currentConfig as Record<string, unknown>)
+			: niwrapExecute(currentConfig);
+		run.then((result) => {
 			// Only apply if this is still the latest execution
 			if (gen === executionGeneration) {
 				executionResult = result;
@@ -185,18 +197,33 @@
 		executionResult = null;
 		executedForApp = null;
 		executionGeneration++;
+		useCompiler = compileInBrowserEnabled();
 
 		try {
 			appData = (await catalog.getApp(packageName, appName)) ?? null;
 
 			// Only fetch schemas if app has a descriptor
 			if (appData?.source) {
-				const [input, output] = await Promise.all([
-					catalog.getAppInputSchema(packageName, appName),
-					catalog.getAppOutputSchema(packageName, appName)
-				]);
-				inputSchema = input;
-				outputSchema = output;
+				if (useCompiler) {
+					// Phase C: compile the descriptor in-browser for the form schemas,
+					// instead of fetching the prebuilt v1 JSON Schema artefacts.
+					const descriptor = await fetchDescriptor(
+						packageName,
+						versionName,
+						appName,
+						appData.source.path
+					);
+					const compiled = await compileTool(descriptor, packageName, appName, 'niwrap');
+					inputSchema = compiled.inputSchema;
+					outputSchema = compiled.outputSchema;
+				} else {
+					const [input, output] = await Promise.all([
+						catalog.getAppInputSchema(packageName, appName),
+						catalog.getAppOutputSchema(packageName, appName)
+					]);
+					inputSchema = input;
+					outputSchema = output;
+				}
 
 				if (initialConfig) {
 					config = initialConfig;
