@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "title": "c3d",
+  "description": "C3D is a command-line tool for medical image processing.",
+  "properties": {
+    "root": {
+      "type": "string",
+      "x-styx-type": "path"
+    },
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "x-styx-type": "path"
+      },
+      "description": "The output"
+    }
+  },
+  "required": [
+    "root",
+    "output"
+  ]
+}

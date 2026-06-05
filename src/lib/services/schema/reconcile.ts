@@ -108,8 +108,17 @@ export function reconcileValueWithSchema(value: any, schema: JSONSchema): any {
 function valueMatchesSchemaType(value: any, schema: JSONSchema): boolean {
 	if (!isSchemaObject(schema)) return false;
 
+	// A literal branch (`{ const: ... }`) - e.g. a mixed union's `"Linear"` arm.
+	if (schema.const !== undefined) return value === schema.const;
+
 	if (isObjectSchema(schema) && schema.properties) {
-		return value != null && typeof value === 'object' && !Array.isArray(value);
+		if (value == null || typeof value !== 'object' || Array.isArray(value)) return false;
+		// Discriminated-union variant: only the branch whose `@type` const matches
+		// the value's `@type` is the right one. Without this, the first object branch
+		// would always "win" and a loaded config could be reshaped into the wrong variant.
+		const tag = (schema.properties['@type'] as { const?: unknown } | undefined)?.const;
+		if (tag !== undefined) return value['@type'] === tag;
+		return true;
 	}
 	if (isArraySchema(schema)) {
 		return Array.isArray(value);

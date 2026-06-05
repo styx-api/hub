@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "title": "bet",
+  "description": "Automated brain extraction tool for FSL",
+  "properties": {
+    "root": {
+      "type": "string",
+      "x-styx-type": "path"
+    },
+    "outfile": {
+      "type": "string",
+      "x-styx-type": "path",
+      "description": "Main default mask output of BET"
+    },
+    "binary_mask": {
+      "type": "string",
+      "x-styx-type": "path",
+      "description": "Binary mask file (from -m option)"
+    },
+    "overlay_file": {
+      "type": "string",
+      "x-styx-type": "path",
+      "description": "Overlaid brain surface onto original image"
+    },
+    "approx_skull_img": {
+      "type": "string",
+      "x-styx-type": "path",
+      "description": "Approximate skull image file"
+    },
+    "output_vtk_mesh": {
+      "type": "string",
+      "x-styx-type": "path",
+      "description": "Mesh in VTK format"
+    },
+    "skull_mask": {
+      "type": "string",
+      "x-styx-type": "path",
+      "description": "Output mask for skull image"
+    },
+    "out_inskull_mask": {
+      "type": "string",
+      "x-styx-type": "path",
+      "description": "The in-skull mask file from betsurf (from -A or -A2)"
+    },
+    "out_inskull_mesh": {
+      "type": "string",
+      "x-styx-type": "path",
+      "description": "The in-skull mesh file from betsurf (from -A or -A2)"
+    },
+    "out_inskull_off": {
+      "type": "string",
+      "x-styx-type": "path",
+      "description": "The in-skull mesh .off file from betsurf (from -A or -A2)"
+    },
+    "out_outskin_mask": {
+      "type": "string",
+      "x-styx-type": "path",
+      "description": "The out-skin mask file from betsurf (from -A or -A2)"
+    },
+    "out_outskin_mesh": {
+      "type": "string",
+      "x-styx-type": "path",
+      "description": "The out-skin mesh file from betsurf (from -A or -A2)"
+    },
+    "out_outskin_off": {
+      "type": "string",
+      "x-styx-type": "path",
+      "description": "The out-skin mesh .off file from betsurf (from -A or -A2)"
+    },
+    "out_outskull_mask": {
+      "type": "string",
+      "x-styx-type": "path",
+      "description": "The out-skull mask file from betsurf (from -A or -A2)"
+    },
+    "out_outskull_mesh": {
+      "type": "string",
+      "x-styx-type": "path",
+      "description": "The out-skull mesh file from betsurf (from -A or -A2)"
+    },
+    "out_outskull_off": {
+      "type": "string",
+      "x-styx-type": "path",
+      "description": "The out-skull mesh .off file from betsurf (from -A or -A2)"
+    }
+  },
+  "required": [
+    "root",
+    "outfile",
+    "binary_mask",
+    "overlay_file",
+    "approx_skull_img",
+    "output_vtk_mesh",
+    "skull_mask",
+    "out_inskull_mask",
+    "out_inskull_mesh",
+    "out_inskull_off",
+    "out_outskin_mask",
+    "out_outskin_mesh",
+    "out_outskin_off",
+    "out_outskull_mask",
+    "out_outskull_mesh",
+    "out_outskull_off"
+  ]
+}

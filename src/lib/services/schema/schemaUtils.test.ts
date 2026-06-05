@@ -4,7 +4,9 @@ import {
 	isNullable,
 	getNonNullSchema,
 	isUnion,
-	getSchemaMetadata
+	getSchemaMetadata,
+	getUnionVariants,
+	isEnumSchema
 } from './schemaUtils';
 
 describe('getSchemaAtPath', () => {
@@ -132,6 +134,72 @@ describe('isUnion', () => {
 
 	it('returns false for boolean schema', () => {
 		expect(isUnion(true)).toBe(false);
+	});
+});
+
+// styx2 emits unions as `oneOf` (not `anyOf`), so the union helpers must accept
+// both keywords. These cases lock that in against the real dialect.
+describe('oneOf dialect (styx2)', () => {
+	const objectUnion = {
+		oneOf: [
+			{ type: 'object' as const, properties: { '@type': { const: 'a' } } },
+			{ type: 'object' as const, properties: { '@type': { const: 'b' } } }
+		]
+	};
+
+	it('isUnion accepts a oneOf with multiple non-null branches', () => {
+		expect(isUnion(objectUnion)).toBe(true);
+	});
+
+	it('isUnion is false for a single-branch oneOf plus null', () => {
+		expect(isUnion({ oneOf: [{ type: 'string' }, { type: 'null' }] })).toBe(false);
+	});
+
+	it('getUnionVariants returns oneOf branches, preferring anyOf when both present', () => {
+		expect(getUnionVariants(objectUnion)).toHaveLength(2);
+		expect(getUnionVariants({ type: 'string' })).toBeNull();
+		expect(getUnionVariants({ anyOf: [{ type: 'string' }] })).toHaveLength(1);
+	});
+
+	it('isNullable accepts a null branch in oneOf', () => {
+		expect(isNullable({ oneOf: [{ type: 'string' }, { type: 'null' }] })).toBe(true);
+	});
+
+	it('getSchemaAtPath traverses through a oneOf object branch', () => {
+		const nameSchema = { type: 'string' as const };
+		const schema = {
+			oneOf: [
+				{ type: 'null' as const },
+				{ type: 'object' as const, properties: { name: nameSchema } }
+			]
+		};
+		expect(getSchemaAtPath(schema, ['name'])).toBe(nameSchema);
+	});
+});
+
+// styx2 outputs mark always-present-but-nullable fields with a `type: [T, "null"]`
+// array rather than a union; the nullable helpers must understand that too.
+describe('type-array null (styx2 outputs)', () => {
+	it('isNullable detects "null" in a type array', () => {
+		expect(isNullable({ type: ['string', 'null'] })).toBe(true);
+		expect(isNullable({ type: ['string'] })).toBe(false);
+	});
+
+	it('getNonNullSchema narrows a [T, "null"] type to T', () => {
+		expect(getNonNullSchema({ type: ['string', 'null'] })).toEqual({ type: 'string' });
+	});
+});
+
+describe('isEnumSchema', () => {
+	it('detects a bare enum with no type', () => {
+		expect(isEnumSchema({ enum: [2, 3, 4] })).toBe(true);
+		expect(isEnumSchema({ enum: ['a', 'b'] })).toBe(true);
+	});
+
+	it('is false for non-enum schemas', () => {
+		expect(isEnumSchema({ type: 'string' })).toBe(false);
+		expect(isEnumSchema({ enum: [] })).toBe(false);
+		expect(isEnumSchema(true)).toBe(false);
 	});
 });
 

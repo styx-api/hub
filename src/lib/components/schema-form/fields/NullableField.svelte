@@ -5,13 +5,18 @@
 	import FieldRenderer from '../FieldRenderer.svelte';
 	import { getSchemaDefaultValue } from '../../../services/schema/defaultValue';
 	import type { FieldProps } from '../types';
-	import { isNullSchema, isSchemaObject, type JSONSchema } from '$lib/services/schema/schema';
+	import { isSchemaObject } from '$lib/services/schema/schema';
+	import { getNonNullSchema } from '$lib/services/schema/schemaUtils';
 	import { getFieldId, getFieldLabel } from '../utils';
 	import GlossaryText from './GlossaryText.svelte';
 
 	let { schema, value, path, required, onUpdate }: FieldProps = $props();
 
-	let nonNullSchema = $derived(makeNonNullSchema(schema));
+	// Resolve the inner (non-null) schema via the shared helper so `anyOf`/`oneOf`
+	// nullables AND styx2's `type: [T, "null"]` outputs encoding all unwrap the same
+	// way. Crucially the narrowed schema no longer reports as nullable, so the inner
+	// FieldRenderer won't route it straight back into NullableField (infinite nest).
+	let nonNullSchema = $derived(getNonNullSchema(schema) ?? schema);
 
 	let fieldName: string = $state('');
 	let fieldId: string = $state('');
@@ -29,13 +34,6 @@
 			checked = shouldBeChecked;
 		}
 	});
-
-	function makeNonNullSchema(schema: JSONSchema.Interface) {
-		const nonNullSchema = schema.anyOf?.find((x) => !isNullSchema(x));
-		if (!nonNullSchema) return schema;
-		if (!isSchemaObject(nonNullSchema)) return schema;
-		return nonNullSchema;
-	}
 
 	function handleToggle(newChecked: boolean) {
 		checked = newChecked;

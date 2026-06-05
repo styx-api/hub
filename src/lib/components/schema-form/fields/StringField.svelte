@@ -23,7 +23,9 @@
 			stringSchema = schema;
 			hasEnum = Array.isArray(stringSchema.enum) && stringSchema.enum.length > 0;
 			enumOptions = hasEnum ? (simpleClone(stringSchema.enum!) as string[]) : [];
-			isFileType = (schema as any)?.['x-styx-type'] === 'file';
+			// styx2 marks filesystem paths with `x-styx-type: "path"` (styx v1 used "file").
+			const styxType = (schema as { 'x-styx-type'?: string })['x-styx-type'];
+			isFileType = styxType === 'path' || styxType === 'file';
 		}
 	});
 

@@ -15,6 +15,22 @@
 	let fieldName: string = $state('Array');
 	let items: any[] = $state([]);
 
+	// Length bounds. styx2 emits `minItems`/`maxItems` for genuinely bounded lists
+	// (e.g. a fixed-length coordinate vector); they enforce a min == max as "exactly N".
+	const minItems = $derived(typeof schema.minItems === 'number' ? schema.minItems : 0);
+	const maxItems = $derived(typeof schema.maxItems === 'number' ? schema.maxItems : Infinity);
+	const canAdd = $derived(items.length < maxItems);
+	const canRemove = $derived(items.length > minItems);
+	const boundsHint = $derived(
+		minItems > 0 && minItems === maxItems
+			? `exactly ${minItems}`
+			: maxItems !== Infinity
+				? `${minItems}-${maxItems}`
+				: minItems > 0
+					? `min ${minItems}`
+					: null
+	);
+
 	$effect(() => {
 		if (isArraySchema(schema) && schema.items && isSchemaObject(schema.items)) {
 			itemSchema = schema.items;
@@ -27,11 +43,13 @@
 	});
 
 	function addItem() {
+		if (!canAdd) return;
 		const newItem = schema.items ? getSchemaDefaultValue(schema.items) : null;
 		onUpdate(path, [...items, newItem]);
 	}
 
 	function removeItem(index: number) {
+		if (!canRemove) return;
 		onUpdate(
 			path,
 			items.filter((_, i) => i !== index)
@@ -46,10 +64,16 @@
 			<h3 class="text-sm font-medium">{schema.title || fieldName}</h3>
 			<Badge variant="outline" class="px-1.5 py-0 text-[10px]">
 				{items.length}
-				{items.length === 1 ? 'item' : 'items'}
+				{items.length === 1 ? 'item' : 'items'}{#if boundsHint}&nbsp;&middot; {boundsHint}{/if}
 			</Badge>
 		</div>
-		<Button variant="outline" size="sm" onclick={addItem} class="h-7 cursor-pointer px-2 text-xs">
+		<Button
+			variant="outline"
+			size="sm"
+			onclick={addItem}
+			disabled={!canAdd}
+			class="h-7 cursor-pointer px-2 text-xs"
+		>
 			<Plus class="mr-1 h-3 w-3" />Add
 		</Button>
 	</div>
@@ -83,6 +107,7 @@
 					variant="ghost"
 					size="sm"
 					onclick={() => removeItem(index)}
+					disabled={!canRemove}
 					class="h-6 w-6 cursor-pointer p-0 text-muted-foreground transition-colors duration-200 hover:text-destructive"
 				>
 					<Trash2 class="h-3 w-3 transition-colors duration-200" />

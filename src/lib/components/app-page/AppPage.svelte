@@ -6,6 +6,7 @@
 	import { niwrapDeathMessage, niwrapExecute } from '$lib/services/execution';
 	import { catalog, type PackageInfo } from '$lib/services/catalog';
 	import { getSchemaAtPath, getSchemaMetadata } from '$lib/services/schema/schemaUtils';
+	import { streamFieldNames } from '$lib/services/schema/outputsSchema';
 	import type { AppType } from '$lib/services/catalog';
 	import { github, openExternal } from '$lib/utils/github';
 	import { URLS } from '$lib/constants/urls';
@@ -107,8 +108,13 @@
 			}
 		}
 
+		// stdout/stderr stream fields are arrays of text lines, not file paths -
+		// skip them so the output list doesn't render each line as a bogus file.
+		const streams = streamFieldNames(outputSchema as Parameters<typeof streamFieldNames>[0]);
+
 		const entries = Object.entries(executionResult.outputObject);
 		for (const [key, value] of entries) {
+			if (streams.has(key)) continue;
 			const isRoot = key === 'root';
 			processValue(value, [key], isRoot);
 		}

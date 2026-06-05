@@ -6,50 +6,12 @@
 	import ArrayField from './fields/ArrayField.svelte';
 	import NullableField from './fields/NullableField.svelte';
 	import UnionField from './fields/UnionField.svelte';
-	import {
-		type JSONSchema,
-		isObjectSchema,
-		isArraySchema,
-		isStringSchema,
-		isNumberSchema,
-		isIntegerSchema,
-		isBooleanSchema,
-		isNullSchema
-	} from '$lib/services/schema/schema';
+	import EnumField from './fields/EnumField.svelte';
+	import { getFieldType, type FieldType } from '$lib/services/schema/fieldType';
 	import type { FieldProps } from './types';
 	import type { Component } from 'svelte';
-	import { isNullable, isUnion } from '$lib/services/schema/schemaUtils';
 
 	let { schema, value, path = [], required = false, onUpdate }: FieldProps = $props();
-
-	type FieldType =
-		| 'const'
-		| 'nullable'
-		| 'union'
-		| 'object'
-		| 'array'
-		| 'string'
-		| 'integer'
-		| 'number'
-		| 'boolean'
-		| 'null'
-		| 'unknown';
-
-	function getFieldType(schema: JSONSchema.Interface): FieldType {
-		if (schema.const !== undefined) return 'const';
-
-		if (isBooleanSchema(schema)) return 'boolean';
-		if (!required || isNullable(schema)) return 'nullable';
-		if (isUnion(schema)) return 'union';
-		if (isObjectSchema(schema)) return 'object';
-		if (isArraySchema(schema)) return 'array';
-		if (isStringSchema(schema)) return 'string';
-		if (isIntegerSchema(schema)) return 'integer';
-		if (isNumberSchema(schema)) return 'number';
-		if (isNullSchema(schema)) return 'null';
-
-		return 'unknown';
-	}
 
 	// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 	const fieldComponents: Record<FieldType, Component<FieldProps, {}, ''> | null> = {
@@ -61,12 +23,13 @@
 		array: ArrayField,
 		nullable: NullableField,
 		union: UnionField,
+		enum: EnumField,
 		const: null,
 		null: null,
 		unknown: null
 	} as const;
 
-	const fieldType = $derived(getFieldType(schema));
+	const fieldType = $derived(getFieldType(schema, required));
 	const FieldComponent = $derived(fieldComponents[fieldType]);
 </script>
 
