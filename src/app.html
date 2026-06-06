@@ -3,6 +3,8 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+		<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#020817" />
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link
@@ -16,6 +18,20 @@
 			data-cf-beacon='{"token": "3cc81275d9484412b3569fdb3580758a"}'
 		></script>
 		<!-- End Cloudflare Web Analytics -->
+		<script type="application/ld+json">
+			{
+				"@context": "https://schema.org",
+				"@type": "WebSite",
+				"name": "NiWrap Hub",
+				"url": "https://niwrap.dev/hub/",
+				"description": "Browse, configure, and run neuroimaging CLI tools as typed Python and TypeScript wrappers, right in your browser.",
+				"publisher": {
+					"@type": "Organization",
+					"name": "NiWrap",
+					"url": "https://niwrap.dev/"
+				}
+			}
+		</script>
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">
