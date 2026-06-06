@@ -7,7 +7,7 @@
  * snippets, which ride along on the execute result).
  */
 
-import type { WorkerRequest, WorkerResponse } from './types';
+import type { DelegationArtifact, WorkerRequest, WorkerResponse } from './types';
 
 export interface CompileResult {
 	inputSchema: object;
@@ -22,6 +22,15 @@ export interface CompileResult {
 	typescriptModule: string;
 	/** The tool's regenerated Boutiques descriptor (pretty-printed JSON), a portable artifact. */
 	boutiquesDescriptor: string;
+	/** Canonical module stem (`bet`, `v_3dcalc`) for naming the vendored files; `null` if unavailable. */
+	moduleStem: string | null;
+	/**
+	 * Experimental Python-ecosystem workflow targets (nipype Interface / pydra task),
+	 * or `null` when unavailable for this tool. Each is a 2-file artifact that delegates
+	 * to `pythonModule` - see {@link DelegationArtifact}.
+	 */
+	nipype: DelegationArtifact | null;
+	pydra: DelegationArtifact | null;
 }
 
 /**
@@ -110,7 +119,10 @@ export async function compileTool(
 		appType: res.appType,
 		pythonModule: res.pythonModule,
 		typescriptModule: res.typescriptModule,
-		boutiquesDescriptor: res.boutiquesDescriptor
+		boutiquesDescriptor: res.boutiquesDescriptor,
+		moduleStem: res.moduleStem,
+		nipype: res.nipype,
+		pydra: res.pydra
 	};
 }
 

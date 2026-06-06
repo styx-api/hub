@@ -8,7 +8,8 @@
 		executeTool,
 		compilerStatus,
 		compilerMismatchWarning,
-		type ExecutionResult
+		type ExecutionResult,
+		type DelegationArtifact
 	} from '$lib/services/compiler';
 	import { niwrapDeathMessage } from '$lib/utils/deathMessage';
 	import { catalog, type PackageInfo } from '$lib/services/catalog';
@@ -41,6 +42,13 @@
 	// The tool's regenerated Boutiques descriptor (config-independent; set on compile),
 	// offered alongside the wrappers in the Source tab.
 	let boutiquesDescriptor = $state<string | null>(null);
+	// The compiler's canonical module stem (`bet`, `v_3dcalc`), used to name the
+	// vendored files so they're valid identifiers and match the delegation files.
+	let moduleStem = $state<string | null>(null);
+	// Experimental Python-ecosystem workflow targets (nipype Interface / pydra task),
+	// each a 2-file artifact delegating to `pythonModule`; `null` when unavailable.
+	let nipype = $state<DelegationArtifact | null>(null);
+	let pydra = $state<DelegationArtifact | null>(null);
 	let config = $state<object>({});
 	let isLoading = $state(true);
 	let error = $state<string | null>(null);
@@ -261,6 +269,9 @@
 		pythonModule = null;
 		typescriptModule = null;
 		boutiquesDescriptor = null;
+		moduleStem = null;
+		nipype = null;
+		pydra = null;
 		executionResult = null;
 		executedForApp = null;
 		executionGeneration++;
@@ -288,6 +299,9 @@
 				pythonModule = compiled.pythonModule;
 				typescriptModule = compiled.typescriptModule;
 				boutiquesDescriptor = compiled.boutiquesDescriptor;
+				moduleStem = compiled.moduleStem;
+				nipype = compiled.nipype;
+				pydra = compiled.pydra;
 
 				if (initialConfig) {
 					config = initialConfig;
@@ -321,6 +335,9 @@
 		pythonModule = compiled.pythonModule;
 		typescriptModule = compiled.typescriptModule;
 		boutiquesDescriptor = compiled.boutiquesDescriptor;
+		moduleStem = compiled.moduleStem;
+		nipype = compiled.nipype;
+		pydra = compiled.pydra;
 	}
 
 	// URL sharing
@@ -438,6 +455,9 @@
 							{pythonModule}
 							{typescriptModule}
 							{boutiquesDescriptor}
+							{moduleStem}
+							{nipype}
+							{pydra}
 							toolName={app}
 							{hasConfig}
 							{githubUrls}
@@ -493,6 +513,9 @@
 						{pythonModule}
 						{typescriptModule}
 						{boutiquesDescriptor}
+						{moduleStem}
+						{nipype}
+						{pydra}
 						toolName={app}
 						{hasConfig}
 						{githubUrls}

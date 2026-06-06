@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Tabs, TabsContent, TabsList, TabsTrigger } from '$lib/components/ui/tabs';
+	import * as Select from '$lib/components/ui/select';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import { Alert, AlertDescription, AlertTitle } from '$lib/components/ui/alert';
@@ -19,7 +20,11 @@
 		Download
 	} from '@lucide/svelte';
 	import type { BundledLanguage } from 'shiki';
-	import { BUNDLED_CORE_NAME, BUNDLED_CORE_VERSION } from '$lib/services/compiler';
+	import {
+		BUNDLED_CORE_NAME,
+		BUNDLED_CORE_VERSION,
+		type DelegationArtifact
+	} from '$lib/services/compiler';
 	import { downloadText, safeFileStem } from '$lib/utils/download';
 
 	interface OutputEntry {
@@ -55,6 +60,11 @@
 		typescriptModule: string | null;
 		/** The tool's regenerated Boutiques descriptor (pretty-printed JSON, config-independent). */
 		boutiquesDescriptor: string | null;
+		/** Compiler's canonical module stem for naming vendored files; null falls back to the tool name. */
+		moduleStem: string | null;
+		/** Experimental Python-ecosystem workflow targets (2-file, config-independent); null when unavailable. */
+		nipype: DelegationArtifact | null;
+		pydra: DelegationArtifact | null;
 		/** App name, used for download filenames and the Source-tab heading. */
 		toolName: string;
 		hasConfig: boolean;
@@ -78,6 +88,9 @@
 		pythonModule,
 		typescriptModule,
 		boutiquesDescriptor,
+		moduleStem,
+		nipype,
+		pydra,
 		toolName,
 		hasConfig,
 		githubUrls,
@@ -90,11 +103,74 @@
 
 	// Source artifacts (the "vendor one tool" tab). Config-independent, so they're
 	// available as soon as the tool compiles - even before the form is filled.
-	let sourceTab = $state('python');
-	const fileStem = $derived(safeFileStem(toolName));
+	// Prefer the compiler's canonical module stem (a valid identifier, and the same
+	// stem the nipype/pydra delegation files use) so every vendored file for a tool
+	// shares one import-safe base name; fall back to the sanitized tool name.
+	const fileStem = $derived(moduleStem ?? safeFileStem(toolName));
 	const inputSchemaJson = $derived(inputSchema ? JSON.stringify(inputSchema, null, 2) : '');
 	const outputSchemaJson = $derived(outputSchema ? JSON.stringify(outputSchema, null, 2) : '');
 	const hasSource = $derived(Boolean(pythonModule || typescriptModule || boutiquesDescriptor));
+
+	// The Source tab grew past a comfortable flat tab strip (now 7 targets, two of
+	// them 2-file), so it's a grouped target picker + a content panel. The grouped
+	// model drives both the <Select> and the trigger label.
+	type SourceTarget =
+		| 'python'
+		| 'typescript'
+		| 'nipype'
+		| 'pydra'
+		| 'boutiques'
+		| 'input-schema'
+		| 'output-schema';
+	interface SourceOption {
+		key: SourceTarget;
+		label: string;
+		available: boolean;
+		experimental?: boolean;
+	}
+	let sourceTarget = $state<SourceTarget>('python');
+	const sourceGroups = $derived<{ heading: string; options: SourceOption[] }[]>([
+		{
+			heading: 'Language wrappers',
+			options: [
+				{ key: 'python', label: 'Python wrapper', available: Boolean(pythonModule) },
+				{ key: 'typescript', label: 'TypeScript wrapper', available: Boolean(typescriptModule) }
+			]
+		},
+		{
+			heading: 'Workflow frameworks (Python)',
+			options: [
+				{
+					key: 'nipype',
+					label: 'Nipype interface',
+					available: Boolean(nipype),
+					experimental: true
+				},
+				{ key: 'pydra', label: 'Pydra task', available: Boolean(pydra), experimental: true }
+			]
+		},
+		{
+			heading: 'Specs',
+			options: [
+				{ key: 'boutiques', label: 'Boutiques', available: Boolean(boutiquesDescriptor) },
+				{ key: 'input-schema', label: 'Input schema', available: Boolean(inputSchemaJson) },
+				{ key: 'output-schema', label: 'Output schema', available: Boolean(outputSchemaJson) }
+			]
+		}
+	]);
+	const sourceOptions = $derived(sourceGroups.flatMap((g) => g.options));
+	// The picker is controlled by `sourceTarget`, but a target chosen for one tool can be
+	// unavailable for the next (nipype/pydra are per-tool). Derive the *effective* target -
+	// the selection when it's still available, else the first available option - so an
+	// unavailable selection transparently falls back. Deriving (vs. a write-in-effect that
+	// resets `sourceTarget`) avoids fighting the user mid-selection and doesn't assume any
+	// one target (e.g. Python) is always present.
+	const effectiveTarget = $derived<SourceTarget>(
+		sourceOptions.find((o) => o.key === sourceTarget)?.available
+			? sourceTarget
+			: (sourceOptions.find((o) => o.available)?.key ?? sourceTarget)
+	);
+	const effectiveOption = $derived(sourceOptions.find((o) => o.key === effectiveTarget));
 
 	function openGithubFile(url: string) {
 		window.open(url, '_blank', 'noopener,noreferrer');
@@ -138,6 +214,68 @@
 		</div>
 		<CodeBlock code={content} {language} showLineNumbers />
 	</div>
+{/snippet}
+
+<!-- Caveat shown above experimental codegen targets (nipype / pydra). -->
+{#snippet experimentalNote()}
+	<div
+		class="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-950/40 dark:text-amber-200"
+	>
+		<TriangleAlert class="mt-0.5 h-3.5 w-3.5 shrink-0" />
+		<span>
+			Experimental codegen in <code>{BUNDLED_CORE_NAME}@{BUNDLED_CORE_VERSION}</code> - review the output
+			before relying on it in a pipeline.
+		</span>
+	</div>
+{/snippet}
+
+<!-- One delegation target (nipype/pydra): the experimental note, a blurb, then the two
+     files it ships as - the interface and the styx wrapper it imports. -->
+{#snippet delegationTarget(artifact: DelegationArtifact, blurb: import('svelte').Snippet)}
+	<div class="space-y-3">
+		{@render experimentalNote()}
+		{@render blurb()}
+		{#if pythonModule}
+			<p class="text-xs text-muted-foreground">
+				Drop both files together as a package - <code>{artifact.ifaceStem}.py</code> imports the
+				styx wrapper from <code>{artifact.styxStem}.py</code>, so depend only on
+				<code>styxdefs</code>.
+			</p>
+			{@render sourceArtifact(
+				`${artifact.ifaceStem}.py`,
+				artifact.module,
+				'python',
+				'text/x-python'
+			)}
+			{@render sourceArtifact(`${artifact.styxStem}.py`, pythonModule, 'python', 'text/x-python')}
+		{/if}
+	</div>
+{/snippet}
+
+{#snippet nipypeBlurb()}
+	<p class="text-sm text-muted-foreground">
+		A <a
+			href="https://nipype.readthedocs.io/"
+			target="_blank"
+			rel="noopener noreferrer"
+			class="underline underline-offset-2">Nipype</a
+		>
+		<code>Interface</code> for <code>{toolName}</code> with a typed input/output spec. Execution is delegated
+		to the styx Python wrapper, so it drops straight into a Nipype workflow.
+	</p>
+{/snippet}
+
+{#snippet pydraBlurb()}
+	<p class="text-sm text-muted-foreground">
+		A <a
+			href="https://pydra.readthedocs.io/"
+			target="_blank"
+			rel="noopener noreferrer"
+			class="underline underline-offset-2">Pydra</a
+		>
+		task for <code>{toolName}</code> (the <code>pydra.compose</code> API) with typed inputs/outputs.
+		Execution is delegated to the styx Python wrapper, so it drops straight into a Pydra workflow.
+	</p>
 {/snippet}
 
 <div class="space-y-6">
@@ -309,8 +447,9 @@
 				<div class="space-y-1">
 					<h3 class="text-base font-semibold">Vendor this tool</h3>
 					<p class="text-sm text-muted-foreground">
-						The full generated wrapper for <code>{toolName}</code>. Drop a single file into your
-						project and depend only on <code>styxdefs</code> - no need to install all of NiWrap.
+						Generated artifacts for <code>{toolName}</code> - drop them into your project and depend
+						only on <code>styxdefs</code>, no need to install all of NiWrap. Pick a target below;
+						some span more than one file.
 					</p>
 					<p class="text-xs text-muted-foreground">
 						Generated by <code>{BUNDLED_CORE_NAME}@{BUNDLED_CORE_VERSION}</code>. You own the copy,
@@ -318,102 +457,131 @@
 					</p>
 				</div>
 
-				<Tabs bind:value={sourceTab} class="w-full">
-					<TabsList class="grid w-full grid-cols-5">
-						<TabsTrigger value="python" disabled={!pythonModule}>Python</TabsTrigger>
-						<TabsTrigger value="typescript" disabled={!typescriptModule}>TypeScript</TabsTrigger>
-						<TabsTrigger value="boutiques" disabled={!boutiquesDescriptor}>Boutiques</TabsTrigger>
-						<TabsTrigger value="input-schema" disabled={!inputSchemaJson}>
-							{isMobile ? 'Input' : 'Input schema'}
-						</TabsTrigger>
-						<TabsTrigger value="output-schema" disabled={!outputSchemaJson}>
-							{isMobile ? 'Output' : 'Output schema'}
-						</TabsTrigger>
-					</TabsList>
-
-					<TabsContent value="python" class="mt-4">
-						<div class="space-y-3">
-							<p class="text-sm text-muted-foreground">
-								Then <code>pip install styxdefs</code> and import from this module.
-							</p>
-							{#if pythonModule}
-								{@render sourceArtifact(`${fileStem}.py`, pythonModule, 'python', 'text/x-python')}
-							{/if}
-						</div>
-					</TabsContent>
-
-					<TabsContent value="typescript" class="mt-4">
-						<div class="space-y-3">
-							<p class="text-sm text-muted-foreground">
-								Then <code>npm install styxdefs</code> and import from this module.
-							</p>
-							{#if typescriptModule}
-								{@render sourceArtifact(
-									`${fileStem}.ts`,
-									typescriptModule,
-									'typescript',
-									'text/plain'
-								)}
-							{/if}
-						</div>
-					</TabsContent>
-
-					<TabsContent value="boutiques" class="mt-4">
-						<div class="space-y-3">
-							<p class="text-sm text-muted-foreground">
-								The <a
-									href="https://boutiques.github.io/"
-									target="_blank"
-									rel="noopener noreferrer"
-									class="underline underline-offset-2">Boutiques</a
+				<Select.Root
+					type="single"
+					value={effectiveTarget}
+					onValueChange={(v) => {
+						if (v) sourceTarget = v as SourceTarget;
+					}}
+				>
+					<Select.Trigger class="w-full sm:w-72">
+						{#if effectiveOption}
+							{effectiveOption.label}
+							{#if effectiveOption.experimental}
+								<Badge variant="secondary" class="ml-1 h-4 px-1 text-[10px] font-medium"
+									>Experimental</Badge
 								>
-								descriptor for this tool - a portable, language-neutral spec you can validate or run
-								with the Boutiques tooling (<code>bosh</code>).
-							</p>
-							{#if boutiquesDescriptor}
-								{@render sourceArtifact(
-									`${fileStem}.json`,
-									boutiquesDescriptor,
-									'json',
-									'application/json'
-								)}
 							{/if}
-						</div>
-					</TabsContent>
+						{:else}
+							Select a target
+						{/if}
+					</Select.Trigger>
+					<Select.Content>
+						{#each sourceGroups as group, i (group.heading)}
+							{#if i > 0}
+								<Select.Separator />
+							{/if}
+							<Select.Group>
+								<Select.GroupHeading>{group.heading}</Select.GroupHeading>
+								{#each group.options as option (option.key)}
+									<Select.Item value={option.key} disabled={!option.available}>
+										<span>
+											{option.label}
+											{#if option.experimental}
+												<Badge variant="secondary" class="h-4 px-1 text-[10px] font-medium"
+													>Experimental</Badge
+												>
+											{/if}
+										</span>
+									</Select.Item>
+								{/each}
+							</Select.Group>
+						{/each}
+					</Select.Content>
+				</Select.Root>
 
-					<TabsContent value="input-schema" class="mt-4">
-						<div class="space-y-3">
-							<p class="text-sm text-muted-foreground">
-								JSON Schema for this tool's inputs - a language-neutral contract for validation or
-								building your own form.
-							</p>
-							{#if inputSchemaJson}
-								{@render sourceArtifact(
-									`${fileStem}.schema.json`,
-									inputSchemaJson,
-									'json',
-									'application/json'
-								)}
-							{/if}
-						</div>
-					</TabsContent>
-
-					<TabsContent value="output-schema" class="mt-4">
-						<div class="space-y-3">
-							<p class="text-sm text-muted-foreground">
-								JSON Schema describing the files and streams the tool produces.
-							</p>
-							{#if outputSchemaJson}
-								{@render sourceArtifact(
-									`${fileStem}.outputs.schema.json`,
-									outputSchemaJson,
-									'json',
-									'application/json'
-								)}
-							{/if}
-						</div>
-					</TabsContent>
-				</Tabs>
+				{#if effectiveTarget === 'python'}
+					<div class="space-y-3">
+						<p class="text-sm text-muted-foreground">
+							Then <code>pip install styxdefs</code> and import from this module.
+						</p>
+						{#if pythonModule}
+							{@render sourceArtifact(`${fileStem}.py`, pythonModule, 'python', 'text/x-python')}
+						{/if}
+					</div>
+				{:else if effectiveTarget === 'typescript'}
+					<div class="space-y-3">
+						<p class="text-sm text-muted-foreground">
+							Then <code>npm install styxdefs</code> and import from this module.
+						</p>
+						{#if typescriptModule}
+							{@render sourceArtifact(
+								`${fileStem}.ts`,
+								typescriptModule,
+								'typescript',
+								'text/plain'
+							)}
+						{/if}
+					</div>
+				{:else if effectiveTarget === 'nipype'}
+					{#if nipype}
+						{@render delegationTarget(nipype, nipypeBlurb)}
+					{/if}
+				{:else if effectiveTarget === 'pydra'}
+					{#if pydra}
+						{@render delegationTarget(pydra, pydraBlurb)}
+					{/if}
+				{:else if effectiveTarget === 'boutiques'}
+					<div class="space-y-3">
+						<p class="text-sm text-muted-foreground">
+							The <a
+								href="https://boutiques.github.io/"
+								target="_blank"
+								rel="noopener noreferrer"
+								class="underline underline-offset-2">Boutiques</a
+							>
+							descriptor for this tool - a portable, language-neutral spec you can validate or run with
+							the Boutiques tooling (<code>bosh</code>).
+						</p>
+						{#if boutiquesDescriptor}
+							{@render sourceArtifact(
+								`${fileStem}.json`,
+								boutiquesDescriptor,
+								'json',
+								'application/json'
+							)}
+						{/if}
+					</div>
+				{:else if effectiveTarget === 'input-schema'}
+					<div class="space-y-3">
+						<p class="text-sm text-muted-foreground">
+							JSON Schema for this tool's inputs - a language-neutral contract for validation or
+							building your own form.
+						</p>
+						{#if inputSchemaJson}
+							{@render sourceArtifact(
+								`${fileStem}.schema.json`,
+								inputSchemaJson,
+								'json',
+								'application/json'
+							)}
+						{/if}
+					</div>
+				{:else if effectiveTarget === 'output-schema'}
+					<div class="space-y-3">
+						<p class="text-sm text-muted-foreground">
+							JSON Schema describing the files and streams the tool produces.
+						</p>
+						{#if outputSchemaJson}
+							{@render sourceArtifact(
+								`${fileStem}.outputs.schema.json`,
+								outputSchemaJson,
+								'json',
+								'application/json'
+							)}
+						{/if}
+					</div>
+				{/if}
 			</div>
 		</TabsContent>
 	</Tabs>

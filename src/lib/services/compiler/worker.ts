@@ -19,14 +19,19 @@
 
 import {
 	appEntrypoint,
+	buildTypedSpec,
 	compile,
 	createContext,
 	defaultPipeline,
 	generateBoutiques,
+	generateNipype,
 	generateOutputsSchema,
+	generatePydra,
 	generatePython,
 	generateSchema,
 	generateTypeScript,
+	nipypeNames,
+	pydraNames,
 	renderPythonCall,
 	renderTypeScriptCall,
 	resolveOutputs,
@@ -36,7 +41,7 @@ import {
 } from '@styx-api/core';
 import { transform } from 'sucrase';
 import * as styxdefs from 'styxdefs';
-import type { WorkerRequest, WorkerResponse } from './types';
+import type { DelegationArtifact, WorkerRequest, WorkerResponse } from './types';
 
 type ExecuteFn = (config: Record<string, unknown>, runner: styxdefs.Runner) => unknown;
 
@@ -82,6 +87,45 @@ function buildExecute(tsCode: string, executeName: string): ExecuteFn {
 	return exec as ExecuteFn;
 }
 
+/**
+ * Build a 2-file delegation artifact (nipype/pydra) defensively. These backends
+ * are experimental in 0.5.0 and "degrade/skip" on tools whose solved root is not
+ * a struct (no flat kwarg surface), so a throw here must not blank the core
+ * python/typescript/schema outputs - it just leaves that target unavailable
+ * (the UI disables its option).
+ */
+function delegationArtifact(
+	gen: (ctx: CodegenContext) => string,
+	names: (ctx: CodegenContext) => { ifaceStem: string; styxStem: string },
+	ctx: CodegenContext
+): DelegationArtifact | null {
+	try {
+		const n = names(ctx);
+		return { module: gen(ctx), ifaceStem: n.ifaceStem, styxStem: n.styxStem };
+	} catch (err) {
+		// Expected for tools the solver collapses to a non-struct root (no kwarg
+		// surface). Log it anyway so a genuine codegen regression - which would make
+		// the target silently unavailable for *every* tool - is distinguishable from
+		// the per-tool "not applicable" case rather than vanishing into a bare catch.
+		console.warn('delegation codegen skipped:', err instanceof Error ? err.message : err);
+		return null;
+	}
+}
+
+/**
+ * The compiler's canonical Python module stem for the tool (`bet`, `v_3dcalc`,
+ * `chauffeur_afni`) - always a valid module identifier, unlike the raw tool name
+ * (`3dcalc` can't name a Python module). Used for the vendored filenames so they
+ * match the delegation files' stems. `null` only if the projection throws.
+ */
+function toolModuleStem(ctx: CodegenContext): string | null {
+	try {
+		return buildTypedSpec(ctx).delegation.moduleName || null;
+	} catch {
+		return null;
+	}
+}
+
 function compileTool(
 	descriptor: string,
 	packageName: string,
@@ -94,6 +138,9 @@ function compileTool(
 	pythonModule: string;
 	typescriptModule: string;
 	boutiquesDescriptor: string;
+	moduleStem: string | null;
+	nipype: DelegationArtifact | null;
+	pydra: DelegationArtifact | null;
 } {
 	// Honor the manifest's declared format (authoritative) rather than sniffing.
 	const parsed = format
@@ -130,24 +177,33 @@ function compileTool(
 		ctx
 	};
 	const boutiquesDescriptor = JSON.stringify(generateBoutiques(ctx).descriptor, null, 2);
+	// The nipype Interface / pydra task delegate execution to the styx Python
+	// wrapper they import as `_<styxStem>.py` (content = `pythonModule`), so they
+	// ship as a 2-file package; the UI pairs each with `pythonModule` under that stem.
 	return {
 		appType: entry.type,
 		tool,
 		pythonModule: generatePython(ctx),
 		typescriptModule,
-		boutiquesDescriptor
+		boutiquesDescriptor,
+		moduleStem: toolModuleStem(ctx),
+		nipype: delegationArtifact(generateNipype, nipypeNames, ctx),
+		pydra: delegationArtifact(generatePydra, pydraNames, ctx)
 	};
 }
 
 function handle(msg: WorkerRequest): WorkerResponse {
 	if (msg.kind === 'compile') {
-		const { appType, tool, pythonModule, typescriptModule, boutiquesDescriptor } = compileTool(
-			msg.descriptor,
-			msg.packageName,
-			msg.projectName,
-			msg.appName,
-			msg.format
-		);
+		const {
+			appType,
+			tool,
+			pythonModule,
+			typescriptModule,
+			boutiquesDescriptor,
+			moduleStem,
+			nipype,
+			pydra
+		} = compileTool(msg.descriptor, msg.packageName, msg.projectName, msg.appName, msg.format);
 		cache.set(appType, tool);
 		if (cache.size > MAX_CACHED_TOOLS) {
 			const oldest = cache.keys().next().value;
@@ -162,7 +218,10 @@ function handle(msg: WorkerRequest): WorkerResponse {
 			outputSchema: tool.outputSchema,
 			pythonModule,
 			typescriptModule,
-			boutiquesDescriptor
+			boutiquesDescriptor,
+			moduleStem,
+			nipype,
+			pydra
 		};
 	}
 

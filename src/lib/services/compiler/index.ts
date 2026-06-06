@@ -1,5 +1,6 @@
 export { compileTool, executeTool } from './client';
 export type { CompileResult, ExecutionResult } from './client';
+export type { DelegationArtifact } from './types';
 export {
 	BUNDLED_CORE_NAME,
 	BUNDLED_CORE_VERSION,
