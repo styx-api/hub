@@ -20,6 +20,8 @@ export interface CompileResult {
 	 */
 	pythonModule: string;
 	typescriptModule: string;
+	/** The tool's regenerated Boutiques descriptor (pretty-printed JSON), a portable artifact. */
+	boutiquesDescriptor: string;
 }
 
 /**
@@ -107,7 +109,8 @@ export async function compileTool(
 		outputSchema: res.outputSchema,
 		appType: res.appType,
 		pythonModule: res.pythonModule,
-		typescriptModule: res.typescriptModule
+		typescriptModule: res.typescriptModule,
+		boutiquesDescriptor: res.boutiquesDescriptor
 	};
 }
 

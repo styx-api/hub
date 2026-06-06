@@ -22,6 +22,7 @@ import {
 	compile,
 	createContext,
 	defaultPipeline,
+	generateBoutiques,
 	generateOutputsSchema,
 	generatePython,
 	generateSchema,
@@ -87,7 +88,13 @@ function compileTool(
 	projectName: string,
 	appName: string,
 	format?: string
-): { appType: string; tool: CompiledTool; pythonModule: string; typescriptModule: string } {
+): {
+	appType: string;
+	tool: CompiledTool;
+	pythonModule: string;
+	typescriptModule: string;
+	boutiquesDescriptor: string;
+} {
 	// Honor the manifest's declared format (authoritative) rather than sniffing.
 	const parsed = format
 		? compile(descriptor, { format: format as FormatName, filename: appName })
@@ -111,9 +118,10 @@ function compileTool(
 	}
 
 	// The full generated TS module doubles as both the execute source (transpiled
-	// and eval'd) and a copy-paste artifact for the UI, so generate it once. Python
-	// and both modules are config-independent, so they ride on the compile response
-	// (computed once per tool) rather than the per-config execute response.
+	// and eval'd) and a copy-paste artifact for the UI, so generate it once. Python,
+	// both modules, and the regenerated Boutiques descriptor are config-independent,
+	// so they ride on the compile response (computed once per tool) rather than the
+	// per-config execute response.
 	const typescriptModule = generateTypeScript(ctx);
 	const tool: CompiledTool = {
 		inputSchema: generateSchema(ctx),
@@ -121,12 +129,19 @@ function compileTool(
 		execute: buildExecute(typescriptModule, entry.executeFn),
 		ctx
 	};
-	return { appType: entry.type, tool, pythonModule: generatePython(ctx), typescriptModule };
+	const boutiquesDescriptor = JSON.stringify(generateBoutiques(ctx).descriptor, null, 2);
+	return {
+		appType: entry.type,
+		tool,
+		pythonModule: generatePython(ctx),
+		typescriptModule,
+		boutiquesDescriptor
+	};
 }
 
 function handle(msg: WorkerRequest): WorkerResponse {
 	if (msg.kind === 'compile') {
-		const { appType, tool, pythonModule, typescriptModule } = compileTool(
+		const { appType, tool, pythonModule, typescriptModule, boutiquesDescriptor } = compileTool(
 			msg.descriptor,
 			msg.packageName,
 			msg.projectName,
@@ -146,7 +161,8 @@ function handle(msg: WorkerRequest): WorkerResponse {
 			inputSchema: tool.inputSchema,
 			outputSchema: tool.outputSchema,
 			pythonModule,
-			typescriptModule
+			typescriptModule,
+			boutiquesDescriptor
 		};
 	}
 

@@ -38,6 +38,9 @@
 	// surfaced in the Source tab as copy-paste "vendor one tool" artifacts.
 	let pythonModule = $state<string | null>(null);
 	let typescriptModule = $state<string | null>(null);
+	// The tool's regenerated Boutiques descriptor (config-independent; set on compile),
+	// offered alongside the wrappers in the Source tab.
+	let boutiquesDescriptor = $state<string | null>(null);
 	let config = $state<object>({});
 	let isLoading = $state(true);
 	let error = $state<string | null>(null);
@@ -250,6 +253,7 @@
 		outputSchema = null;
 		pythonModule = null;
 		typescriptModule = null;
+		boutiquesDescriptor = null;
 		executionResult = null;
 		executedForApp = null;
 		executionGeneration++;
@@ -276,6 +280,7 @@
 				outputSchema = compiled.outputSchema;
 				pythonModule = compiled.pythonModule;
 				typescriptModule = compiled.typescriptModule;
+				boutiquesDescriptor = compiled.boutiquesDescriptor;
 
 				if (initialConfig) {
 					config = initialConfig;
@@ -308,6 +313,7 @@
 		outputSchema = compiled.outputSchema;
 		pythonModule = compiled.pythonModule;
 		typescriptModule = compiled.typescriptModule;
+		boutiquesDescriptor = compiled.boutiquesDescriptor;
 	}
 
 	// URL sharing
@@ -423,6 +429,7 @@
 							{outputSchema}
 							{pythonModule}
 							{typescriptModule}
+							{boutiquesDescriptor}
 							toolName={app}
 							{hasConfig}
 							{githubUrls}
@@ -476,6 +483,7 @@
 						{outputSchema}
 						{pythonModule}
 						{typescriptModule}
+						{boutiquesDescriptor}
 						toolName={app}
 						{hasConfig}
 						{githubUrls}

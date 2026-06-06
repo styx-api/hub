@@ -53,6 +53,8 @@
 		/** Full generated single-tool wrapper modules (config-independent). */
 		pythonModule: string | null;
 		typescriptModule: string | null;
+		/** The tool's regenerated Boutiques descriptor (pretty-printed JSON, config-independent). */
+		boutiquesDescriptor: string | null;
 		/** App name, used for download filenames and the Source-tab heading. */
 		toolName: string;
 		hasConfig: boolean;
@@ -75,6 +77,7 @@
 		outputSchema,
 		pythonModule,
 		typescriptModule,
+		boutiquesDescriptor,
 		toolName,
 		hasConfig,
 		githubUrls,
@@ -91,7 +94,7 @@
 	const fileStem = $derived(safeFileStem(toolName));
 	const inputSchemaJson = $derived(inputSchema ? JSON.stringify(inputSchema, null, 2) : '');
 	const outputSchemaJson = $derived(outputSchema ? JSON.stringify(outputSchema, null, 2) : '');
-	const hasSource = $derived(Boolean(pythonModule || typescriptModule));
+	const hasSource = $derived(Boolean(pythonModule || typescriptModule || boutiquesDescriptor));
 
 	function openGithubFile(url: string) {
 		window.open(url, '_blank', 'noopener,noreferrer');
@@ -316,9 +319,10 @@
 				</div>
 
 				<Tabs bind:value={sourceTab} class="w-full">
-					<TabsList class="grid w-full grid-cols-4">
+					<TabsList class="grid w-full grid-cols-5">
 						<TabsTrigger value="python" disabled={!pythonModule}>Python</TabsTrigger>
 						<TabsTrigger value="typescript" disabled={!typescriptModule}>TypeScript</TabsTrigger>
+						<TabsTrigger value="boutiques" disabled={!boutiquesDescriptor}>Boutiques</TabsTrigger>
 						<TabsTrigger value="input-schema" disabled={!inputSchemaJson}>
 							{isMobile ? 'Input' : 'Input schema'}
 						</TabsTrigger>
@@ -349,6 +353,29 @@
 									typescriptModule,
 									'typescript',
 									'text/plain'
+								)}
+							{/if}
+						</div>
+					</TabsContent>
+
+					<TabsContent value="boutiques" class="mt-4">
+						<div class="space-y-3">
+							<p class="text-sm text-muted-foreground">
+								The <a
+									href="https://boutiques.github.io/"
+									target="_blank"
+									rel="noopener noreferrer"
+									class="underline underline-offset-2">Boutiques</a
+								>
+								descriptor for this tool - a portable, language-neutral spec you can validate or run
+								with the Boutiques tooling (<code>bosh</code>).
+							</p>
+							{#if boutiquesDescriptor}
+								{@render sourceArtifact(
+									`${fileStem}.json`,
+									boutiquesDescriptor,
+									'json',
+									'application/json'
 								)}
 							{/if}
 						</div>
