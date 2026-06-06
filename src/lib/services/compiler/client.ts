@@ -14,6 +14,12 @@ export interface CompileResult {
 	outputSchema: object;
 	/** Root `@type` discriminator (`<pkg>/<app>`). */
 	appType: string;
+	/**
+	 * Full generated single-tool wrapper modules (Python + TypeScript). Self-contained
+	 * bar the `styxdefs` runtime import, so the UI offers them as copy-paste artifacts.
+	 */
+	pythonModule: string;
+	typescriptModule: string;
 }
 
 /**
@@ -96,7 +102,13 @@ export async function compileTool(
 	});
 	if (!res.ok) throw new Error(res.error);
 	if (res.kind !== 'compile') throw new Error('unexpected worker response for compile');
-	return { inputSchema: res.inputSchema, outputSchema: res.outputSchema, appType: res.appType };
+	return {
+		inputSchema: res.inputSchema,
+		outputSchema: res.outputSchema,
+		appType: res.appType,
+		pythonModule: res.pythonModule,
+		typescriptModule: res.typescriptModule
+	};
 }
 
 /**

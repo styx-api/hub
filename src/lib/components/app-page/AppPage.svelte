@@ -34,6 +34,10 @@
 	let appData = $state<AppType | null>(null);
 	let inputSchema = $state<object | null>(null);
 	let outputSchema = $state<object | null>(null);
+	// Full generated single-tool wrapper modules (config-independent; set on compile),
+	// surfaced in the Source tab as copy-paste "vendor one tool" artifacts.
+	let pythonModule = $state<string | null>(null);
+	let typescriptModule = $state<string | null>(null);
 	let config = $state<object>({});
 	let isLoading = $state(true);
 	let error = $state<string | null>(null);
@@ -244,6 +248,8 @@
 		appData = null;
 		inputSchema = null;
 		outputSchema = null;
+		pythonModule = null;
+		typescriptModule = null;
 		executionResult = null;
 		executedForApp = null;
 		executionGeneration++;
@@ -268,6 +274,8 @@
 				);
 				inputSchema = compiled.inputSchema;
 				outputSchema = compiled.outputSchema;
+				pythonModule = compiled.pythonModule;
+				typescriptModule = compiled.typescriptModule;
 
 				if (initialConfig) {
 					config = initialConfig;
@@ -298,6 +306,8 @@
 		);
 		inputSchema = compiled.inputSchema;
 		outputSchema = compiled.outputSchema;
+		pythonModule = compiled.pythonModule;
+		typescriptModule = compiled.typescriptModule;
 	}
 
 	// URL sharing
@@ -409,6 +419,11 @@
 							{pythonCode}
 							{typescriptCode}
 							{snippetError}
+							{inputSchema}
+							{outputSchema}
+							{pythonModule}
+							{typescriptModule}
+							toolName={app}
 							{hasConfig}
 							{githubUrls}
 							isMobile={true}
@@ -457,6 +472,11 @@
 						{pythonCode}
 						{typescriptCode}
 						{snippetError}
+						{inputSchema}
+						{outputSchema}
+						{pythonModule}
+						{typescriptModule}
+						toolName={app}
 						{hasConfig}
 						{githubUrls}
 						isMobile={false}

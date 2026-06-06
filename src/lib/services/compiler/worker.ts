@@ -23,6 +23,7 @@ import {
 	createContext,
 	defaultPipeline,
 	generateOutputsSchema,
+	generatePython,
 	generateSchema,
 	generateTypeScript,
 	renderPythonCall,
@@ -86,7 +87,7 @@ function compileTool(
 	projectName: string,
 	appName: string,
 	format?: string
-): { appType: string; tool: CompiledTool } {
+): { appType: string; tool: CompiledTool; pythonModule: string; typescriptModule: string } {
 	// Honor the manifest's declared format (authoritative) rather than sniffing.
 	const parsed = format
 		? compile(descriptor, { format: format as FormatName, filename: appName })
@@ -109,18 +110,23 @@ function compileTool(
 		throw new Error(`${appName} has no dispatch entrypoint (missing app id or package name)`);
 	}
 
+	// The full generated TS module doubles as both the execute source (transpiled
+	// and eval'd) and a copy-paste artifact for the UI, so generate it once. Python
+	// and both modules are config-independent, so they ride on the compile response
+	// (computed once per tool) rather than the per-config execute response.
+	const typescriptModule = generateTypeScript(ctx);
 	const tool: CompiledTool = {
 		inputSchema: generateSchema(ctx),
 		outputSchema: generateOutputsSchema(ctx),
-		execute: buildExecute(generateTypeScript(ctx), entry.executeFn),
+		execute: buildExecute(typescriptModule, entry.executeFn),
 		ctx
 	};
-	return { appType: entry.type, tool };
+	return { appType: entry.type, tool, pythonModule: generatePython(ctx), typescriptModule };
 }
 
 function handle(msg: WorkerRequest): WorkerResponse {
 	if (msg.kind === 'compile') {
-		const { appType, tool } = compileTool(
+		const { appType, tool, pythonModule, typescriptModule } = compileTool(
 			msg.descriptor,
 			msg.packageName,
 			msg.projectName,
@@ -138,7 +144,9 @@ function handle(msg: WorkerRequest): WorkerResponse {
 			ok: true,
 			appType,
 			inputSchema: tool.inputSchema,
-			outputSchema: tool.outputSchema
+			outputSchema: tool.outputSchema,
+			pythonModule,
+			typescriptModule
 		};
 	}
 

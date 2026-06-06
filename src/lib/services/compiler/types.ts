@@ -39,6 +39,13 @@ export interface CompileResponse {
 	appType: string;
 	inputSchema: object;
 	outputSchema: object;
+	/**
+	 * Full generated single-tool wrapper modules (config-independent, so computed
+	 * once per compile). Self-contained except for the `styxdefs` runtime import,
+	 * so the UI can offer them as copy-paste "vendor one tool" artifacts.
+	 */
+	pythonModule: string;
+	typescriptModule: string;
 }
 
 export interface ExecuteResponse {
