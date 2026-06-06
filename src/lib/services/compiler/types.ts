@@ -31,6 +31,24 @@ export interface ExecuteRequest {
 
 export type WorkerRequest = CompileRequest | ExecuteRequest;
 
+/**
+ * A 2-file "delegation" codegen target (nipype Interface / pydra task, experimental
+ * in `@styx-api/core` 0.5.0). `module` is the interface/task file; it delegates
+ * execution by importing the co-located styx Python wrapper as `_<styxStem>.py`,
+ * whose content is the response's `pythonModule`. So a working vendor needs both
+ * `<ifaceStem>.py` (this `module`) and `<styxStem>.py` (`pythonModule`). The stems
+ * come from the compiler (`nipypeNames`/`pydraNames`), not the tool name, because
+ * the import target must be a valid Python module (e.g. `3dcalc` -> `_v_3dcalc`).
+ */
+export interface DelegationArtifact {
+	/** The nipype Interface / pydra task module source (the `<ifaceStem>.py` file). */
+	module: string;
+	/** File stem for the interface/task file (e.g. `bet`, `v_3dcalc`). */
+	ifaceStem: string;
+	/** File stem for the co-located styx wrapper, content = `pythonModule` (e.g. `_bet`, `_v_3dcalc`). */
+	styxStem: string;
+}
+
 export interface CompileResponse {
 	kind: 'compile';
 	id: number;
@@ -52,6 +70,19 @@ export interface CompileResponse {
 	 * "vendor one tool" tab; pretty-printed JSON, ready to write to a file.
 	 */
 	boutiquesDescriptor: string;
+	/**
+	 * The compiler's canonical module stem for the tool (`bet`, `v_3dcalc`) - a valid
+	 * identifier even when the raw tool name isn't, so the UI names the vendored files
+	 * after it (matching the delegation files' stems). `null` only if unavailable.
+	 */
+	moduleStem: string | null;
+	/**
+	 * Experimental Python-ecosystem workflow targets (config-independent), or `null`
+	 * when generation isn't applicable/failed for this tool. Each delegates execution
+	 * to `pythonModule` - see {@link DelegationArtifact}.
+	 */
+	nipype: DelegationArtifact | null;
+	pydra: DelegationArtifact | null;
 }
 
 export interface ExecuteResponse {
