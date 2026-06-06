@@ -58,7 +58,7 @@
 		/** App name, used for download filenames and the Source-tab heading. */
 		toolName: string;
 		hasConfig: boolean;
-		githubUrls: { schemaInput: string; descriptor: string };
+		githubUrls: { schemaInput: string; schemaOutput: string };
 		isMobile?: boolean;
 		activeTab?: string;
 	}
@@ -243,7 +243,7 @@
 						<Button
 							variant="outline"
 							size="sm"
-							onclick={() => openGithubFile(githubUrls.descriptor)}
+							onclick={() => openGithubFile(githubUrls.schemaOutput)}
 							title="View output schema"
 						>
 							<ExternalLink class="h-3 w-3" />

@@ -66,10 +66,17 @@
 	// Derived
 	const hasDescriptor = $derived(appData?.descriptor != null);
 
+	// The source descriptor's format (boutiques | workbench | mrtrix | ...), carried
+	// by the manifest. Drives the provenance chip and its link to the source file.
+	const sourceFormat = $derived(appData?.format ?? null);
+
 	const githubUrls = $derived({
 		schemaInput: github.schemaInput(pkg.package.name, app),
 		schemaOutput: github.schemaOutput(pkg.package.name, app),
-		descriptor: github.app(pkg.package.name, pkg.version.name, app)
+		manifest: github.app(pkg.package.name, pkg.version.name, app),
+		descriptorSource: sourceFormat
+			? github.descriptorSource(pkg.package.name, pkg.version.name, app, sourceFormat)
+			: github.app(pkg.package.name, pkg.version.name, app)
 	});
 	const commandArgs = $derived(
 		!executionResult || executedForApp !== app
@@ -374,7 +381,7 @@
 				<ExternalLink class="ml-2 h-3 w-3" />
 			</Button>
 
-			<Button variant="outline" onclick={() => openExternal(githubUrls.descriptor)}>
+			<Button variant="outline" onclick={() => openExternal(githubUrls.manifest)}>
 				View app manifest
 				<ExternalLink class="ml-2 h-3 w-3" />
 			</Button>
@@ -408,6 +415,7 @@
 							{isLoading}
 							{error}
 							{githubUrls}
+							{sourceFormat}
 							isMobile={true}
 							onRetry={() => loadApp(pkg.package.name, app)}
 							onShare={handleShare}
@@ -458,6 +466,7 @@
 						{isLoading}
 						{error}
 						{githubUrls}
+						{sourceFormat}
 						isMobile={false}
 						onRetry={() => loadApp(pkg.package.name, app)}
 						onShare={handleShare}

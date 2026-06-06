@@ -3,12 +3,13 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Alert, AlertDescription, AlertTitle } from '$lib/components/ui/alert';
 	import { describeLoadError } from '$lib/services/compiler';
+	import { descriptorSourceInfo } from '$lib/utils/descriptorSource';
 	import {
 		TriangleAlert,
 		RefreshCw,
 		LoaderCircle,
 		Settings,
-		Github,
+		FileJson,
 		Share2,
 		Check
 	} from '@lucide/svelte';
@@ -18,7 +19,9 @@
 		descriptorConfig: object;
 		isLoading: boolean;
 		error: string | null;
-		githubUrls: { descriptor: string };
+		githubUrls: { descriptorSource: string };
+		/** Source descriptor format (boutiques | workbench | ...); drives the provenance chip. */
+		sourceFormat?: string | null;
 		isMobile?: boolean;
 		onRetry: () => void;
 		onShare?: () => void;
@@ -30,6 +33,7 @@
 		isLoading,
 		error,
 		githubUrls,
+		sourceFormat = null,
 		isMobile = false,
 		onRetry,
 		onShare
@@ -38,11 +42,9 @@
 	const hasConfig = $derived(Object.keys(descriptorConfig).length > 0);
 	// Turn a raw fetch/compile diagnostic into a clean headline + tidied detail.
 	const loadError = $derived(error ? describeLoadError(error) : null);
+	// Where this wrapper came from: labels the provenance chip + its source link.
+	const source = $derived(descriptorSourceInfo(sourceFormat));
 	let showCopied = $state(false);
-
-	function openGithubFile(url: string) {
-		window.open(url, '_blank', 'noopener,noreferrer');
-	}
 
 	async function handleShare() {
 		if (onShare) {
@@ -79,26 +81,18 @@
 						<span class="hidden xl:inline">{showCopied ? 'Copied!' : 'Share'}</span>
 					</Button>
 				{/if}
-				{#if isMobile}
+				{#if source}
 					<Button
 						variant="outline"
 						size="sm"
-						onclick={() => openGithubFile(githubUrls.descriptor)}
-						class="h-8 w-8 cursor-pointer p-0"
-						title="View descriptor on GitHub"
-					>
-						<Github class="h-3 w-3" />
-					</Button>
-				{:else}
-					<Button
-						variant="outline"
-						size="sm"
-						onclick={() => openGithubFile(githubUrls.descriptor)}
+						href={githubUrls.descriptorSource}
+						target="_blank"
+						rel="noopener noreferrer"
 						class="h-8 cursor-pointer"
-						title="View descriptor on GitHub"
+						title={`Generated from ${source.blurb}. View the source on GitHub.`}
 					>
-						<Github class="mr-1 h-3 w-3" />
-						<span class="hidden xl:inline">Descriptor</span>
+						<FileJson class="mr-1 h-3 w-3 text-muted-foreground" />
+						<span>{source.label}</span>
 					</Button>
 				{/if}
 			</div>

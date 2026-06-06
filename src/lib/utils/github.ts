@@ -9,6 +9,14 @@ export const github = {
 	app: (pkg: string, version: string, app: string) =>
 		`${NIWRAP_SRC}/${pkg}/${version}/${app}/app.json`,
 
+	/**
+	 * The original source descriptor the wrapper was generated from. The file is
+	 * named after its format (`boutiques.json`, `workbench.json`, ...), which the
+	 * manifest's `format` field gives us directly.
+	 */
+	descriptorSource: (pkg: string, version: string, app: string, format: string) =>
+		`${NIWRAP_SRC}/${pkg}/${version}/${app}/${format}.json`,
+
 	schemaInput: (pkg: string, app: string) => `${SCHEMA_BASE}/${pkg}/${pkg}.${app}.input.json`,
 
 	schemaOutput: (pkg: string, app: string) => `${SCHEMA_BASE}/${pkg}/${pkg}.${app}.output.json`
