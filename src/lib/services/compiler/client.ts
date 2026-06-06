@@ -30,7 +30,7 @@ export interface Snippets {
 
 export type ExecutionResult =
 	| ({ success: true; cargs: string[]; outputObject: Record<string, unknown> } & Snippets)
-	| ({ success: false; error: string } & Snippets);
+	| ({ success: false; error: string; recoverable: boolean } & Snippets);
 
 /** Distributive omit so the discriminated-union members keep their own fields. */
 type WithoutId<T> = T extends unknown ? Omit<T, 'id'> : never;
@@ -54,9 +54,12 @@ function getWorker(): Worker {
 			// fail everything in flight and drop the worker so the next call respawns.
 			// In practice this only fires at spawn/import time - compile and execute
 			// errors are caught inside the worker - so a successful compile implies a
-			// stable worker. The respawned worker starts with an empty cache; recovery
-			// (recompile) happens when the app reloads. Full crash-recovery is H6.
-			const message = ev.message || 'compiler worker crashed';
+			// stable worker. The respawned worker starts with an empty cache, which is
+			// why these failures are reported as `recoverable` (see `executeTool`): the
+			// caller recompiles (repopulating the cache) and retries, and a full page
+			// reload always recovers.
+			ev.preventDefault?.();
+			const message = ev.message || 'The in-browser compiler stopped unexpectedly.';
 			for (const [id, resolve] of pending) {
 				resolve({ kind: 'error', id, ok: false, error: message });
 			}
@@ -96,15 +99,19 @@ export async function compileTool(
 	return { inputSchema: res.inputSchema, outputSchema: res.outputSchema, appType: res.appType };
 }
 
-/** A failure with no snippets (the config never reached a successful render). */
-function failed(error: string): ExecutionResult {
-	return { success: false, error, python: '', typescript: '', snippetError: null };
+/**
+ * A failure with no snippets (the config never reached a successful render).
+ * `recoverable` marks an infrastructure failure (worker crash / lost cache) that a
+ * recompile-and-retry can fix, as opposed to a config the generated code rejected.
+ */
+function failed(error: string, recoverable: boolean): ExecutionResult {
+	return { success: false, error, recoverable, python: '', typescript: '', snippetError: null };
 }
 
 export async function executeTool(config: Record<string, unknown>): Promise<ExecutionResult> {
 	const appType = config['@type'];
 	if (typeof appType !== 'string') {
-		return failed('Invalid config: missing @type');
+		return failed('Invalid config: missing @type', false);
 	}
 	// The form's config is a Svelte `$state` proxy, which `worker.postMessage`
 	// (structured clone) cannot serialize - it throws and the request silently
@@ -112,16 +119,22 @@ export async function executeTool(config: Record<string, unknown>): Promise<Exec
 	// to a clonable plain object first.
 	const plainConfig = JSON.parse(JSON.stringify(config)) as Record<string, unknown>;
 	const res = await send({ kind: 'execute', appType, config: plainConfig });
-	if (!res.ok) return failed(res.error);
-	if (res.kind !== 'execute') return failed('unexpected worker response for execute');
+	// An error response to an execute means the worker, not the config, failed: a
+	// crash, or a respawned worker whose cache no longer has this tool. Both are
+	// fixed by recompiling, so mark them recoverable for the caller to retry.
+	if (!res.ok) return failed(res.error, true);
+	if (res.kind !== 'execute') return failed('unexpected worker response for execute', true);
 	const snippets: Snippets = {
 		python: res.python,
 		typescript: res.typescript,
 		snippetError: res.snippetError
 	};
-	// A run that threw (e.g. a missing required input) is a command failure, but
-	// its call snippets still rendered - surface them with the error.
-	if (res.commandError) return { success: false, error: res.commandError, ...snippets };
+	// A run that threw (e.g. a missing required input) is a config-level command
+	// failure - not recoverable by retrying - but its call snippets still rendered,
+	// so surface them with the error.
+	if (res.commandError) {
+		return { success: false, error: res.commandError, recoverable: false, ...snippets };
+	}
 	return {
 		success: true,
 		cargs: res.cargs,

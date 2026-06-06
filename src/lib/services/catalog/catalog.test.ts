@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { toPackageInfo } from './store.svelte';
+import { catalog, toPackageInfo } from './store.svelte';
 import { fetchDescriptor, fetchManifest, fetchReleasesIndex } from './types';
 import type { ManifestPackage } from './types';
 
@@ -92,5 +92,41 @@ describe('hosted-layout URLs', () => {
 	it('throws with status detail on a failed descriptor fetch', async () => {
 		mockFetch(() => ({ ok: false, status: 404, statusText: 'Not Found' }));
 		await expect(fetchDescriptor('1.0.0', 'descriptors/x/y.json')).rejects.toThrow(/404/);
+	});
+});
+
+describe('catalog store', () => {
+	it('exposes the manifest compiler after load (for the lockstep check)', async () => {
+		mockFetch((url) =>
+			url.includes('index.json')
+				? {
+						body: {
+							schemaVersion: 1,
+							project: 'niwrap',
+							latest: '1.0.0',
+							versions: [
+								{
+									version: '1.0.0',
+									catalog: '1.0.0/catalog.json',
+									compiler: '@styx-api/core@0.2.0'
+								}
+							]
+						}
+					}
+				: {
+						body: {
+							schemaVersion: 1,
+							project: 'niwrap',
+							version: '1.0.0',
+							compiler: { name: '@styx-api/core', version: '0.2.0' },
+							descriptorBase: 'descriptors',
+							packages: []
+						}
+					}
+		);
+
+		expect(catalog.compiler).toBeNull();
+		await catalog.load();
+		expect(catalog.compiler).toEqual({ name: '@styx-api/core', version: '0.2.0' });
 	});
 });

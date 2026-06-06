@@ -1,7 +1,8 @@
 <script lang="ts">
 	import SchemaForm from '../schema-form/SchemaForm.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { Alert, AlertDescription } from '$lib/components/ui/alert';
+	import { Alert, AlertDescription, AlertTitle } from '$lib/components/ui/alert';
+	import { describeLoadError } from '$lib/services/compiler';
 	import {
 		TriangleAlert,
 		RefreshCw,
@@ -35,6 +36,8 @@
 	}: Props = $props();
 
 	const hasConfig = $derived(Object.keys(descriptorConfig).length > 0);
+	// Turn a raw fetch/compile diagnostic into a clean headline + tidied detail.
+	const loadError = $derived(error ? describeLoadError(error) : null);
 	let showCopied = $state(false);
 
 	function openGithubFile(url: string) {
@@ -110,20 +113,28 @@
 					<div class="text-sm text-muted-foreground">Loading configuration schema...</div>
 				</div>
 			</div>
-		{:else if error}
+		{:else if loadError}
 			<Alert variant="destructive">
 				<TriangleAlert class="h-4 w-4" />
-				<AlertDescription class="flex items-center justify-between">
-					<span>{error}</span>
-					<Button
-						variant="outline"
-						size="sm"
-						onclick={onRetry}
-						class="ml-4 shrink-0 cursor-pointer"
-					>
-						<RefreshCw class="mr-1 h-3 w-3" />
-						Retry
-					</Button>
+				<AlertTitle>{loadError.title}</AlertTitle>
+				<AlertDescription>
+					<div class="flex items-start justify-between gap-4">
+						<p class="text-sm">
+							Retrying may help. If it persists, the tool's descriptor may be unavailable or need a
+							fix.
+						</p>
+						<Button variant="outline" size="sm" onclick={onRetry} class="shrink-0 cursor-pointer">
+							<RefreshCw class="mr-1 h-3 w-3" />
+							Retry
+						</Button>
+					</div>
+					{#if loadError.detail}
+						<details class="mt-2">
+							<summary class="cursor-pointer text-xs opacity-70">Technical details</summary>
+							<pre
+								class="mt-1 overflow-x-auto text-xs whitespace-pre-wrap opacity-80">{loadError.detail}</pre>
+						</details>
+					{/if}
 				</AlertDescription>
 			</Alert>
 		{:else if descriptorInputSchema}

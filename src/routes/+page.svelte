@@ -7,6 +7,7 @@
 	import { PackageGallery } from '$lib/components/package';
 	import AppPage from '$lib/components/app-page/AppPage.svelte';
 	import { catalog, type PackageInfo } from '$lib/services/catalog';
+	import { compilerStatus } from '$lib/services/compiler';
 	import { theme } from '$lib/services/theme.svelte';
 	import {
 		parseUrlState,
@@ -35,6 +36,9 @@
 	}
 
 	const pageTitle = $derived(getPageTitle(selectedPackage, selectedApp));
+
+	// Compiler lockstep status (bundled vs. the compiler that built the release).
+	const compiler = $derived(compilerStatus(catalog.compiler));
 
 	// Initialize
 	if (browser) {
@@ -188,6 +192,6 @@
 			{/if}
 		</div>
 
-		<Footer />
+		<Footer {compiler} />
 	</div>
 {/if}
