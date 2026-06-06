@@ -46,6 +46,12 @@ export interface CompileResponse {
 	 */
 	pythonModule: string;
 	typescriptModule: string;
+	/**
+	 * The tool's Boutiques descriptor, regenerated from the IR (config-independent).
+	 * A portable, language-neutral spec offered alongside the wrappers in the
+	 * "vendor one tool" tab; pretty-printed JSON, ready to write to a file.
+	 */
+	boutiquesDescriptor: string;
 }
 
 export interface ExecuteResponse {
