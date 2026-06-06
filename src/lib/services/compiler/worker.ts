@@ -29,7 +29,8 @@ import {
 	renderTypeScriptCall,
 	resolveOutputs,
 	solve,
-	type CodegenContext
+	type CodegenContext,
+	type FormatName
 } from '@styx-api/core';
 import { transform } from 'sucrase';
 import * as styxdefs from 'styxdefs';
@@ -83,9 +84,13 @@ function compileTool(
 	descriptor: string,
 	packageName: string,
 	projectName: string,
-	appName: string
+	appName: string,
+	format?: string
 ): { appType: string; tool: CompiledTool } {
-	const parsed = compile(descriptor);
+	// Honor the manifest's declared format (authoritative) rather than sniffing.
+	const parsed = format
+		? compile(descriptor, { format: format as FormatName, filename: appName })
+		: compile(descriptor);
 	if (parsed.errors.length > 0) {
 		throw new Error(`compiling ${appName}: ${parsed.errors.map((e) => e.message).join('; ')}`);
 	}
@@ -119,7 +124,8 @@ function handle(msg: WorkerRequest): WorkerResponse {
 			msg.descriptor,
 			msg.packageName,
 			msg.projectName,
-			msg.appName
+			msg.appName,
+			msg.format
 		);
 		cache.set(appType, tool);
 		if (cache.size > MAX_CACHED_TOOLS) {

@@ -3,13 +3,8 @@
 	import ConfigurationPanel from './ConfigurationPanel.svelte';
 	import ResultsPanel from './ResultsPanel.svelte';
 	import { Settings, Terminal as TerminalIcon, FileCode, ExternalLink } from '@lucide/svelte';
-	import { niwrapDeathMessage, niwrapExecute } from '$lib/services/execution';
-	import {
-		compileInBrowserEnabled,
-		compileTool,
-		executeTool,
-		fetchDescriptor
-	} from '$lib/services/compiler';
+	import { compileTool, executeTool } from '$lib/services/compiler';
+	import { niwrapDeathMessage } from '$lib/utils/deathMessage';
 	import { catalog, type PackageInfo } from '$lib/services/catalog';
 	import { getSchemaAtPath, getSchemaMetadata } from '$lib/services/schema/schemaUtils';
 	import { streamFieldNames } from '$lib/services/schema/outputsSchema';
@@ -34,16 +29,12 @@
 	let inputSchema = $state<object | null>(null);
 	let outputSchema = $state<object | null>(null);
 	let config = $state<object>({});
-	// Whether this load is using the compile-in-browser path (Phase C). Captured
-	// per load so the execute effect routes to the same backend as the schemas.
-	let useCompiler = $state(false);
 	let isLoading = $state(true);
 	let error = $state<string | null>(null);
 	let mobileActiveTab = $state('config');
 	let desktopResultsTab = $state('command');
 
-	// Snippet fields are optional: the compile-in-browser path (`executeTool`)
-	// always sets them, the legacy `niwrapExecute` path never does.
+	// Call snippets, always produced alongside the command by `executeTool`.
 	type Snippets = { python?: string; typescript?: string; snippetError?: string | null };
 	type ExecutionResult =
 		| ({ success: true; cargs: string[]; outputObject: Record<string, unknown> } & Snippets)
@@ -58,7 +49,7 @@
 	let executionGeneration = 0;
 
 	// Derived
-	const hasDescriptor = $derived(appData?.source != null);
+	const hasDescriptor = $derived(appData?.descriptor != null);
 
 	const githubUrls = $derived({
 		schemaInput: github.schemaInput(pkg.package.name, app),
@@ -141,9 +132,8 @@
 	);
 
 	// Call snippets (H5) ride along on the execution result so they refresh with
-	// the config and survive a command error. They are only produced by the
-	// compile-in-browser path; in legacy mode they stay null and ResultsPanel
-	// shows a note pointing at the compiler flag.
+	// the config and survive a command error (best-effort render even when the
+	// command itself throws).
 	const forCurrentApp = $derived(executionResult != null && executedForApp === app);
 	const pythonCode = $derived(forCurrentApp ? (executionResult!.python ?? null) : null);
 	const typescriptCode = $derived(forCurrentApp ? (executionResult!.typescript ?? null) : null);
@@ -165,7 +155,7 @@
 
 	// Fetch app data and schema when app changes
 	$effect(() => {
-		loadApp(pkg.package.name, pkg.version.name, app);
+		loadApp(pkg.package.name, app);
 	});
 
 	// Execute when config changes (after initial load)
@@ -187,9 +177,7 @@
 		// Increment generation so any in-flight execution is discarded
 		const gen = ++executionGeneration;
 
-		const run = useCompiler
-			? executeTool(currentConfig as Record<string, unknown>)
-			: niwrapExecute(currentConfig);
+		const run = executeTool(currentConfig as Record<string, unknown>);
 		run.then((result) => {
 			// Only apply if this is still the latest execution
 			if (gen === executionGeneration) {
@@ -199,7 +187,7 @@
 		});
 	});
 
-	async function loadApp(packageName: string, versionName: string, appName: string) {
+	async function loadApp(packageName: string, appName: string) {
 		isLoading = true;
 		error = null;
 		config = {};
@@ -209,33 +197,24 @@
 		executionResult = null;
 		executedForApp = null;
 		executionGeneration++;
-		useCompiler = compileInBrowserEnabled();
 
 		try {
-			appData = (await catalog.getApp(packageName, appName)) ?? null;
+			const entry = (await catalog.getApp(packageName, appName)) ?? null;
+			appData = entry;
 
-			// Only fetch schemas if app has a descriptor
-			if (appData?.source) {
-				if (useCompiler) {
-					// Phase C: compile the descriptor in-browser for the form schemas,
-					// instead of fetching the prebuilt v1 JSON Schema artefacts.
-					const descriptor = await fetchDescriptor(
-						packageName,
-						versionName,
-						appName,
-						appData.source.path
-					);
-					const compiled = await compileTool(descriptor, packageName, appName, 'niwrap');
-					inputSchema = compiled.inputSchema;
-					outputSchema = compiled.outputSchema;
-				} else {
-					const [input, output] = await Promise.all([
-						catalog.getAppInputSchema(packageName, appName),
-						catalog.getAppOutputSchema(packageName, appName)
-					]);
-					inputSchema = input;
-					outputSchema = output;
-				}
+			// Compile the descriptor in-browser for the form schemas. Apps without a
+			// descriptor render the "not yet available" CTA instead.
+			if (entry?.descriptor) {
+				const descriptor = await catalog.fetchDescriptor(entry);
+				const compiled = await compileTool(
+					descriptor,
+					packageName,
+					appName,
+					'niwrap',
+					entry.format
+				);
+				inputSchema = compiled.inputSchema;
+				outputSchema = compiled.outputSchema;
 
 				if (initialConfig) {
 					config = initialConfig;
@@ -341,7 +320,7 @@
 							{error}
 							{githubUrls}
 							isMobile={true}
-							onRetry={() => loadApp(pkg.package.name, pkg.version.name, app)}
+							onRetry={() => loadApp(pkg.package.name, app)}
 							onShare={handleShare}
 						/>
 					</TabsContent>
@@ -355,7 +334,6 @@
 							{pythonCode}
 							{typescriptCode}
 							{snippetError}
-							compilerEnabled={useCompiler}
 							{hasConfig}
 							{githubUrls}
 							isMobile={true}
@@ -384,7 +362,7 @@
 						{error}
 						{githubUrls}
 						isMobile={false}
-						onRetry={() => loadApp(pkg.package.name, pkg.version.name, app)}
+						onRetry={() => loadApp(pkg.package.name, app)}
 						onShare={handleShare}
 					/>
 				</div>
@@ -402,7 +380,6 @@
 						{pythonCode}
 						{typescriptCode}
 						{snippetError}
-						compilerEnabled={useCompiler}
 						{hasConfig}
 						{githubUrls}
 						isMobile={false}

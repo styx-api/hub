@@ -3,8 +3,8 @@
  *
  * Lazily spawns the worker on first use, correlates request/response by id, and
  * exposes the two operations the app page needs: compile a descriptor to its
- * form schemas, and execute a config to a command line + outputs. The execute
- * result mirrors the legacy `niwrapExecute` shape so call sites stay uniform.
+ * form schemas, and execute a config to a command line + outputs (plus the call
+ * snippets, which ride along on the execute result).
  */
 
 import type { WorkerRequest, WorkerResponse } from './types';
@@ -80,9 +80,17 @@ export async function compileTool(
 	descriptor: string,
 	packageName: string,
 	appName: string,
-	projectName: string
+	projectName: string,
+	format?: string
 ): Promise<CompileResult> {
-	const res = await send({ kind: 'compile', descriptor, packageName, appName, projectName });
+	const res = await send({
+		kind: 'compile',
+		descriptor,
+		packageName,
+		appName,
+		projectName,
+		format
+	});
 	if (!res.ok) throw new Error(res.error);
 	if (res.kind !== 'compile') throw new Error('unexpected worker response for compile');
 	return { inputSchema: res.inputSchema, outputSchema: res.outputSchema, appType: res.appType };

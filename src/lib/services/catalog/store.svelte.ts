@@ -1,34 +1,24 @@
-import type { ProjectType, PackageType, VersionType, AppType } from './types';
-import { fetchAppSchemaInput, fetchAppSchemaOutput } from './schema';
+import type { AppType, CatalogIndex, Manifest, ManifestPackage, PackageInfo } from './types';
+import { fetchDescriptor, fetchManifest, fetchReleasesIndex } from './types';
 
-import { getApp, getPackage, getProject, getVersion } from './types';
+export type { PackageInfo, CatalogIndex };
 
-export interface PackageInfo {
-	package: PackageType;
-	version: VersionType;
+export function toPackageInfo(pkg: ManifestPackage): PackageInfo {
+	return {
+		package: { name: pkg.name, neurodeskId: pkg.neurodeskId, docs: pkg.docs },
+		version: { name: pkg.version, container: pkg.container, apps: pkg.apps.map((a) => a.name) }
+	};
 }
-
-export interface CatalogIndex {
-	project: ProjectType;
-	packages: Map<string, PackageInfo>;
-}
-
-const PROJECT = 'niwrap';
-
-export const getProjectNiwrap = () => getProject(PROJECT);
-
-export const getPackageNiwrap = (packageName: string) => getPackage(PROJECT, packageName);
-
-export const getVersionNiwrap = (packageName: string, versionName: string) =>
-	getVersion(PROJECT, packageName, versionName);
-
-export const getAppNiwrap = (packageName: string, versionName: string, appName: string) =>
-	getApp(PROJECT, packageName, versionName, appName);
 
 class CatalogStore {
 	#index: CatalogIndex | null = $state(null);
 	#loading = $state(false);
 	#loadPromise: Promise<CatalogIndex> | null = null;
+
+	// Raw manifest (non-reactive): the source for per-app lookups + descriptor URLs.
+	#manifest: Manifest | null = null;
+	// Per-app entries keyed by `<package>/<app>` for O(1) getApp.
+	#apps = new Map<string, AppType>();
 
 	get loading(): boolean {
 		return this.#loading;
@@ -51,21 +41,29 @@ class CatalogStore {
 	async #fetchIndex(): Promise<CatalogIndex> {
 		this.#loading = true;
 		try {
-			const project = await getProjectNiwrap();
+			const releases = await fetchReleasesIndex();
+			const release =
+				releases.versions.find((v) => v.version === releases.latest) ?? releases.versions[0];
+			if (!release) throw new Error('catalog index lists no versions');
 
-			const results = await Promise.all(
-				project.packages.map(async (name) => {
-					const pkg = await getPackageNiwrap(name);
-					const version = await getVersionNiwrap(pkg.name, pkg.default);
-					return { pkg, version };
-				})
-			);
+			const manifest = await fetchManifest(release.catalog);
+			this.#manifest = manifest;
+
+			this.#apps.clear();
+			for (const pkg of manifest.packages) {
+				for (const app of pkg.apps) {
+					this.#apps.set(`${pkg.name}/${app.name}`, app);
+				}
+			}
 
 			const packages = new Map<string, PackageInfo>(
-				results.map(({ pkg, version }) => [pkg.name, { package: pkg, version }])
+				manifest.packages.map((pkg) => [pkg.name, toPackageInfo(pkg)])
 			);
 
-			this.#index = { project, packages };
+			this.#index = {
+				project: { name: manifest.project, version: manifest.version, docs: manifest.docs },
+				packages
+			};
 			return this.#index;
 		} catch (err) {
 			this.#loadPromise = null; // Allow retry on failure
@@ -80,23 +78,17 @@ class CatalogStore {
 		return idx.packages.get(name);
 	}
 
-	async getApps(packageName: string): Promise<string[]> {
-		const pkg = await this.getPackage(packageName);
-		return pkg?.version.apps ?? [];
-	}
-
 	async getApp(packageName: string, appName: string): Promise<AppType | undefined> {
-		const pkg = await this.getPackage(packageName);
-		if (!pkg) return undefined;
-		return getAppNiwrap(packageName, pkg.version.name, appName);
+		await this.load();
+		return this.#apps.get(`${packageName}/${appName}`);
 	}
 
-	async getAppInputSchema(packageName: string, appId: string) {
-		return fetchAppSchemaInput(packageName, appId);
-	}
-
-	async getAppOutputSchema(packageName: string, appId: string) {
-		return fetchAppSchemaOutput(packageName, appId);
+	/** Fetch the raw descriptor text for an app (compiled in-browser by the worker). */
+	async fetchDescriptor(app: AppType): Promise<string> {
+		const manifest = this.#manifest;
+		if (!manifest) throw new Error('catalog not loaded');
+		if (!app.descriptor) throw new Error(`app "${app.name}" has no descriptor`);
+		return fetchDescriptor(manifest.version, app.descriptor);
 	}
 }
 
