@@ -322,4 +322,45 @@ test.describe('Navigation', () => {
 		await expect(page).toHaveURL(/[?&]package=ants/, { timeout: 10000 });
 		await expect(page).toHaveURL(/[?&]app=antsRegistration/, { timeout: 10000 });
 	});
+
+	// Regression guard for the first-load deep-link race: on a cold load the URL
+	// -> selection (initialize/loadSelectionFromUrl) must win over the selection
+	// -> URL effect, so a slow catalog load can't let the effect strip the params
+	// and bounce to the gallery before the selection is applied. Delaying the
+	// catalog widens that window; the deep link must survive it.
+	test('slow first-load deep link is not stripped back to the gallery', async ({ page }) => {
+		// Delay only the catalog index + manifest (what `initialize()` awaits),
+		// not the later per-app descriptor fetches, so the injected latency lands
+		// squarely in the init-vs-effect window without stacking.
+		await page.route('https://niwrap.dev/niwrap/**', async (route) => {
+			const url = route.request().url();
+			if (url.endsWith('/index.json') || url.endsWith('/catalog.json')) {
+				await new Promise((r) => setTimeout(r, 800));
+			}
+			await route.continue();
+		});
+
+		// Record every same-origin main-frame navigation so a transient bounce to a
+		// query-less URL fails loudly with the full trail (the symptom was landing
+		// on the bare gallery). The initial `about:blank` frame is filtered out.
+		const navs: string[] = [];
+		page.on('framenavigated', (frame) => {
+			if (frame === page.mainFrame() && frame.url().startsWith('http')) navs.push(frame.url());
+		});
+
+		await page.goto('/?package=ants&app=antsRegistration');
+		await waitForLoad(page);
+
+		// The deep link must still be selected (a bounce would have cleared `app`).
+		await expect(page, `bounced to gallery; navigations=${JSON.stringify(navs)}`).toHaveURL(
+			/[?&]app=antsRegistration/,
+			{ timeout: 10000 }
+		);
+		// And the app page must actually render its results column.
+		await expect(page.getByRole('heading', { name: 'Generated Command' })).toBeVisible({
+			timeout: 15000
+		});
+		// No intermediate navigation should have dropped the selection mid-load.
+		expect(navs.every((u) => new URL(u).search.includes('app=antsRegistration'))).toBe(true);
+	});
 });
