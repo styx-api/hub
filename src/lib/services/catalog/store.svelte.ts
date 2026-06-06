@@ -15,6 +15,9 @@ class CatalogStore {
 	#loading = $state(false);
 	#loadPromise: Promise<CatalogIndex> | null = null;
 
+	// Compiler that built the loaded release (reactive, for the lockstep/C8 check).
+	#compiler: Manifest['compiler'] | null = $state(null);
+
 	// Raw manifest (non-reactive): the source for per-app lookups + descriptor URLs.
 	#manifest: Manifest | null = null;
 	// Per-app entries keyed by `<package>/<app>` for O(1) getApp.
@@ -26,6 +29,11 @@ class CatalogStore {
 
 	get index(): CatalogIndex | null {
 		return this.#index;
+	}
+
+	/** The compiler that built the loaded release (`@styx-api/core` + version). */
+	get compiler(): Manifest['compiler'] | null {
+		return this.#compiler;
 	}
 
 	async load(): Promise<CatalogIndex> {
@@ -48,6 +56,7 @@ class CatalogStore {
 
 			const manifest = await fetchManifest(release.catalog);
 			this.#manifest = manifest;
+			this.#compiler = manifest.compiler;
 
 			this.#apps.clear();
 			for (const pkg of manifest.packages) {

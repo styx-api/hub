@@ -2,7 +2,7 @@
 	import { Tabs, TabsContent, TabsList, TabsTrigger } from '$lib/components/ui/tabs';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
-	import { Alert, AlertDescription } from '$lib/components/ui/alert';
+	import { Alert, AlertDescription, AlertTitle } from '$lib/components/ui/alert';
 	import Terminal from './Terminal.svelte';
 	import OutputList from './OutputList.svelte';
 	import CodeBlock from './CodeBlock.svelte';
@@ -13,7 +13,8 @@
 		Code,
 		FileCode2,
 		ExternalLink,
-		BracesIcon
+		BracesIcon,
+		RotateCcw
 	} from '@lucide/svelte';
 	import type { BundledLanguage } from 'shiki';
 
@@ -30,7 +31,12 @@
 		commandArgs: string[];
 		outputEntries: OutputEntry[];
 		descriptorConfig: object;
-		niwrapError: string | null;
+		/** A config the tool rejected when building the command (user-fixable). */
+		configError: string | null;
+		/** The in-browser compiler failed/crashed (infra, not the config). */
+		compilerError: string | null;
+		/** Lockstep warning when the bundled compiler differs from the release's. */
+		compilerWarning: string | null;
 		/** Python call snippet for the current config, or null when unavailable. */
 		pythonCode: string | null;
 		/** TypeScript call snippet for the current config, or null when unavailable. */
@@ -47,7 +53,9 @@
 		commandArgs,
 		outputEntries,
 		descriptorConfig,
-		niwrapError,
+		configError,
+		compilerError,
+		compilerWarning,
 		pythonCode,
 		typescriptCode,
 		snippetError,
@@ -81,6 +89,19 @@
 {/snippet}
 
 <div class="space-y-6">
+	<!-- Lockstep (C8): the hub's compiler differs from the one that built the release. -->
+	{#if compilerWarning}
+		<Alert
+			class="border-amber-500/40 bg-amber-50 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200"
+		>
+			<TriangleAlert class="h-4 w-4" />
+			<AlertTitle>Compiler version mismatch</AlertTitle>
+			<AlertDescription class="text-amber-900/90 dark:text-amber-200/90">
+				{compilerWarning}
+			</AlertDescription>
+		</Alert>
+	{/if}
+
 	<Tabs bind:value={activeTab} class="w-full">
 		<TabsList class="grid w-full grid-cols-5">
 			<TabsTrigger value="command" disabled={!hasConfig} class="flex items-center gap-2">
@@ -112,12 +133,32 @@
 
 		<TabsContent value="command" class="mt-4">
 			<div class="space-y-4">
-				{#if niwrapError}
+				{#if compilerError}
+					<!-- Infrastructure failure (worker crash / lost cache), not the config. -->
+					<Alert variant="destructive">
+						<TriangleAlert class="h-4 w-4" />
+						<AlertTitle>The in-browser compiler hit an error.</AlertTitle>
+						<AlertDescription>
+							<div class="flex items-start justify-between gap-4">
+								<span>Reload the page to recompile this tool.</span>
+								<Button
+									variant="outline"
+									size="sm"
+									onclick={() => window.location.reload()}
+									class="shrink-0 cursor-pointer"
+								>
+									<RotateCcw class="mr-1 h-3 w-3" />
+									Reload
+								</Button>
+							</div>
+						</AlertDescription>
+					</Alert>
+				{:else if configError}
 					<Alert variant="destructive">
 						<TriangleAlert class="h-4 w-4" />
 						<AlertDescription>
 							<strong>Configuration Error:</strong>
-							{niwrapError}
+							{configError}
 						</AlertDescription>
 					</Alert>
 				{/if}

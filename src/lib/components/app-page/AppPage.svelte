@@ -3,7 +3,13 @@
 	import ConfigurationPanel from './ConfigurationPanel.svelte';
 	import ResultsPanel from './ResultsPanel.svelte';
 	import { Settings, Terminal as TerminalIcon, FileCode, ExternalLink } from '@lucide/svelte';
-	import { compileTool, executeTool } from '$lib/services/compiler';
+	import {
+		compileTool,
+		executeTool,
+		compilerStatus,
+		compilerMismatchWarning,
+		type ExecutionResult
+	} from '$lib/services/compiler';
 	import { niwrapDeathMessage } from '$lib/utils/deathMessage';
 	import { catalog, type PackageInfo } from '$lib/services/catalog';
 	import { getSchemaAtPath, getSchemaMetadata } from '$lib/services/schema/schemaUtils';
@@ -34,12 +40,7 @@
 	let mobileActiveTab = $state('config');
 	let desktopResultsTab = $state('command');
 
-	// Call snippets, always produced alongside the command by `executeTool`.
-	type Snippets = { python?: string; typescript?: string; snippetError?: string | null };
-	type ExecutionResult =
-		| ({ success: true; cargs: string[]; outputObject: Record<string, unknown> } & Snippets)
-		| ({ success: false; error: string } & Snippets);
-
+	// Execution result (command + outputs + call snippets), from `executeTool`.
 	let executionResult = $state<ExecutionResult | null>(null);
 
 	// Track which app the current execution belongs to
@@ -47,6 +48,13 @@
 
 	// Generation counter to discard stale execution results
 	let executionGeneration = 0;
+
+	// Worker-crash recovery: the last compiled descriptor (to recompile in place
+	// without re-fetching or wiping the form), and a bounded retry counter so a
+	// genuinely dead worker can't loop. Reset per `loadApp`.
+	let lastDescriptor: string | null = null;
+	let recoveryAttempts = 0;
+	const MAX_RECOVERY = 1;
 
 	// Derived
 	const hasDescriptor = $derived(appData?.descriptor != null);
@@ -60,7 +68,11 @@
 		!executionResult || executedForApp !== app
 			? []
 			: !executionResult.success
-				? niwrapDeathMessage()
+				? // A compiler/infra failure gets a neutral placeholder (the alert above
+					// explains it); a config the tool rejected keeps the playful tombstone.
+					executionResult.recoverable
+					? ['# Compiler unavailable']
+					: niwrapDeathMessage()
 				: executionResult.cargs.length > 0
 					? executionResult.cargs
 					: ['# No command generated']
@@ -125,11 +137,18 @@
 		return results;
 	});
 
-	const niwrapError = $derived(
-		executionResult && !executionResult.success && executedForApp === app
-			? executionResult.error
-			: null
+	// The current failure (for this app), split into the two kinds the UI renders
+	// differently: a config the tool rejected vs. an in-browser compiler failure.
+	const failure = $derived(
+		executionResult && !executionResult.success && executedForApp === app ? executionResult : null
 	);
+	const configError = $derived(failure && !failure.recoverable ? failure.error : null);
+	const compilerError = $derived(failure && failure.recoverable ? failure.error : null);
+
+	// Lockstep (C8): warn when the bundled compiler differs from the one that built
+	// the published release, so the user knows the command/snippets may not match
+	// `pip install niwrap`. `null` when they match or can't be verified.
+	const compilerWarning = $derived(compilerMismatchWarning(compilerStatus(catalog.compiler)));
 
 	// Call snippets (H5) ride along on the execution result so they refresh with
 	// the config and survive a command error (best-effort render even when the
@@ -169,7 +188,14 @@
 
 		const configKeys = Object.keys(currentConfig);
 		if (configKeys.length === 0) {
-			executionResult = { success: false, error: 'No configuration provided' };
+			executionResult = {
+				success: false,
+				error: 'No configuration provided',
+				recoverable: false,
+				python: '',
+				typescript: '',
+				snippetError: null
+			};
 			executedForApp = currentApp;
 			return;
 		}
@@ -178,9 +204,33 @@
 		const gen = ++executionGeneration;
 
 		const run = executeTool(currentConfig as Record<string, unknown>);
-		run.then((result) => {
-			// Only apply if this is still the latest execution
+		run.then(async (result) => {
+			// Ignore a result superseded by a newer config/app.
+			if (gen !== executionGeneration) return;
+
+			// A worker crash leaves the respawned worker with an empty cache, so the
+			// execute fails as `recoverable`. Recompile in place (repopulating the
+			// cache, keeping the form intact) and retry once before giving up.
+			if (!result.success && result.recoverable && recoveryAttempts < MAX_RECOVERY) {
+				recoveryAttempts++;
+				try {
+					await recompileInPlace(pkg.package.name, currentApp);
+					if (gen !== executionGeneration) return;
+					const retried = await executeTool(currentConfig as Record<string, unknown>);
+					if (gen === executionGeneration) {
+						// Recovered: refresh the budget so a later, independent crash can also retry.
+						if (retried.success) recoveryAttempts = 0;
+						executionResult = retried;
+						executedForApp = currentApp;
+					}
+					return;
+				} catch {
+					// Recompile failed; fall through to surface the original failure.
+				}
+			}
+
 			if (gen === executionGeneration) {
+				if (result.success) recoveryAttempts = 0;
 				executionResult = result;
 				executedForApp = currentApp;
 			}
@@ -197,6 +247,8 @@
 		executionResult = null;
 		executedForApp = null;
 		executionGeneration++;
+		lastDescriptor = null;
+		recoveryAttempts = 0;
 
 		try {
 			const entry = (await catalog.getApp(packageName, appName)) ?? null;
@@ -206,6 +258,7 @@
 			// descriptor render the "not yet available" CTA instead.
 			if (entry?.descriptor) {
 				const descriptor = await catalog.fetchDescriptor(entry);
+				lastDescriptor = descriptor;
 				const compiled = await compileTool(
 					descriptor,
 					packageName,
@@ -225,6 +278,26 @@
 		} finally {
 			isLoading = false;
 		}
+	}
+
+	/**
+	 * Recompile the current descriptor to repopulate a respawned worker's cache,
+	 * without re-fetching or resetting the form. Used by the execute effect's
+	 * one-shot crash recovery; throws if there is no descriptor to recompile.
+	 */
+	async function recompileInPlace(packageName: string, appName: string): Promise<void> {
+		if (!lastDescriptor || !appData?.descriptor) {
+			throw new Error('no descriptor to recompile');
+		}
+		const compiled = await compileTool(
+			lastDescriptor,
+			packageName,
+			appName,
+			'niwrap',
+			appData.format
+		);
+		inputSchema = compiled.inputSchema;
+		outputSchema = compiled.outputSchema;
 	}
 
 	// URL sharing
@@ -330,7 +403,9 @@
 							{commandArgs}
 							{outputEntries}
 							descriptorConfig={config}
-							{niwrapError}
+							{configError}
+							{compilerError}
+							{compilerWarning}
 							{pythonCode}
 							{typescriptCode}
 							{snippetError}
@@ -376,7 +451,9 @@
 						{commandArgs}
 						{outputEntries}
 						descriptorConfig={config}
-						{niwrapError}
+						{configError}
+						{compilerError}
+						{compilerWarning}
 						{pythonCode}
 						{typescriptCode}
 						{snippetError}
