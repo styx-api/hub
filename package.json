@@ -50,6 +50,7 @@
 		"vitest": "^4.0.18"
 	},
 	"dependencies": {
+		"@huggingface/transformers": "^4.2.0",
 		"@styx-api/core": "0.5.0",
 		"mode-watcher": "^1.1.0",
 		"shell-quote": "^1.8.3",

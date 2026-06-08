@@ -13,10 +13,12 @@
 		Package as PackageIcon,
 		Terminal,
 		CircleAlert,
-		RefreshCw
+		RefreshCw,
+		Sparkles
 	} from '@lucide/svelte/icons';
 	import { cn } from '$lib/utils.js';
-	import { catalog, type PackageInfo } from '$lib/services/catalog';
+	import { catalog, type PackageInfo, type ToolRef } from '$lib/services/catalog';
+	import { blendHits, semanticScores, semanticSearch, type SearchHit } from '$lib/services/search';
 
 	interface Props {
 		package?: PackageInfo | null;
@@ -42,15 +44,19 @@
 	let appLimit = $state(50);
 	let listRef = $state<HTMLDivElement | null>(null);
 
-	interface AppEntry {
-		name: string;
-		package: PackageInfo;
-	}
+	// Flat tool refs (with descriptions) + a name→PackageInfo map for selection.
+	let refs: ToolRef[] = $state([]);
+	let packagesByName = $state(new Map<string, PackageInfo>());
 
-	// Build flat app index once packages load
-	const allApps = $derived<AppEntry[]>(
-		packages.flatMap((pkg) => (pkg.version.apps ?? []).map((app) => ({ name: app, package: pkg })))
-	);
+	// Semantic upgrade: the resolved cosine map and the query it belongs to. When
+	// `semQuery` matches the current trimmed search, hits blend in semantics;
+	// otherwise the list stays on the instant lexical ranking.
+	let semScores = $state<Map<string, number> | null>(null);
+	let semQuery = $state('');
+	// Status of the semantic pass for the current query, for the footer label.
+	let semStatus = $state<'idle' | 'pending' | 'ready' | 'unavailable'>('idle');
+
+	const APP_RESULT_CAP = 200;
 
 	const searchTerms = $derived(
 		search
@@ -76,19 +82,46 @@
 					.slice(0, MAX_PACKAGES)
 	);
 
-	// All matching apps (unsliced — sliced in template via appLimit)
-	const filteredApps = $derived(
+	// Ranked tool hits (unsliced — sliced in template via appLimit). Lexical and
+	// synchronous on every keystroke; upgrades to the blended ranking once the
+	// semantic map for this query has resolved.
+	const appHits = $derived<SearchHit[]>(
 		searchTerms.length === 0 || search.trim().length < 2
 			? []
-			: allApps.filter((a) =>
-					matchesAllTerms(
-						searchTerms,
-						a.name,
-						a.package.package.docs?.title ?? '',
-						a.package.package.name
-					)
+			: blendHits(
+					search,
+					refs,
+					semScores && semQuery === search.trim() ? semScores : null,
+					APP_RESULT_CAP
 				)
 	);
+
+	// Debounced semantic pass: embeds the query in a worker and stores the cosine
+	// map for the *current* query only (stale resolutions are ignored). Skipped
+	// when semantic is gated off or the query is too short — pure lexical then.
+	$effect(() => {
+		const q = search.trim();
+		if (!semanticSearch.enabled || q.length < 2) {
+			semScores = null;
+			semQuery = '';
+			semStatus = 'idle';
+			return;
+		}
+		let cancelled = false;
+		semStatus = 'pending';
+		const timer = setTimeout(() => {
+			semanticScores(q).then((scores) => {
+				if (cancelled || search.trim() !== q) return;
+				semScores = scores;
+				semQuery = q;
+				semStatus = scores ? 'ready' : 'unavailable';
+			});
+		}, 150);
+		return () => {
+			cancelled = true;
+			clearTimeout(timer);
+		};
+	});
 
 	// When a package is selected and no search, show its apps (unsliced)
 	const selectedPackageApps = $derived(
@@ -96,13 +129,11 @@
 	);
 
 	// The app list currently being displayed (whichever is active)
-	const totalAppCount = $derived(
-		filteredApps.length > 0 ? filteredApps.length : selectedPackageApps.length
-	);
+	const totalAppCount = $derived(appHits.length > 0 ? appHits.length : selectedPackageApps.length);
 	const hasMoreApps = $derived(totalAppCount > appLimit);
 
 	const hasResults = $derived(
-		filteredPackages.length > 0 || filteredApps.length > 0 || selectedPackageApps.length > 0
+		filteredPackages.length > 0 || appHits.length > 0 || selectedPackageApps.length > 0
 	);
 
 	const packageLabel = $derived(
@@ -146,6 +177,8 @@
 			error = null;
 			const idx = await catalog.load();
 			packages = [...idx.packages.values()];
+			packagesByName = new Map(packages.map((p) => [p.package.name, p]));
+			refs = catalog.toolRefs();
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to load packages';
 		}
@@ -158,9 +191,10 @@
 		tick().then(() => triggerRef?.focus());
 	}
 
-	function handleSelectApp(entry: AppEntry) {
-		onPackageSelected?.(entry.package);
-		onAppSelected?.(entry.name);
+	function handleSelectHit(hit: SearchHit) {
+		const pkg = packagesByName.get(hit.package);
+		if (pkg) onPackageSelected?.(pkg);
+		onAppSelected?.(hit.name);
 		open = false;
 		search = '';
 		tick().then(() => triggerRef?.focus());
@@ -258,15 +292,15 @@
 							</Command.Group>
 						{/if}
 
-						{#if filteredApps.length > 0}
+						{#if appHits.length > 0}
 							<Command.Group heading="Apps">
-								{#each filteredApps.slice(0, appLimit) as entry (entry.package.package.name + '/' + entry.name)}
+								{#each appHits.slice(0, appLimit) as hit (hit.tool_id)}
+									{@const pkg = packagesByName.get(hit.package)}
 									{@const isSelected =
-										selectedPackage?.package.name === entry.package.package.name &&
-										selectedApp === entry.name}
+										selectedPackage?.package.name === hit.package && selectedApp === hit.name}
 									<Command.Item
-										value={entry.package.package.name + '/' + entry.name}
-										onSelect={() => handleSelectApp(entry)}
+										value={hit.tool_id}
+										onSelect={() => handleSelectHit(hit)}
 										class="flex cursor-pointer items-center justify-between py-2"
 									>
 										<div class="flex min-w-0 flex-1 items-center">
@@ -277,10 +311,10 @@
 												)}
 											/>
 											<Terminal class="mr-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-											<span class="truncate font-mono text-sm">{entry.name}</span>
+											<span class="truncate font-mono text-sm">{hit.name}</span>
 										</div>
 										<span class="ml-2 shrink-0 text-xs text-muted-foreground">
-											{entry.package.package.docs?.title ?? entry.package.package.name}
+											{pkg?.package.docs?.title ?? hit.package}
 										</span>
 									</Command.Item>
 								{/each}
@@ -332,6 +366,35 @@
 							</Command.Item>
 						{/if}
 					</Command.List>
+					{#if search.trim().length >= 2}
+						<div
+							class="flex items-center justify-between border-t border-border px-3 py-1.5 text-xs text-muted-foreground"
+						>
+							<span class="flex items-center gap-1.5">
+								{#if semStatus === 'ready'}
+									<Sparkles class="h-3 w-3 text-primary" />
+									Semantic ranking
+								{:else if semStatus === 'pending'}
+									<LoaderCircle class="h-3 w-3 animate-spin" />
+									Warming semantic search…
+								{:else}
+									Lexical ranking
+								{/if}
+							</span>
+							<button
+								type="button"
+								onclick={() => semanticSearch.cycle()}
+								title="Toggle smarter (semantic) search. Auto enables it on capable devices; first use downloads a ~23MB model, cached after."
+								class="rounded px-1.5 py-0.5 font-medium hover:bg-muted hover:text-foreground"
+							>
+								{semanticSearch.mode === 'auto'
+									? 'Auto'
+									: semanticSearch.mode === 'on'
+										? 'On'
+										: 'Off'}
+							</button>
+						</div>
+					{/if}
 				</Command.Root>
 			</Popover.Content>
 		</Popover.Root>
