@@ -10,7 +10,7 @@
  * gallery, search, and app page are unchanged; only the source moved.
  */
 
-const PAGES_ROOT = 'https://niwrap.dev/niwrap';
+export const PAGES_ROOT = 'https://niwrap.dev/niwrap';
 const INDEX_PATH = 'index.json';
 
 async function fetchJson<T>(url: string): Promise<T> {
@@ -64,11 +64,39 @@ export interface Manifest {
 	packages: ManifestPackage[];
 }
 
+/** One vector-blob encoding of a version's embedding index (see niwrap-mcp/docs/embeddings-contract.md). */
+export interface EmbeddingsVariant {
+	encoding: 'f32' | 'int8';
+	/** Pages-relative path to embeddings.meta.json (already version-prefixed, e.g. `1.0.0/…`). */
+	meta: string;
+	/** Pages-relative path to the vector blob. */
+	vectors: string;
+	/** Byte length of the vector blob (== count * dim * 4 for f32). */
+	bytes: number;
+	scale?: number; // int8 only (reserved)
+	zeroPoint?: number; // int8 only (reserved)
+}
+
+/** Per-version embeddings announce in index.json. Absent ⇒ semantic search unavailable for that version. */
+export interface EmbeddingsAnnounce {
+	/** HF/Xenova model id the index was built with — and the one a client must query with. */
+	model: string;
+	dim: number;
+	count: number;
+	variants: EmbeddingsVariant[];
+}
+
 export interface ReleasesIndex {
 	schemaVersion: number;
 	project: string;
 	latest: string;
-	versions: { version: string; catalog: string; compiler: string; releaseDate?: string }[];
+	versions: {
+		version: string;
+		catalog: string;
+		compiler: string;
+		releaseDate?: string;
+		embeddings?: EmbeddingsAnnounce;
+	}[];
 }
 
 // --- Consumer-facing shape (kept stable for existing components) ------------
@@ -103,6 +131,27 @@ export interface PackageInfo {
 export interface CatalogIndex {
 	project: ProjectType;
 	packages: Map<string, PackageInfo>;
+}
+
+// --- Search-facing views ----------------------------------------------------
+
+/** A flat `<package>/<app>` reference carrying the fields search ranks over. */
+export interface ToolRef {
+	tool_id: string; // `${package}/${name}`
+	name: string;
+	package: string;
+	description?: string;
+	wrapped: boolean; // has a descriptor (callable)
+}
+
+/** A resolved, fetchable embeddings source: the announce plus absolute URLs for one variant. */
+export interface EmbeddingsSource {
+	version: string;
+	model: string;
+	dim: number;
+	count: number;
+	metaUrl: string;
+	vectorsUrl: string;
 }
 
 // --- Fetchers --------------------------------------------------------------

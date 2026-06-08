@@ -1,5 +1,14 @@
-import type { AppType, CatalogIndex, Manifest, ManifestPackage, PackageInfo } from './types';
-import { fetchDescriptor, fetchManifest, fetchReleasesIndex } from './types';
+import type {
+	AppType,
+	CatalogIndex,
+	EmbeddingsAnnounce,
+	EmbeddingsSource,
+	Manifest,
+	ManifestPackage,
+	PackageInfo,
+	ToolRef
+} from './types';
+import { fetchDescriptor, fetchManifest, fetchReleasesIndex, PAGES_ROOT } from './types';
 
 export type { PackageInfo, CatalogIndex };
 
@@ -22,6 +31,10 @@ class CatalogStore {
 	#manifest: Manifest | null = null;
 	// Per-app entries keyed by `<package>/<app>` for O(1) getApp.
 	#apps = new Map<string, AppType>();
+	// The loaded version's embeddings announce (if it ships any); drives semantic search.
+	#embeddings: EmbeddingsAnnounce | null = null;
+	// Flat tool refs (with descriptions), built once per load and memoized for search.
+	#toolRefs: ToolRef[] | null = null;
 
 	get loading(): boolean {
 		return this.#loading;
@@ -57,6 +70,8 @@ class CatalogStore {
 			const manifest = await fetchManifest(release.catalog);
 			this.#manifest = manifest;
 			this.#compiler = manifest.compiler;
+			this.#embeddings = release.embeddings ?? null;
+			this.#toolRefs = null; // rebuilt lazily from the new manifest
 
 			this.#apps.clear();
 			for (const pkg of manifest.packages) {
@@ -90,6 +105,56 @@ class CatalogStore {
 	async getApp(packageName: string, appName: string): Promise<AppType | undefined> {
 		await this.load();
 		return this.#apps.get(`${packageName}/${appName}`);
+	}
+
+	/** The loaded release version (`manifest.version`), or null before load. */
+	get version(): string | null {
+		return this.#manifest?.version ?? null;
+	}
+
+	/**
+	 * Flat list of every app as a search ref (with description + wrapped flag),
+	 * built once from the loaded manifest and memoized. Empty before load.
+	 */
+	toolRefs(): ToolRef[] {
+		if (this.#toolRefs) return this.#toolRefs;
+		const manifest = this.#manifest;
+		if (!manifest) return [];
+		const refs: ToolRef[] = [];
+		for (const pkg of manifest.packages) {
+			for (const app of pkg.apps) {
+				refs.push({
+					tool_id: `${pkg.name}/${app.name}`,
+					name: app.name,
+					package: pkg.name,
+					description: app.description,
+					wrapped: Boolean(app.descriptor)
+				});
+			}
+		}
+		this.#toolRefs = refs;
+		return refs;
+	}
+
+	/**
+	 * Resolve the loaded version's embeddings source: the f32 variant's absolute
+	 * URLs, or null if the version announces no (supported) embeddings — in which
+	 * case semantic search falls back to lexical. Call after `load()`.
+	 */
+	getEmbeddingsSource(): EmbeddingsSource | null {
+		const announce = this.#embeddings;
+		const version = this.#manifest?.version;
+		if (!announce || !version) return null;
+		const variant = announce.variants.find((v) => v.encoding === 'f32');
+		if (!variant) return null; // only f32 is supported today
+		return {
+			version,
+			model: announce.model,
+			dim: announce.dim,
+			count: announce.count,
+			metaUrl: `${PAGES_ROOT}/${variant.meta}`,
+			vectorsUrl: `${PAGES_ROOT}/${variant.vectors}`
+		};
 	}
 
 	/** Fetch the raw descriptor text for an app (compiled in-browser by the worker). */
